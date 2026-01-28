@@ -120,24 +120,30 @@ class TextGenerator:
                     {
                         "role": "system",
                         "content": "You are an expert at creating DALL-E prompts that generate "
-                                   "photorealistic, professional photography-style images. Create prompts that "
-                                   "look like real photographs taken by a professional photographer."
+                                   "authentic, candid-looking photographs that DON'T look AI-generated. "
+                                   "Your prompts create images that look like real photos taken by real people - "
+                                   "slightly imperfect, natural, with real-world textures and lighting."
                     },
                     {
                         "role": "user",
                         "content": f"Create a DALL-E prompt for an Instagram post about: {topic}\n"
                                    f"Niche: {self.niche}\n"
                                    f"Style hints: {style_hints}\n\n"
-                                   "CRITICAL Requirements:\n"
-                                   "- MUST look like a real photograph, not illustration or art\n"
-                                   "- Professional photography style (DSLR quality, proper lighting)\n"
-                                   "- Show real-world scenes: hands holding, nature, candles, flowers, ribbons\n"
-                                   "- Warm, soft lighting like golden hour photography\n"
+                                   "CRITICAL - Make it look REAL, not AI-generated:\n"
+                                   "- Documentary/candid photography style, NOT studio perfect\n"
+                                   "- Natural imperfections: slightly uneven lighting, real textures\n"
+                                   "- Shot on iPhone or mirrorless camera look, not overly polished\n"
+                                   "- Real-world environment with authentic details\n"
+                                   "- Natural color grading, slight warmth, NOT oversaturated\n"
+                                   "- Subtle film grain or slight noise for authenticity\n"
+                                   "- Ambient/available light, NOT perfect studio lighting\n"
+                                   "- Everyday scenes: coffee shops, parks, home settings, nature\n"
+                                   "- Real fabric textures, wood grain, natural surfaces\n"
                                    "- NO faces or identifiable people\n"
                                    "- NO text, words, or letters in the image\n"
-                                   "- Symbolic and hopeful imagery (purple ribbons, candles, flowers, hands)\n"
-                                   "- Square composition for Instagram\n"
-                                   "- Include: 'photorealistic, professional photography, DSLR, soft natural lighting'\n\n"
+                                   "- Symbolic imagery: purple ribbons, candles, flowers, hands, nature\n"
+                                   "- Add: 'candid photo, authentic, natural lighting, slight film grain, "
+                                   "realistic textures, not AI, shot on iPhone, documentary style'\n\n"
                                    "Return ONLY the prompt, nothing else."
                     }
                 ],
@@ -146,14 +152,19 @@ class TextGenerator:
             )
 
             prompt = response.choices[0].message.content.strip()
+
+            # Add authenticity modifiers to the prompt
+            authenticity_suffix = ", candid authentic photo, natural imperfections, realistic textures, not AI generated, documentary photography style, subtle film grain"
+            prompt = prompt.rstrip('.') + authenticity_suffix
+
             self.logger.info("Image prompt generated successfully")
 
             return prompt
 
         except Exception as e:
             self.logger.error(f"Error generating image prompt: {e}")
-            # Return a simple fallback prompt
-            return f"Photorealistic photograph of {topic}, professional DSLR photography, soft natural lighting, warm colors, no text, no faces, symbolic hopeful imagery"
+            # Return a simple fallback prompt with authenticity markers
+            return f"Candid photograph of {topic}, authentic documentary style, natural ambient lighting, slight film grain, realistic textures, shot on iPhone, warm natural tones, not AI generated, no text, no faces"
 
     def _build_caption_prompt(
         self,

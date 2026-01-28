@@ -33,13 +33,13 @@ class ImageGenerator:
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
 
-    # Fallback prompts for when DALL-E safety filter blocks content (photorealistic style)
+    # Fallback prompts designed to look authentic and NOT AI-generated
     SAFE_FALLBACK_PROMPTS = [
-        "Photorealistic photograph of a purple awareness ribbon lying on a wooden table next to a lit candle, soft natural window lighting, DSLR camera quality, shallow depth of field, warm and hopeful mood",
-        "Professional photograph of two hands gently holding each other in a supportive gesture, soft golden hour lighting, no faces visible, DSLR quality, warm skin tones, symbol of support and unity",
-        "Photorealistic image of purple lavender flowers in a sunlit garden with morning dew, professional nature photography, soft bokeh background, peaceful and healing atmosphere, DSLR quality",
-        "Professional photograph of a single lit candle with purple flowers beside it on a peaceful table setting, soft natural lighting, shallow depth of field, symbol of hope, DSLR camera quality",
-        "Photorealistic photograph of a butterfly resting on purple flowers in a garden, golden hour sunlight, professional macro photography style, symbol of transformation and hope, sharp detail"
+        "Candid photo of a purple awareness ribbon on a weathered wooden table next to a lit candle, natural window light with slight shadows, shot on iPhone, authentic home setting, slight film grain, warm natural tones, documentary style, not AI generated",
+        "Authentic photograph of two hands gently holding in supportive gesture, natural daylight from nearby window, no faces, real skin texture with natural imperfections, candid moment, slight warmth, not studio lighting, documentary photography",
+        "Real photograph of purple lavender flowers in a backyard garden, morning light, shot on smartphone, natural colors not oversaturated, slight bokeh, authentic garden setting with real soil and leaves, candid nature photo",
+        "Candid photo of a single lit candle with purple flowers on a wooden coffee table, cozy living room ambient light, authentic home decor visible, natural shadows, warm atmosphere, shot on mirrorless camera, not AI",
+        "Documentary style photo of a butterfly on purple wildflowers, natural outdoor lighting, real meadow setting, authentic nature photography, organic composition, candid wildlife moment, slight motion, not artificial"
     ]
 
     def generate_image(
@@ -170,12 +170,13 @@ class ImageGenerator:
 
         return output_path
 
-    def optimize_for_instagram(self, image_path: str) -> str:
+    def optimize_for_instagram(self, image_path: str, add_authenticity: bool = True) -> str:
         """
-        Optimize image for Instagram posting.
+        Optimize image for Instagram posting with authenticity effects.
 
         Args:
             image_path: Path to source image
+            add_authenticity: Add subtle effects to make image look less AI-generated
 
         Returns:
             Path to optimized image
@@ -195,11 +196,97 @@ class ImageGenerator:
         if image.size != target_size:
             image = image.resize(target_size, Image.Resampling.LANCZOS)
 
+        # Add authenticity effects to reduce AI look
+        if add_authenticity:
+            image = self._add_authenticity_effects(image)
+
         # Save as JPEG with optimal quality for Instagram
         base, _ = os.path.splitext(image_path)
         output_path = f"{base}_instagram.jpg"
 
-        image.save(output_path, "JPEG", quality=95, optimize=True)
+        image.save(output_path, "JPEG", quality=92, optimize=True)
         self.logger.info(f"Optimized image saved to: {output_path}")
 
         return output_path
+
+    def _add_authenticity_effects(self, image: Image.Image) -> Image.Image:
+        """
+        Add subtle effects to make AI images look more authentic/real.
+
+        Args:
+            image: PIL Image object
+
+        Returns:
+            Modified image with authenticity effects
+        """
+        import random
+        from PIL import ImageEnhance, ImageFilter
+        import numpy as np
+
+        # Convert to numpy for grain
+        img_array = np.array(image)
+
+        # 1. Add subtle film grain/noise
+        noise_intensity = random.uniform(3, 8)
+        noise = np.random.normal(0, noise_intensity, img_array.shape).astype(np.int16)
+        img_array = np.clip(img_array.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+
+        image = Image.fromarray(img_array)
+
+        # 2. Slightly reduce saturation (AI images are often oversaturated)
+        enhancer = ImageEnhance.Color(image)
+        saturation = random.uniform(0.92, 0.98)
+        image = enhancer.enhance(saturation)
+
+        # 3. Add very subtle warmth by adjusting color balance
+        r, g, b = image.split()
+        r = r.point(lambda x: min(255, int(x * random.uniform(1.01, 1.03))))
+        b = b.point(lambda x: int(x * random.uniform(0.97, 0.99)))
+        image = Image.merge('RGB', (r, g, b))
+
+        # 4. Very slight blur to reduce AI sharpness
+        if random.random() > 0.5:
+            image = image.filter(ImageFilter.GaussianBlur(radius=0.3))
+
+        # 5. Subtle contrast adjustment
+        enhancer = ImageEnhance.Contrast(image)
+        contrast = random.uniform(0.97, 1.03)
+        image = enhancer.enhance(contrast)
+
+        # 6. Very slight vignette effect (darker corners like real cameras)
+        image = self._add_vignette(image, intensity=random.uniform(0.05, 0.12))
+
+        return image
+
+    def _add_vignette(self, image: Image.Image, intensity: float = 0.1) -> Image.Image:
+        """
+        Add a subtle vignette effect like real camera lenses produce.
+
+        Args:
+            image: PIL Image object
+            intensity: How strong the vignette should be (0-1)
+
+        Returns:
+            Image with vignette effect
+        """
+        import numpy as np
+
+        width, height = image.size
+        img_array = np.array(image).astype(np.float32)
+
+        # Create vignette mask
+        x = np.linspace(-1, 1, width)
+        y = np.linspace(-1, 1, height)
+        X, Y = np.meshgrid(x, y)
+        distance = np.sqrt(X**2 + Y**2)
+
+        # Smooth falloff from center
+        vignette = 1 - (distance * intensity)
+        vignette = np.clip(vignette, 0.7, 1)
+
+        # Apply to all channels
+        for i in range(3):
+            img_array[:, :, i] = img_array[:, :, i] * vignette
+
+        img_array = np.clip(img_array, 0, 255).astype(np.uint8)
+        return Image.fromarray(img_array)
