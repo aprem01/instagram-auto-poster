@@ -3,6 +3,22 @@
 {% block title %}Dashboard - DVCCC Content Manager{% endblock %}
 
 {% block content %}
+{% if config_issues %}
+<div class="config-warning">
+    <div class="warning-icon">⚠️</div>
+    <div class="warning-content">
+        <strong>Configuration Required</strong>
+        <p>Some features are disabled due to missing configuration:</p>
+        <ul>
+            {% for issue in config_issues %}
+            <li>{{ issue }}</li>
+            {% endfor %}
+        </ul>
+        <p class="warning-action">Add environment variables in your deployment settings (Render → Environment tab)</p>
+    </div>
+</div>
+{% endif %}
+
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-icon">📊</div>
@@ -124,6 +140,46 @@
 </div>
 
 <style>
+    .config-warning {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1px solid #f59e0b;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    .config-warning .warning-icon {
+        font-size: 2rem;
+    }
+    .config-warning .warning-content {
+        flex: 1;
+    }
+    .config-warning strong {
+        color: #b45309;
+        font-size: 1.1rem;
+    }
+    .config-warning p {
+        color: #92400e;
+        margin: 8px 0;
+    }
+    .config-warning ul {
+        margin: 10px 0;
+        padding-left: 20px;
+        color: #92400e;
+    }
+    .config-warning li {
+        margin: 5px 0;
+    }
+    .config-warning .warning-action {
+        background: white;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        border-left: 3px solid #f59e0b;
+    }
+
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

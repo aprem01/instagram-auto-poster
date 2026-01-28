@@ -113,6 +113,44 @@
     </div>
 </div>
 
+<div id="errorCard" class="card error-card" style="display: none;">
+    <div class="error-icon">&#9888;</div>
+    <h3 id="errorTitle">Error</h3>
+    <p id="errorMessage"></p>
+    <p id="errorAction" class="error-action"></p>
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button onclick="hideError()" class="btn btn-primary">Try Again</button>
+    </div>
+</div>
+
+<style>
+    .error-card {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 1px solid #fc8181;
+        text-align: center;
+    }
+    .error-icon {
+        font-size: 3rem;
+        color: #c53030;
+        margin-bottom: 10px;
+    }
+    .error-card h3 {
+        color: #c53030;
+        margin-bottom: 15px;
+    }
+    .error-card p {
+        color: #742a2a;
+    }
+    .error-action {
+        background: white;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        font-size: 0.9rem;
+        border-left: 3px solid #667eea;
+    }
+</style>
+
 <style>
     .preview-grid {
         display: grid;
@@ -254,6 +292,25 @@
         document.getElementById('theme').value = theme;
     }
 
+    function showError(title, message, action) {
+        document.getElementById('errorTitle').textContent = title || 'Error';
+        document.getElementById('errorMessage').textContent = message || 'An unexpected error occurred.';
+        document.getElementById('errorAction').textContent = action || '';
+        document.getElementById('errorAction').style.display = action ? 'block' : 'none';
+
+        document.getElementById('createCard').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('preview').style.display = 'none';
+        document.getElementById('regenLoading').style.display = 'none';
+        document.getElementById('success').style.display = 'none';
+        document.getElementById('errorCard').style.display = 'block';
+    }
+
+    function hideError() {
+        document.getElementById('errorCard').style.display = 'none';
+        document.getElementById('createCard').style.display = 'block';
+    }
+
     function updatePreview() {
         const caption = document.getElementById('caption').value;
         document.getElementById('phoneCaption').textContent = caption.substring(0, 150) + (caption.length > 150 ? '...' : '');
@@ -275,6 +332,7 @@
         document.getElementById('loading').style.display = 'block';
         document.getElementById('preview').style.display = 'none';
         document.getElementById('success').style.display = 'none';
+        document.getElementById('errorCard').style.display = 'none';
 
         try {
             const formData = new FormData();
@@ -288,9 +346,7 @@
             const data = await response.json();
 
             if (data.error) {
-                alert('Error: ' + data.error);
-                document.getElementById('createCard').style.display = 'block';
-                document.getElementById('loading').style.display = 'none';
+                showError(data.title, data.error, data.action);
                 return;
             }
 
@@ -306,9 +362,7 @@
             document.getElementById('preview').style.display = 'block';
 
         } catch (error) {
-            alert('Error generating content: ' + error.message);
-            document.getElementById('createCard').style.display = 'block';
-            document.getElementById('loading').style.display = 'none';
+            showError('Connection Error', 'Could not connect to the server. Please check your internet connection.', 'Try refreshing the page.');
         }
     });
 
@@ -327,17 +381,18 @@
             const data = await response.json();
 
             if (data.error) {
-                alert('Error: ' + data.error);
-            } else {
-                document.getElementById('caption').value = data.caption;
-                updatePreview();
+                showError(data.title, data.error, data.action);
+                return;
             }
-        } catch (error) {
-            alert('Error regenerating caption: ' + error.message);
-        }
 
-        document.getElementById('regenLoading').style.display = 'none';
-        document.getElementById('preview').style.display = 'block';
+            document.getElementById('caption').value = data.caption;
+            updatePreview();
+            document.getElementById('regenLoading').style.display = 'none';
+            document.getElementById('preview').style.display = 'block';
+
+        } catch (error) {
+            showError('Connection Error', 'Could not connect to the server.', 'Try refreshing the page.');
+        }
     }
 
     async function regenerateImage() {
@@ -355,19 +410,20 @@
             const data = await response.json();
 
             if (data.error) {
-                alert('Error: ' + data.error);
-            } else {
-                currentData.image_url = data.image_url;
-                document.getElementById('previewImage').src = data.image_url;
-                document.getElementById('phoneImage').src = data.image_url;
-                document.getElementById('imageLink').href = data.image_url;
+                showError(data.title, data.error, data.action);
+                return;
             }
-        } catch (error) {
-            alert('Error regenerating image: ' + error.message);
-        }
 
-        document.getElementById('regenLoading').style.display = 'none';
-        document.getElementById('preview').style.display = 'block';
+            currentData.image_url = data.image_url;
+            document.getElementById('previewImage').src = data.image_url;
+            document.getElementById('phoneImage').src = data.image_url;
+            document.getElementById('imageLink').href = data.image_url;
+            document.getElementById('regenLoading').style.display = 'none';
+            document.getElementById('preview').style.display = 'block';
+
+        } catch (error) {
+            showError('Connection Error', 'Could not connect to the server.', 'Try refreshing the page.');
+        }
     }
 
     async function savePost(action) {
@@ -398,9 +454,11 @@
                     ? 'Your post has been scheduled!'
                     : 'Your post has been saved as a draft.';
                 document.getElementById('successMessage').textContent = statusText;
+            } else if (result.error) {
+                showError(result.title, result.error, result.action);
             }
         } catch (error) {
-            alert('Error saving post: ' + error.message);
+            showError('Save Error', 'Could not save your post. Please try again.', '');
         }
     }
 
@@ -412,6 +470,7 @@
 
         document.getElementById('createCard').style.display = 'block';
         document.getElementById('success').style.display = 'none';
+        document.getElementById('errorCard').style.display = 'none';
     }
 </script>
 {% endblock %}

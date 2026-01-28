@@ -28,6 +28,64 @@ app.secret_key = os.urandom(24)
 # Database setup
 DB_PATH = 'scheduled_posts.db'
 
+# ============== ERROR HANDLING HELPERS ==============
+
+def check_api_keys():
+    """Check if required API keys are configured."""
+    issues = []
+    if not os.getenv('OPENAI_API_KEY'):
+        issues.append('OPENAI_API_KEY is not set')
+    if not os.getenv('IMGBB_API_KEY'):
+        issues.append('IMGBB_API_KEY is not set (image hosting may not work)')
+    return issues
+
+def parse_openai_error(error):
+    """Parse OpenAI errors into user-friendly messages."""
+    error_str = str(error).lower()
+
+    if 'authentication' in error_str or 'api key' in error_str or 'invalid_api_key' in error_str:
+        return {
+            'title': 'API Key Error',
+            'message': 'The OpenAI API key is invalid or not configured. Please check your OPENAI_API_KEY environment variable.',
+            'action': 'Go to Render Dashboard → Environment → Add OPENAI_API_KEY'
+        }
+    elif 'rate_limit' in error_str or 'rate limit' in error_str:
+        return {
+            'title': 'Rate Limit Reached',
+            'message': 'Too many requests to OpenAI. Please wait a moment and try again.',
+            'action': 'Wait 30-60 seconds before trying again'
+        }
+    elif 'insufficient_quota' in error_str or 'quota' in error_str or 'billing' in error_str:
+        return {
+            'title': 'OpenAI Quota Exceeded',
+            'message': 'Your OpenAI account has run out of credits or the billing limit has been reached.',
+            'action': 'Check your OpenAI billing at platform.openai.com/account/billing'
+        }
+    elif 'content_policy' in error_str or 'safety' in error_str:
+        return {
+            'title': 'Content Policy',
+            'message': 'The generated content was flagged by OpenAI\'s safety system. Please try a different theme.',
+            'action': 'Try rephrasing your theme or use a suggested theme'
+        }
+    elif 'timeout' in error_str or 'timed out' in error_str:
+        return {
+            'title': 'Request Timeout',
+            'message': 'The request to OpenAI took too long. This might be due to high demand.',
+            'action': 'Please try again in a few moments'
+        }
+    elif 'connection' in error_str or 'network' in error_str:
+        return {
+            'title': 'Connection Error',
+            'message': 'Could not connect to OpenAI servers. Please check your internet connection.',
+            'action': 'Check network connectivity and try again'
+        }
+    else:
+        return {
+            'title': 'Generation Error',
+            'message': f'An error occurred while generating content: {str(error)[:200]}',
+            'action': 'Please try again or contact support if the issue persists'
+        }
+
 
 def init_db():
     """Initialize the database."""
@@ -109,18 +167,41 @@ def get_db():
     return conn
 
 
-# Initialize components
-text_gen = TextGenerator(
-    niche='domestic violence awareness',
-    style='warm, personal, and empowering',
-    hashtag_count=10
-)
-img_gen = ImageGenerator(output_dir='generated_images')
+# Initialize components with error handling
+text_gen = None
+img_gen = None
+uploader = None
+initialization_errors = []
+
+try:
+    if os.getenv('OPENAI_API_KEY'):
+        text_gen = TextGenerator(
+            niche='domestic violence awareness',
+            style='warm, personal, and empowering',
+            hashtag_count=10
+        )
+        img_gen = ImageGenerator(output_dir='generated_images')
+    else:
+        initialization_errors.append('OPENAI_API_KEY not configured - content generation disabled')
+except Exception as e:
+    initialization_errors.append(f'Failed to initialize AI generators: {str(e)}')
 
 try:
     uploader = get_uploader()
-except:
-    uploader = None
+except Exception as e:
+    initialization_errors.append(f'Image hosting not configured: {str(e)}')
+
+
+@app.route('/status')
+def status():
+    """Health check and configuration status."""
+    api_issues = check_api_keys()
+    return jsonify({
+        'status': 'ok' if not api_issues else 'degraded',
+        'generators_ready': text_gen is not None and img_gen is not None,
+        'uploader_ready': uploader is not None,
+        'issues': api_issues + initialization_errors
+    })
 
 
 @app.route('/')
@@ -164,6 +245,10 @@ def dashboard():
 
     conn.close()
 
+    # Check configuration status
+    config_issues = check_api_keys() + initialization_errors
+    generators_ready = text_gen is not None and img_gen is not None
+
     return render_template('dashboard.html',
         total_posts=total_posts,
         scheduled_posts=scheduled_posts,
@@ -172,7 +257,9 @@ def dashboard():
         active_schedules=active_schedules,
         posts_this_week=posts_this_week,
         recent_posts=recent_posts,
-        upcoming=upcoming
+        upcoming=upcoming,
+        config_issues=config_issues,
+        generators_ready=generators_ready
     )
 
 
@@ -235,7 +322,17 @@ def generate():
     theme = request.form.get('theme', '').strip()
 
     if not theme:
-        return jsonify({'error': 'Please provide a theme'}), 400
+        return jsonify({'error': 'Please provide a theme', 'title': 'Missing Theme'}), 400
+
+    # Check if generators are available
+    if not text_gen or not img_gen:
+        api_issues = check_api_keys()
+        return jsonify({
+            'error': 'Content generation is not available.',
+            'title': 'Configuration Required',
+            'details': api_issues if api_issues else ['AI generators failed to initialize'],
+            'action': 'Please configure the OPENAI_API_KEY environment variable in your deployment settings.'
+        }), 503
 
     try:
         # Generate caption
@@ -265,7 +362,12 @@ def generate():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_info = parse_openai_error(e)
+        return jsonify({
+            'error': error_info['message'],
+            'title': error_info['title'],
+            'action': error_info['action']
+        }), 500
 
 
 @app.route('/save', methods=['POST'])
@@ -660,6 +762,16 @@ def generate_for_schedule(schedule_id):
 
     conn.close()
 
+    # Check if generators are available
+    if not text_gen or not img_gen:
+        api_issues = check_api_keys()
+        return jsonify({
+            'error': 'Content generation is not available.',
+            'title': 'Configuration Required',
+            'details': api_issues,
+            'action': 'Please configure the OPENAI_API_KEY environment variable.'
+        }), 503
+
     try:
         # Generate caption
         channel_desc = '''We are the Domestic Violence Center of Chester County (DVCCC),
@@ -688,7 +800,12 @@ def generate_for_schedule(schedule_id):
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_info = parse_openai_error(e)
+        return jsonify({
+            'error': error_info['message'],
+            'title': error_info['title'],
+            'action': error_info['action']
+        }), 500
 
 
 # ============== REGENERATE OPTIONS ==============
@@ -700,7 +817,14 @@ def regenerate_caption():
     theme = data.get('theme', '').strip()
 
     if not theme:
-        return jsonify({'error': 'Please provide a theme'}), 400
+        return jsonify({'error': 'Please provide a theme', 'title': 'Missing Theme'}), 400
+
+    if not text_gen:
+        return jsonify({
+            'error': 'Caption generation is not available.',
+            'title': 'Configuration Required',
+            'action': 'Please configure the OPENAI_API_KEY environment variable.'
+        }), 503
 
     try:
         channel_desc = '''We are the Domestic Violence Center of Chester County (DVCCC),
@@ -714,7 +838,12 @@ def regenerate_caption():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_info = parse_openai_error(e)
+        return jsonify({
+            'error': error_info['message'],
+            'title': error_info['title'],
+            'action': error_info['action']
+        }), 500
 
 
 @app.route('/regenerate/image', methods=['POST'])
@@ -724,7 +853,14 @@ def regenerate_image():
     theme = data.get('theme', '').strip()
 
     if not theme:
-        return jsonify({'error': 'Please provide a theme'}), 400
+        return jsonify({'error': 'Please provide a theme', 'title': 'Missing Theme'}), 400
+
+    if not text_gen or not img_gen:
+        return jsonify({
+            'error': 'Image generation is not available.',
+            'title': 'Configuration Required',
+            'action': 'Please configure the OPENAI_API_KEY environment variable.'
+        }), 503
 
     try:
         prompt = text_gen.generate_image_prompt(theme)
@@ -742,7 +878,12 @@ def regenerate_image():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_info = parse_openai_error(e)
+        return jsonify({
+            'error': error_info['message'],
+            'title': error_info['title'],
+            'action': error_info['action']
+        }), 500
 
 
 # ============== VIDEO GENERATION ==============
@@ -768,7 +909,14 @@ def generate_video():
     video_type = data.get('video_type', 'slideshow')  # slideshow, animation, or ai_generated
 
     if not theme:
-        return jsonify({'error': 'Please provide a theme'}), 400
+        return jsonify({'error': 'Please provide a theme', 'title': 'Missing Theme'}), 400
+
+    if not text_gen or not img_gen:
+        return jsonify({
+            'error': 'Content generation is not available.',
+            'title': 'Configuration Required',
+            'action': 'Please configure the OPENAI_API_KEY environment variable.'
+        }), 503
 
     try:
         # Generate caption for the video
@@ -815,10 +963,15 @@ def generate_video():
             })
 
         else:
-            return jsonify({'error': 'Invalid video type'}), 400
+            return jsonify({'error': 'Invalid video type', 'title': 'Invalid Option'}), 400
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        error_info = parse_openai_error(e)
+        return jsonify({
+            'error': error_info['message'],
+            'title': error_info['title'],
+            'action': error_info['action']
+        }), 500
 
 
 # ============== API ENDPOINTS ==============
