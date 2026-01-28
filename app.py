@@ -849,10 +849,13 @@ init_db()
 
 
 if __name__ == '__main__':
+    # Get port from environment variable (for deployment) or use 5001
+    port = int(os.environ.get('PORT', 5001))
+
     print("\n" + "="*60)
     print("  DVCCC Instagram Content Manager")
     print("="*60)
-    print("\n  Open in browser: http://127.0.0.1:5001")
+    print(f"\n  Open in browser: http://127.0.0.1:{port}")
     print("  Background scheduler: ACTIVE")
     print("="*60 + "\n")
 
@@ -860,6 +863,6 @@ if __name__ == '__main__':
     start_web_scheduler()
 
     try:
-        app.run(host='127.0.0.1', debug=True, port=5001, use_reloader=False)
+        app.run(host='0.0.0.0', debug=False, port=port, use_reloader=False)
     finally:
         stop_web_scheduler()

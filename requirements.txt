@@ -12,3 +12,6 @@ flask>=3.0.0
 
 # Image hosting
 cloudinary>=1.36.0
+
+# Production server
+gunicorn>=21.0.0
