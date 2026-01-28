@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Content Calendar</h2>
+        <a href="{{ url_for('create_post') }}" class="btn btn-primary" style="padding: 8px 16px;">+ Create Post</a>
+    </div>
+    <div id="calendar"></div>
+</div>
+
+<!-- Event Detail Modal -->
+<div id="eventModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div id="modalBody">
+            <div class="modal-image">
+                <img id="modalImage" src="" alt="Post image">
+            </div>
+            <div class="modal-info">
+                <span id="modalStatus" class="status-badge"></span>
+                <h3 id="modalTitle"></h3>
+                <p id="modalTime" class="modal-time"></p>
+                <div id="modalActions" class="modal-actions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .card-header h2 {
+        margin: 0;
+    }
+
+    #calendar {
+        max-width: 100%;
+    }
+
+    /* FullCalendar Overrides */
+    .fc {
+        font-family: inherit;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1.3rem;
+    }
+
+    .fc .fc-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .fc .fc-button:hover {
+        background: #5a6fd6;
+    }
+
+    .fc .fc-button-primary:disabled {
+        background: #ccc;
+    }
+
+    .fc-event {
+        cursor: pointer;
+        border: none;
+        padding: 2px 5px;
+        font-size: 0.8rem;
+    }
+
+    .fc-event.status-scheduled {
+        background: #3498db;
+    }
+
+    .fc-event.status-draft {
+        background: #95a5a6;
+    }
+
+    .fc-event.status-posted {
+        background: #27ae60;
+    }
+
+    .fc-event.status-pending_review {
+        background: #f39c12;
+    }
+
+    .fc-daygrid-event-dot {
+        display: none;
+    }
+
+    /* Modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow: auto;
+        position: relative;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+        z-index: 10;
+    }
+
+    .modal-image img {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .modal-info {
+        padding: 20px;
+    }
+
+    .modal-info h3 {
+        margin: 10px 0;
+    }
+
+    .modal-time {
+        color: #667eea;
+        font-weight: 500;
+        margin-bottom: 15px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .modal-actions .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+
+    /* Legend */
+    .calendar-legend {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .legend-dot.scheduled { background: #3498db; }
+    .legend-dot.draft { background: #95a5a6; }
+    .legend-dot.posted { background: #27ae60; }
+    .legend-dot.pending { background: #f39c12; }
+</style>
+
+<!-- FullCalendar CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const events = {{ events | safe }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            events: events.map(e => ({
+                ...e,
+                className: 'status-' + e.status
+            })),
+            eventClick: function(info) {
+                showEventModal(info.event);
+            },
+            eventDidMount: function(info) {
+                // Add tooltip on hover
+                info.el.title = info.event.title;
+            }
+        });
+
+        calendar.render();
+
+        // Add legend
+        const legendHtml = `
+            <div class="calendar-legend">
+                <div class="legend-item"><div class="legend-dot scheduled"></div> Scheduled</div>
+                <div class="legend-item"><div class="legend-dot draft"></div> Draft</div>
+                <div class="legend-item"><div class="legend-dot posted"></div> Posted</div>
+                <div class="legend-item"><div class="legend-dot pending"></div> Pending Review</div>
+            </div>
+        `;
+        calendarEl.insertAdjacentHTML('afterend', legendHtml);
+    });
+
+    function showEventModal(event) {
+        const modal = document.getElementById('eventModal');
+        const props = event.extendedProps;
+
+        document.getElementById('modalImage').src = props.image_url || '';
+        document.getElementById('modalTitle').textContent = event.title;
+        document.getElementById('modalTime').textContent = event.start ? event.start.toLocaleString() : '';
+
+        const statusEl = document.getElementById('modalStatus');
+        statusEl.textContent = props.status;
+        statusEl.className = 'status-badge status-' + props.status;
+
+        // Set actions based on type
+        const actionsEl = document.getElementById('modalActions');
+        if (props.type === 'pending') {
+            actionsEl.innerHTML = `
+                <a href="/pending" class="btn btn-primary">Review Post</a>
+            `;
+        } else {
+            actionsEl.innerHTML = `
+                <a href="/post/${event.id}" class="btn btn-secondary">View Details</a>
+            `;
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('eventModal').style.display = 'none';
+    }
+
+    // Close modal on outside click
+    document.getElementById('eventModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+</script>
+{% endblock %}

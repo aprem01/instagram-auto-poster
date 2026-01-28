@@ -62,16 +62,18 @@
         nav {
             margin-top: 20px;
             display: flex;
-            gap: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         nav a {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: #f0f0f0;
             color: #333;
             text-decoration: none;
             border-radius: 8px;
             transition: all 0.3s;
+            font-size: 0.9rem;
         }
 
         nav a:hover, nav a.active {
@@ -275,9 +277,12 @@
                 </div>
             </div>
             <nav>
-                <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Create Post</a>
+                <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="{{ url_for('create_post') }}" class="{% if request.endpoint == 'create_post' %}active{% endif %}">Create Post</a>
+                <a href="{{ url_for('video_page') }}" class="{% if request.endpoint == 'video_page' %}active{% endif %}">Video</a>
+                <a href="{{ url_for('calendar') }}" class="{% if request.endpoint == 'calendar' %}active{% endif %}">Calendar</a>
                 <a href="{{ url_for('schedules') }}" class="{% if request.endpoint in ['schedules', 'new_schedule', 'view_schedule'] %}active{% endif %}">Schedules</a>
-                <a href="{{ url_for('pending_posts') }}" class="{% if request.endpoint == 'pending_posts' %}active{% endif %}">Pending Review</a>
+                <a href="{{ url_for('pending_posts') }}" class="{% if request.endpoint == 'pending_posts' %}active{% endif %}">Pending</a>
                 <a href="{{ url_for('posts') }}" class="{% if request.endpoint == 'posts' %}active{% endif %}">All Posts</a>
             </nav>
         </header>

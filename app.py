@@ -124,8 +124,61 @@ except:
 
 
 @app.route('/')
-def index():
-    """Homepage - Create new content."""
+def dashboard():
+    """Dashboard - Overview and stats."""
+    conn = get_db()
+    c = conn.cursor()
+
+    # Get stats
+    c.execute('SELECT COUNT(*) as cnt FROM posts')
+    total_posts = c.fetchone()['cnt']
+
+    c.execute('SELECT COUNT(*) as cnt FROM posts WHERE status = "scheduled"')
+    scheduled_posts = c.fetchone()['cnt']
+
+    c.execute('SELECT COUNT(*) as cnt FROM posts WHERE status = "draft"')
+    draft_posts = c.fetchone()['cnt']
+
+    c.execute('SELECT COUNT(*) as cnt FROM pending_posts WHERE status = "pending_review"')
+    pending_count = c.fetchone()['cnt']
+
+    c.execute('SELECT COUNT(*) as cnt FROM schedules WHERE is_active = 1')
+    active_schedules = c.fetchone()['cnt']
+
+    # Posts this week
+    week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    c.execute('SELECT COUNT(*) as cnt FROM posts WHERE created_at >= ?', (week_ago,))
+    posts_this_week = c.fetchone()['cnt']
+
+    # Recent posts
+    c.execute('SELECT * FROM posts ORDER BY created_at DESC LIMIT 5')
+    recent_posts = c.fetchall()
+
+    # Upcoming scheduled posts
+    c.execute('''
+        SELECT * FROM posts
+        WHERE status = 'scheduled' AND scheduled_time >= datetime('now')
+        ORDER BY scheduled_time ASC LIMIT 5
+    ''')
+    upcoming = c.fetchall()
+
+    conn.close()
+
+    return render_template('dashboard.html',
+        total_posts=total_posts,
+        scheduled_posts=scheduled_posts,
+        draft_posts=draft_posts,
+        pending_count=pending_count,
+        active_schedules=active_schedules,
+        posts_this_week=posts_this_week,
+        recent_posts=recent_posts,
+        upcoming=upcoming
+    )
+
+
+@app.route('/create')
+def create_post():
+    """Create new content page."""
     # Suggested themes
     themes = [
         "We see you, we believe you, and we are here for you",
@@ -138,6 +191,42 @@ def index():
         "Building healthy relationships after trauma"
     ]
     return render_template('index.html', themes=themes)
+
+
+@app.route('/calendar')
+def calendar():
+    """Calendar view of scheduled posts."""
+    conn = get_db()
+    c = conn.cursor()
+
+    # Get all scheduled and posted items for calendar
+    c.execute('''
+        SELECT id, theme, caption, image_url, scheduled_time, status, 'post' as type
+        FROM posts
+        WHERE scheduled_time IS NOT NULL AND scheduled_time != ''
+        UNION ALL
+        SELECT id, theme, caption, image_url, scheduled_for as scheduled_time, status, 'pending' as type
+        FROM pending_posts
+        WHERE status = 'pending_review'
+        ORDER BY scheduled_time
+    ''')
+    events = c.fetchall()
+
+    conn.close()
+
+    # Convert to calendar format
+    calendar_events = []
+    for event in events:
+        calendar_events.append({
+            'id': event['id'],
+            'title': event['theme'][:30] + '...' if len(event['theme']) > 30 else event['theme'],
+            'start': event['scheduled_time'],
+            'status': event['status'],
+            'type': event['type'],
+            'image_url': event['image_url']
+        })
+
+    return render_template('calendar.html', events=json.dumps(calendar_events))
 
 
 @app.route('/generate', methods=['POST'])
@@ -600,6 +689,159 @@ def generate_for_schedule(schedule_id):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ============== REGENERATE OPTIONS ==============
+
+@app.route('/regenerate/caption', methods=['POST'])
+def regenerate_caption():
+    """Regenerate only the caption for a theme."""
+    data = request.json
+    theme = data.get('theme', '').strip()
+
+    if not theme:
+        return jsonify({'error': 'Please provide a theme'}), 400
+
+    try:
+        channel_desc = '''We are the Domestic Violence Center of Chester County (DVCCC),
+        providing FREE, CONFIDENTIAL, LIFESAVING services to survivors of domestic violence
+        in Chester County, PA.'''
+
+        result = text_gen.generate_caption(theme, channel_description=channel_desc)
+        return jsonify({
+            'success': True,
+            'caption': result['caption']
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/regenerate/image', methods=['POST'])
+def regenerate_image():
+    """Regenerate only the image for a theme."""
+    data = request.json
+    theme = data.get('theme', '').strip()
+
+    if not theme:
+        return jsonify({'error': 'Please provide a theme'}), 400
+
+    try:
+        prompt = text_gen.generate_image_prompt(theme)
+        img_result = img_gen.generate_image(prompt, size='1024x1024', style='natural')
+        optimized = img_gen.optimize_for_instagram(img_result['image_path'])
+
+        if uploader:
+            image_url = uploader.upload(optimized)
+        else:
+            image_url = img_result['image_url']
+
+        return jsonify({
+            'success': True,
+            'image_url': image_url
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============== VIDEO GENERATION ==============
+
+@app.route('/video')
+def video_page():
+    """Video generation page."""
+    themes = [
+        "We see you, we believe you, and we are here for you",
+        "Free confidential support available in Chester County",
+        "Your journey to healing starts with one step",
+        "You deserve to feel safe - help is available",
+        "Hope lives here at DVCCC"
+    ]
+    return render_template('video.html', themes=themes)
+
+
+@app.route('/generate/video', methods=['POST'])
+def generate_video():
+    """Generate a video using AI."""
+    data = request.json
+    theme = data.get('theme', '').strip()
+    video_type = data.get('video_type', 'slideshow')  # slideshow, animation, or ai_generated
+
+    if not theme:
+        return jsonify({'error': 'Please provide a theme'}), 400
+
+    try:
+        # Generate caption for the video
+        channel_desc = '''We are the Domestic Violence Center of Chester County (DVCCC),
+        providing FREE, CONFIDENTIAL, LIFESAVING services to survivors of domestic violence
+        in Chester County, PA.'''
+
+        result = text_gen.generate_caption(theme, channel_description=channel_desc)
+        caption = result['caption']
+
+        if video_type == 'slideshow':
+            # Generate multiple images for slideshow
+            images = []
+            for i in range(3):  # Generate 3 images
+                prompt = text_gen.generate_image_prompt(theme)
+                img_result = img_gen.generate_image(prompt, size='1024x1024', style='natural')
+                optimized = img_gen.optimize_for_instagram(img_result['image_path'])
+
+                if uploader:
+                    image_url = uploader.upload(optimized)
+                else:
+                    image_url = img_result['image_url']
+                images.append(image_url)
+
+            return jsonify({
+                'success': True,
+                'video_type': 'slideshow',
+                'theme': theme,
+                'caption': caption,
+                'images': images,
+                'message': 'Slideshow images generated! Use these in Instagram Reels or a video editor.'
+            })
+
+        elif video_type == 'ai_generated':
+            # For AI video generation, we'd use a service like Runway, Pika, or similar
+            # For now, return info about the feature
+            return jsonify({
+                'success': True,
+                'video_type': 'ai_generated',
+                'theme': theme,
+                'caption': caption,
+                'message': 'AI video generation requires additional API setup (Runway ML, Pika Labs, etc.)',
+                'prompt': text_gen.generate_image_prompt(theme)
+            })
+
+        else:
+            return jsonify({'error': 'Invalid video type'}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============== API ENDPOINTS ==============
+
+@app.route('/api/calendar/events')
+def api_calendar_events():
+    """API endpoint for calendar events."""
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT id, theme, scheduled_time, status, 'post' as type
+        FROM posts
+        WHERE scheduled_time IS NOT NULL AND scheduled_time != ''
+        UNION ALL
+        SELECT id, theme, scheduled_for as scheduled_time, status, 'pending' as type
+        FROM pending_posts
+        WHERE status = 'pending_review'
+    ''')
+    events = c.fetchall()
+    conn.close()
+
+    return jsonify([dict(e) for e in events])
 
 
 # Initialize database on startup

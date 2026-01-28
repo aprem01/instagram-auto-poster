@@ -3,7 +3,7 @@
 {% block title %}Create Post - DVCCC Content Manager{% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card" id="createCard">
     <h2>Create New Post</h2>
 
     <div class="form-group">
@@ -36,18 +36,52 @@
 <div id="preview" class="card" style="display: none;">
     <h2>Preview Your Post</h2>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-        <div>
-            <img id="previewImage" class="preview-image" src="" alt="Generated image">
-            <p style="color: #666; font-size: 0.85rem; margin-top: 10px;">
-                <a id="imageLink" href="" target="_blank">Open image in new tab</a>
-            </p>
+    <div class="preview-grid">
+        <!-- Instagram Phone Mockup -->
+        <div class="phone-mockup">
+            <div class="phone-frame">
+                <div class="phone-header">
+                    <div class="phone-avatar">DV</div>
+                    <span class="phone-username">dvcccpa</span>
+                </div>
+                <img id="phoneImage" class="phone-image" src="" alt="Post preview">
+                <div class="phone-actions">
+                    <span>&#9825;</span>
+                    <span>&#128172;</span>
+                    <span>&#10148;</span>
+                </div>
+                <div class="phone-caption">
+                    <strong>dvcccpa</strong>
+                    <span id="phoneCaption"></span>
+                </div>
+            </div>
+            <p style="text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px;">Instagram Preview</p>
         </div>
 
-        <div>
+        <!-- Edit Panel -->
+        <div class="edit-panel">
             <div class="form-group">
-                <label>Caption (you can edit)</label>
-                <textarea id="caption"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label>Caption</label>
+                    <span id="charCount" class="char-count">0 / 2,200</span>
+                </div>
+                <textarea id="caption" oninput="updatePreview()"></textarea>
+                <button type="button" onclick="regenerateCaption()" class="btn btn-secondary regen-btn">
+                    &#x21bb; Regenerate Caption
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label>Image</label>
+                <div class="image-preview-small">
+                    <img id="previewImage" src="" alt="Generated image">
+                    <div class="image-actions">
+                        <a id="imageLink" href="" target="_blank" class="btn btn-secondary">Open Full Size</a>
+                        <button type="button" onclick="regenerateImage()" class="btn btn-secondary">
+                            &#x21bb; New Image
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -55,12 +89,17 @@
                 <input type="datetime-local" id="scheduleTime">
             </div>
 
-            <div style="display: flex; gap: 10px;">
+            <div class="action-buttons">
                 <button onclick="savePost('draft')" class="btn btn-secondary">Save as Draft</button>
                 <button onclick="savePost('schedule')" class="btn btn-primary">Save & Schedule</button>
             </div>
         </div>
     </div>
+</div>
+
+<div id="regenLoading" class="card" style="display: none;">
+    <div class="spinner"></div>
+    <p id="regenMessage">Regenerating...</p>
 </div>
 
 <div id="success" class="card" style="display: none;">
@@ -73,6 +112,138 @@
         <button onclick="resetForm()" class="btn btn-secondary">Create Another</button>
     </div>
 </div>
+
+<style>
+    .preview-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 30px;
+        align-items: start;
+    }
+
+    @media (max-width: 900px) {
+        .preview-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Phone Mockup */
+    .phone-mockup {
+        position: sticky;
+        top: 20px;
+    }
+
+    .phone-frame {
+        background: white;
+        border: 3px solid #333;
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .phone-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .phone-avatar {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .phone-username {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .phone-image {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+    }
+
+    .phone-actions {
+        padding: 12px 15px;
+        display: flex;
+        gap: 15px;
+        font-size: 1.4rem;
+    }
+
+    .phone-caption {
+        padding: 0 15px 15px;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        max-height: 100px;
+        overflow: hidden;
+    }
+
+    .phone-caption strong {
+        margin-right: 5px;
+    }
+
+    /* Edit Panel */
+    .edit-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .char-count {
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .char-count.warning {
+        color: #e74c3c;
+    }
+
+    .regen-btn {
+        margin-top: 10px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .image-preview-small {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .image-preview-small img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .image-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .image-actions .btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -83,6 +254,16 @@
         document.getElementById('theme').value = theme;
     }
 
+    function updatePreview() {
+        const caption = document.getElementById('caption').value;
+        document.getElementById('phoneCaption').textContent = caption.substring(0, 150) + (caption.length > 150 ? '...' : '');
+
+        // Update character count
+        const charCount = document.getElementById('charCount');
+        charCount.textContent = `${caption.length} / 2,200`;
+        charCount.classList.toggle('warning', caption.length > 2200);
+    }
+
     document.getElementById('generateForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -90,7 +271,7 @@
         if (!theme) return;
 
         // Show loading
-        document.querySelector('.card').style.display = 'none';
+        document.getElementById('createCard').style.display = 'none';
         document.getElementById('loading').style.display = 'block';
         document.getElementById('preview').style.display = 'none';
         document.getElementById('success').style.display = 'none';
@@ -108,7 +289,7 @@
 
             if (data.error) {
                 alert('Error: ' + data.error);
-                document.querySelector('.card').style.display = 'block';
+                document.getElementById('createCard').style.display = 'block';
                 document.getElementById('loading').style.display = 'none';
                 return;
             }
@@ -116,18 +297,78 @@
             // Show preview
             currentData = data;
             document.getElementById('previewImage').src = data.image_url;
+            document.getElementById('phoneImage').src = data.image_url;
             document.getElementById('imageLink').href = data.image_url;
             document.getElementById('caption').value = data.caption;
+            updatePreview();
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('preview').style.display = 'block';
 
         } catch (error) {
             alert('Error generating content: ' + error.message);
-            document.querySelector('.card').style.display = 'block';
+            document.getElementById('createCard').style.display = 'block';
             document.getElementById('loading').style.display = 'none';
         }
     });
+
+    async function regenerateCaption() {
+        document.getElementById('regenMessage').textContent = 'Regenerating caption...';
+        document.getElementById('regenLoading').style.display = 'block';
+        document.getElementById('preview').style.display = 'none';
+
+        try {
+            const response = await fetch('/regenerate/caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: currentData.theme })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else {
+                document.getElementById('caption').value = data.caption;
+                updatePreview();
+            }
+        } catch (error) {
+            alert('Error regenerating caption: ' + error.message);
+        }
+
+        document.getElementById('regenLoading').style.display = 'none';
+        document.getElementById('preview').style.display = 'block';
+    }
+
+    async function regenerateImage() {
+        document.getElementById('regenMessage').textContent = 'Generating new image...';
+        document.getElementById('regenLoading').style.display = 'block';
+        document.getElementById('preview').style.display = 'none';
+
+        try {
+            const response = await fetch('/regenerate/image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: currentData.theme })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else {
+                currentData.image_url = data.image_url;
+                document.getElementById('previewImage').src = data.image_url;
+                document.getElementById('phoneImage').src = data.image_url;
+                document.getElementById('imageLink').href = data.image_url;
+            }
+        } catch (error) {
+            alert('Error regenerating image: ' + error.message);
+        }
+
+        document.getElementById('regenLoading').style.display = 'none';
+        document.getElementById('preview').style.display = 'block';
+    }
 
     async function savePost(action) {
         const caption = document.getElementById('caption').value;
@@ -169,7 +410,7 @@
         document.getElementById('scheduleTime').value = '';
         currentData = {};
 
-        document.querySelector('.card').style.display = 'block';
+        document.getElementById('createCard').style.display = 'block';
         document.getElementById('success').style.display = 'none';
     }
 </script>
