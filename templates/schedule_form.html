@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if schedule else 'New' }} Schedule - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{{ 'Edit' if schedule else 'Create New' }} Schedule</h2>
+
+    <form id="scheduleForm">
+        <div class="form-group">
+            <label for="name">Schedule Name</label>
+            <input type="text" id="name" name="name" value="{{ schedule['name'] if schedule else '' }}" placeholder="e.g., Daily Morning Posts" required>
+        </div>
+
+        <div class="form-group">
+            <label>Theme Mode</label>
+            <div class="mode-options">
+                <label class="mode-option">
+                    <input type="radio" name="theme_mode" value="same" {% if not schedule or schedule['theme_mode'] == 'same' %}checked{% endif %}>
+                    <span class="mode-card">
+                        <strong>Same Theme</strong>
+                        <small>Use the same theme for every post</small>
+                    </span>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="theme_mode" value="different" {% if schedule and schedule['theme_mode'] == 'different' %}checked{% endif %}>
+                    <span class="mode-card">
+                        <strong>Rotate Themes</strong>
+                        <small>Cycle through themes in order</small>
+                    </span>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="theme_mode" value="mixed" {% if schedule and schedule['theme_mode'] == 'mixed' %}checked{% endif %}>
+                    <span class="mode-card">
+                        <strong>Random/Mixed</strong>
+                        <small>Randomly pick from themes</small>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Auto-Post or Review First?</label>
+            <div class="mode-options">
+                <label class="mode-option">
+                    <input type="radio" name="auto_post" value="0" {% if not schedule or not schedule['auto_post'] %}checked{% endif %}>
+                    <span class="mode-card">
+                        <strong>Review First</strong>
+                        <small>Posts go to Pending Review queue</small>
+                    </span>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="auto_post" value="1" {% if schedule and schedule['auto_post'] %}checked{% endif %}>
+                    <span class="mode-card">
+                        <strong>Auto-Post</strong>
+                        <small>Automatically post (requires Instagram setup)</small>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Post Times</label>
+            <p style="color: #666; font-size: 0.85rem; margin-bottom: 10px;">Add times when posts should be generated</p>
+            <div id="timesContainer">
+                {% if times %}
+                    {% for time in times %}
+                    <div class="time-row">
+                        <input type="time" class="time-input" value="{{ time['time_of_day'] }}">
+                        <div class="days-checkboxes">
+                            {% set days_list = time['days_of_week'].split(',') %}
+                            <label><input type="checkbox" value="0" {% if '0' in days_list %}checked{% endif %}> Sun</label>
+                            <label><input type="checkbox" value="1" {% if '1' in days_list %}checked{% endif %}> Mon</label>
+                            <label><input type="checkbox" value="2" {% if '2' in days_list %}checked{% endif %}> Tue</label>
+                            <label><input type="checkbox" value="3" {% if '3' in days_list %}checked{% endif %}> Wed</label>
+                            <label><input type="checkbox" value="4" {% if '4' in days_list %}checked{% endif %}> Thu</label>
+                            <label><input type="checkbox" value="5" {% if '5' in days_list %}checked{% endif %}> Fri</label>
+                            <label><input type="checkbox" value="6" {% if '6' in days_list %}checked{% endif %}> Sat</label>
+                        </div>
+                        <button type="button" class="btn btn-danger remove-time" onclick="removeTime(this)">X</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="time-row">
+                        <input type="time" class="time-input" value="09:00">
+                        <div class="days-checkboxes">
+                            <label><input type="checkbox" value="0" checked> Sun</label>
+                            <label><input type="checkbox" value="1" checked> Mon</label>
+                            <label><input type="checkbox" value="2" checked> Tue</label>
+                            <label><input type="checkbox" value="3" checked> Wed</label>
+                            <label><input type="checkbox" value="4" checked> Thu</label>
+                            <label><input type="checkbox" value="5" checked> Fri</label>
+                            <label><input type="checkbox" value="6" checked> Sat</label>
+                        </div>
+                        <button type="button" class="btn btn-danger remove-time" onclick="removeTime(this)">X</button>
+                    </div>
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="addTime()" style="margin-top: 10px;">+ Add Time</button>
+        </div>
+
+        <div class="form-group">
+            <label>Themes</label>
+            <p style="color: #666; font-size: 0.85rem; margin-bottom: 10px;">Add themes for your posts. Click suggested themes or type your own.</p>
+
+            <div class="theme-chips">
+                {% for theme in suggested_themes %}
+                <span class="theme-chip" onclick="addTheme('{{ theme }}')">{{ theme }}</span>
+                {% endfor %}
+            </div>
+
+            <div id="themesContainer">
+                {% if themes %}
+                    {% for theme in themes %}
+                    <div class="theme-row">
+                        <input type="text" class="theme-input" value="{{ theme['theme'] }}" placeholder="Enter a theme...">
+                        <button type="button" class="btn btn-danger" onclick="removeTheme(this)">X</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="theme-row">
+                        <input type="text" class="theme-input" placeholder="Enter a theme...">
+                        <button type="button" class="btn btn-danger" onclick="removeTheme(this)">X</button>
+                    </div>
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="addThemeRow()" style="margin-top: 10px;">+ Add Theme</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button type="submit" class="btn btn-primary">{{ 'Update' if schedule else 'Create' }} Schedule</button>
+            <a href="{{ url_for('schedules') }}" class="btn btn-secondary">Cancel</a>
+            {% if schedule %}
+            <form action="{{ url_for('delete_schedule', schedule_id=schedule['id']) }}" method="POST" style="margin-left: auto;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this schedule?');">Delete Schedule</button>
+            </form>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<style>
+    .mode-options {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .mode-option {
+        cursor: pointer;
+    }
+
+    .mode-option input {
+        display: none;
+    }
+
+    .mode-card {
+        display: block;
+        padding: 15px 20px;
+        background: #f5f5f5;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+
+    .mode-option input:checked + .mode-card {
+        background: #e8f4fc;
+        border-color: #667eea;
+    }
+
+    .mode-card strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .mode-card small {
+        color: #666;
+    }
+
+    .time-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 10px;
+    }
+
+    .time-input {
+        width: 130px;
+    }
+
+    .days-checkboxes {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .days-checkboxes label {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        cursor: pointer;
+    }
+
+    .days-checkboxes input {
+        width: auto;
+    }
+
+    .remove-time {
+        padding: 8px 12px;
+    }
+
+    .theme-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .theme-input {
+        flex: 1;
+    }
+
+    .theme-row .btn {
+        padding: 8px 12px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addTime() {
+        const container = document.getElementById('timesContainer');
+        const row = document.createElement('div');
+        row.className = 'time-row';
+        row.innerHTML = `
+            <input type="time" class="time-input" value="12:00">
+            <div class="days-checkboxes">
+                <label><input type="checkbox" value="0" checked> Sun</label>
+                <label><input type="checkbox" value="1" checked> Mon</label>
+                <label><input type="checkbox" value="2" checked> Tue</label>
+                <label><input type="checkbox" value="3" checked> Wed</label>
+                <label><input type="checkbox" value="4" checked> Thu</label>
+                <label><input type="checkbox" value="5" checked> Fri</label>
+                <label><input type="checkbox" value="6" checked> Sat</label>
+            </div>
+            <button type="button" class="btn btn-danger remove-time" onclick="removeTime(this)">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function removeTime(btn) {
+        const container = document.getElementById('timesContainer');
+        if (container.children.length > 1) {
+            btn.closest('.time-row').remove();
+        } else {
+            alert('You need at least one posting time.');
+        }
+    }
+
+    function addThemeRow() {
+        const container = document.getElementById('themesContainer');
+        const row = document.createElement('div');
+        row.className = 'theme-row';
+        row.innerHTML = `
+            <input type="text" class="theme-input" placeholder="Enter a theme...">
+            <button type="button" class="btn btn-danger" onclick="removeTheme(this)">X</button>
+        `;
+        container.appendChild(row);
+        row.querySelector('input').focus();
+    }
+
+    function removeTheme(btn) {
+        const container = document.getElementById('themesContainer');
+        if (container.children.length > 1) {
+            btn.closest('.theme-row').remove();
+        } else {
+            btn.closest('.theme-row').querySelector('input').value = '';
+        }
+    }
+
+    function addTheme(theme) {
+        const container = document.getElementById('themesContainer');
+        const emptyInput = container.querySelector('.theme-input[value=""], .theme-input:not([value])');
+
+        if (emptyInput && emptyInput.value === '') {
+            emptyInput.value = theme;
+        } else {
+            addThemeRow();
+            container.lastChild.querySelector('input').value = theme;
+        }
+    }
+
+    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const themeMode = document.querySelector('input[name="theme_mode"]:checked').value;
+        const autoPost = document.querySelector('input[name="auto_post"]:checked').value === '1';
+
+        // Collect times
+        const times = [];
+        document.querySelectorAll('.time-row').forEach(row => {
+            const time = row.querySelector('.time-input').value;
+            const days = [];
+            row.querySelectorAll('.days-checkboxes input:checked').forEach(cb => {
+                days.push(cb.value);
+            });
+            if (time && days.length > 0) {
+                times.push({ time, days: days.join(',') });
+            }
+        });
+
+        // Collect themes
+        const themes = [];
+        document.querySelectorAll('.theme-input').forEach(input => {
+            if (input.value.trim()) {
+                themes.push(input.value.trim());
+            }
+        });
+
+        if (times.length === 0) {
+            alert('Please add at least one posting time.');
+            return;
+        }
+
+        if (themes.length === 0) {
+            alert('Please add at least one theme.');
+            return;
+        }
+
+        const data = {
+            name,
+            theme_mode: themeMode,
+            auto_post: autoPost,
+            times,
+            themes
+        };
+
+        try {
+            {% if schedule %}
+            const url = '/schedule/{{ schedule["id"] }}/update';
+            {% else %}
+            const url = '/schedule/create';
+            {% endif %}
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = '{{ url_for("schedules") }}';
+            } else {
+                alert('Error: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error saving schedule: ' + error.message);
+        }
+    });
+</script>
+{% endblock %}

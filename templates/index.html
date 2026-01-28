@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Create New Post</h2>
+
+    <div class="form-group">
+        <label>Quick Theme Ideas (click to use)</label>
+        <div class="theme-chips">
+            {% for theme in themes %}
+            <span class="theme-chip" onclick="selectTheme('{{ theme }}')">{{ theme }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <form id="generateForm">
+        <div class="form-group">
+            <label for="theme">Your Theme / Topic</label>
+            <input type="text" id="theme" name="theme" placeholder="Enter a theme for today's post..." required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <span>Generate Content</span>
+        </button>
+    </form>
+</div>
+
+<div id="loading" class="card loading">
+    <div class="spinner"></div>
+    <p>Generating your personalized content...</p>
+    <p style="color: #666; font-size: 0.9rem; margin-top: 10px;">This may take 30-60 seconds</p>
+</div>
+
+<div id="preview" class="card" style="display: none;">
+    <h2>Preview Your Post</h2>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div>
+            <img id="previewImage" class="preview-image" src="" alt="Generated image">
+            <p style="color: #666; font-size: 0.85rem; margin-top: 10px;">
+                <a id="imageLink" href="" target="_blank">Open image in new tab</a>
+            </p>
+        </div>
+
+        <div>
+            <div class="form-group">
+                <label>Caption (you can edit)</label>
+                <textarea id="caption"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="scheduleTime">Schedule For (optional)</label>
+                <input type="datetime-local" id="scheduleTime">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="savePost('draft')" class="btn btn-secondary">Save as Draft</button>
+                <button onclick="savePost('schedule')" class="btn btn-primary">Save & Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="success" class="card" style="display: none;">
+    <div class="success-message">
+        <strong>Post saved successfully!</strong>
+    </div>
+    <p id="successMessage"></p>
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <a href="{{ url_for('posts') }}" class="btn btn-primary">View All Posts</a>
+        <button onclick="resetForm()" class="btn btn-secondary">Create Another</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentData = {};
+
+    function selectTheme(theme) {
+        document.getElementById('theme').value = theme;
+    }
+
+    document.getElementById('generateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const theme = document.getElementById('theme').value;
+        if (!theme) return;
+
+        // Show loading
+        document.querySelector('.card').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('preview').style.display = 'none';
+        document.getElementById('success').style.display = 'none';
+
+        try {
+            const formData = new FormData();
+            formData.append('theme', theme);
+
+            const response = await fetch('/generate', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                document.querySelector('.card').style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            // Show preview
+            currentData = data;
+            document.getElementById('previewImage').src = data.image_url;
+            document.getElementById('imageLink').href = data.image_url;
+            document.getElementById('caption').value = data.caption;
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('preview').style.display = 'block';
+
+        } catch (error) {
+            alert('Error generating content: ' + error.message);
+            document.querySelector('.card').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+    });
+
+    async function savePost(action) {
+        const caption = document.getElementById('caption').value;
+        const scheduleTime = document.getElementById('scheduleTime').value;
+
+        const postData = {
+            theme: currentData.theme,
+            caption: caption,
+            image_url: currentData.image_url,
+            scheduled_time: action === 'schedule' ? scheduleTime : ''
+        };
+
+        try {
+            const response = await fetch('/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(postData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('preview').style.display = 'none';
+                document.getElementById('success').style.display = 'block';
+
+                const statusText = result.status === 'scheduled'
+                    ? 'Your post has been scheduled!'
+                    : 'Your post has been saved as a draft.';
+                document.getElementById('successMessage').textContent = statusText;
+            }
+        } catch (error) {
+            alert('Error saving post: ' + error.message);
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('theme').value = '';
+        document.getElementById('caption').value = '';
+        document.getElementById('scheduleTime').value = '';
+        currentData = {};
+
+        document.querySelector('.card').style.display = 'block';
+        document.getElementById('success').style.display = 'none';
+    }
+</script>
+{% endblock %}

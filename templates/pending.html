@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Review - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Posts Pending Review</h2>
+    <p style="color: #666; margin-bottom: 20px;">Review and approve posts before they go live.</p>
+
+    {% if posts %}
+    <div class="pending-list">
+        {% for post in posts %}
+        <div class="pending-card" id="pending-{{ post['id'] }}">
+            <div class="pending-image">
+                <img src="{{ post['image_url'] }}" alt="Generated image">
+            </div>
+            <div class="pending-content">
+                <div class="pending-header">
+                    <span class="status-badge status-scheduled">{{ post['status'] }}</span>
+                    {% if post['schedule_name'] %}
+                    <span class="schedule-tag">{{ post['schedule_name'] }}</span>
+                    {% endif %}
+                </div>
+
+                <h3>{{ post['theme'][:60] }}{% if post['theme']|length > 60 %}...{% endif %}</h3>
+
+                <div class="pending-meta">
+                    <span>Scheduled for: <strong>{{ post['scheduled_for'] }}</strong></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Caption (editable)</label>
+                    <textarea id="caption-{{ post['id'] }}" class="pending-caption">{{ post['caption'] }}</textarea>
+                </div>
+
+                <div class="pending-actions">
+                    <button onclick="approvePost({{ post['id'] }})" class="btn btn-primary">Approve</button>
+                    <button onclick="saveCaption({{ post['id'] }})" class="btn btn-secondary">Save Changes</button>
+                    <button onclick="rejectPost({{ post['id'] }})" class="btn btn-danger">Reject</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px; color: #666;">
+        <p style="font-size: 3rem; margin-bottom: 20px;">&#10003;</p>
+        <p>No posts pending review. All caught up!</p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">Posts from schedules with "Review First" enabled will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .pending-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .pending-card {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 25px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+
+    .pending-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    .pending-image img {
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    .pending-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pending-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .schedule-tag {
+        background: #667eea;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+    }
+
+    .pending-content h3 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
+
+    .pending-meta {
+        color: #666;
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+
+    .pending-caption {
+        flex: 1;
+        min-height: 120px;
+        background: white;
+    }
+
+    .pending-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .pending-actions .btn {
+        padding: 10px 20px;
+    }
+
+    @media (max-width: 768px) {
+        .pending-card {
+            grid-template-columns: 1fr;
+        }
+
+        .pending-image img {
+            max-height: 200px;
+            object-fit: cover;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function approvePost(postId) {
+        if (!confirm('Approve this post for scheduling?')) return;
+
+        try {
+            // Save any caption changes first
+            const caption = document.getElementById(`caption-${postId}`).value;
+            await fetch(`/pending/${postId}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ caption })
+            });
+
+            // Then approve
+            const response = await fetch(`/pending/${postId}/approve`, { method: 'POST' });
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById(`pending-${postId}`).style.display = 'none';
+                showMessage('Post approved and scheduled!', 'success');
+            }
+        } catch (error) {
+            alert('Error approving post: ' + error.message);
+        }
+    }
+
+    async function saveCaption(postId) {
+        const caption = document.getElementById(`caption-${postId}`).value;
+
+        try {
+            const response = await fetch(`/pending/${postId}/edit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ caption })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showMessage('Caption saved!', 'success');
+            }
+        } catch (error) {
+            alert('Error saving caption: ' + error.message);
+        }
+    }
+
+    async function rejectPost(postId) {
+        if (!confirm('Reject this post? It will not be published.')) return;
+
+        try {
+            const response = await fetch(`/pending/${postId}/reject`, { method: 'POST' });
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById(`pending-${postId}`).style.display = 'none';
+                showMessage('Post rejected.', 'info');
+            }
+        } catch (error) {
+            alert('Error rejecting post: ' + error.message);
+        }
+    }
+
+    function showMessage(text, type) {
+        const msg = document.createElement('div');
+        msg.className = 'toast-message';
+        msg.textContent = text;
+        msg.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: ${type === 'success' ? '#27ae60' : '#3498db'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        `;
+        document.body.appendChild(msg);
+
+        setTimeout(() => {
+            msg.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

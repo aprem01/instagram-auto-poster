@@ -1,0 +1,68 @@
+# Instagram Auto-Poster Configuration
+
+channel:
+  # Your channel's niche/topic
+  niche: "domestic_violence_awareness"
+
+  # Content style: compassionate, supportive, empowering
+  style: "warm, personal, and empowering"
+
+  # Number of hashtags to include in posts
+  hashtag_count: 10
+
+  # Organization details for personalized content
+  organization:
+    name: "Domestic Violence Center of Chester County"
+    short_name: "DVCCC"
+    tagline: "Supporting Survivors of Domestic Violence in Chester County"
+    location: "Chester County, Pennsylvania"
+    website: "dvcccpa.org"
+    services: "free, confidential, lifesaving services including compassionate support, counseling, and resources"
+    mission: "Helping survivors reclaim their life and happiness"
+
+  # Brief description of your channel for AI context
+  description: "We are the Domestic Violence Center of Chester County (DVCCC), providing FREE, CONFIDENTIAL, LIFESAVING services to survivors of domestic violence in Chester County, PA. We offer compassionate support, counseling, and resources to help you reclaim your life and happiness. You are not alone - we are here for you. Visit dvcccpa.org or reach out today."
+
+schedule:
+  # How often to post (in hours)
+  interval_hours: 1
+
+  # Timezone for scheduling
+  timezone: "UTC"
+
+trends:
+  # Sources for trending topics
+  sources:
+    - google_trends
+
+  # Geographic region for trends (US, GB, IN, etc.)
+  geo: "US"
+
+  # Language for trends
+  language: "en-US"
+
+content:
+  # Image settings
+  image:
+    # Size: 1024x1024 for square posts
+    width: 1024
+    height: 1024
+    # DALL-E quality: standard or hd
+    quality: "standard"
+    # Style: vivid or natural (natural = more realistic/photographic)
+    style: "natural"
+
+  # Caption settings
+  caption:
+    # Maximum length for captions
+    max_length: 2200
+    # Include emojis in captions
+    include_emojis: true
+    # Include call-to-action
+    include_cta: true
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  # Log file path
+  file: "logs/app.log"

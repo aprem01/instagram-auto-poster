@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}All Posts - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>All Posts</h2>
+
+    {% if posts %}
+    <div class="grid">
+        {% for post in posts %}
+        <div class="post-card">
+            <img src="{{ post['image_url'] }}" alt="Post image">
+            <div class="post-card-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span class="status-badge status-{{ post['status'] }}">{{ post['status'] }}</span>
+                    <small style="color: #999;">{{ post['created_at'][:16] }}</small>
+                </div>
+                <h3>{{ post['theme'][:50] }}{% if post['theme']|length > 50 %}...{% endif %}</h3>
+                <p>{{ post['caption'][:100] }}{% if post['caption']|length > 100 %}...{% endif %}</p>
+
+                {% if post['scheduled_time'] %}
+                <p style="margin-top: 10px; color: #3498db; font-size: 0.85rem;">
+                    Scheduled: {{ post['scheduled_time'] }}
+                </p>
+                {% endif %}
+
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <a href="{{ url_for('view_post', post_id=post['id']) }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">View</a>
+                    <button onclick="copyCaption({{ post['id'] }})" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">Copy</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px; color: #666;">
+        <p style="font-size: 3rem; margin-bottom: 20px;">📝</p>
+        <p>No posts yet. Create your first one!</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top: 20px;">Create Post</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function copyCaption(postId) {
+        try {
+            const response = await fetch(`/post/${postId}/copy`);
+            const data = await response.json();
+
+            // Copy caption to clipboard
+            await navigator.clipboard.writeText(data.caption);
+            alert('Caption copied to clipboard!\\n\\nImage URL: ' + data.image_url);
+        } catch (error) {
+            alert('Error copying: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}
