@@ -124,20 +124,35 @@ class ImageGenerator:
         Returns:
             Path to saved image
         """
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-
         # Generate filename if not provided
         if not filename:
             import uuid
             filename = f"generated_{uuid.uuid4().hex[:8]}"
 
-        # Save as PNG
-        image_path = os.path.join(self.output_dir, f"{filename}.png")
+        # Save as JPEG directly (less memory than PNG compression)
+        image_path = os.path.join(self.output_dir, f"{filename}.jpg")
 
-        # Open with PIL to ensure valid image and save
-        image = Image.open(BytesIO(response.content))
-        image.save(image_path, "PNG")
+        # Stream download to reduce memory usage
+        with requests.get(url, timeout=60, stream=True) as response:
+            response.raise_for_status()
+
+            # Download in chunks to temp file
+            temp_path = image_path + ".tmp"
+            with open(temp_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+        # Verify and convert to JPEG (more memory efficient than PNG)
+        try:
+            image = Image.open(temp_path)
+            if image.mode in ("RGBA", "P"):
+                image = image.convert("RGB")
+            image.save(image_path, "JPEG", quality=95)
+            image.close()
+        finally:
+            # Clean up temp file
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
         return image_path
 
