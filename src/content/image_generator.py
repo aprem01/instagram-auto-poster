@@ -37,13 +37,15 @@ class ImageGenerator:
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
 
-    # Fallback prompts designed to look authentic and NOT AI-generated
+    # Fallback prompts - varied themes for DVCCC (not always purple ribbons)
     SAFE_FALLBACK_PROMPTS = [
-        "Candid photo of a purple awareness ribbon on a weathered wooden table next to a lit candle, natural window light with slight shadows, shot on iPhone, authentic home setting, slight film grain, warm natural tones, documentary style, not AI generated",
-        "Authentic photograph of two hands gently holding in supportive gesture, natural daylight from nearby window, no faces, real skin texture with natural imperfections, candid moment, slight warmth, not studio lighting, documentary photography",
-        "Real photograph of purple lavender flowers in a backyard garden, morning light, shot on smartphone, natural colors not oversaturated, slight bokeh, authentic garden setting with real soil and leaves, candid nature photo",
-        "Candid photo of a single lit candle with purple flowers on a wooden coffee table, cozy living room ambient light, authentic home decor visible, natural shadows, warm atmosphere, shot on mirrorless camera, not AI",
-        "Documentary style photo of a butterfly on purple wildflowers, natural outdoor lighting, real meadow setting, authentic nature photography, organic composition, candid wildlife moment, slight motion, not artificial"
+        "Candid photograph of golden sunrise breaking through clouds over a peaceful meadow, natural morning light, hope and new beginnings, shot on iPhone, authentic landscape, slight film grain, warm tones, documentary style",
+        "Authentic photo of two hands gently holding in supportive gesture, natural daylight from window, no faces, real skin texture, candid moment of connection, warm supportive atmosphere, documentary photography",
+        "Real photograph of a single oak tree standing strong in a Chester County field, morning golden hour light, symbol of strength and resilience, shot on smartphone, natural colors, slight bokeh, authentic nature",
+        "Candid photo of birds taking flight at sunrise, silhouetted against warm sky, freedom and hope, natural outdoor lighting, documentary wildlife photography, slight motion blur, authentic moment",
+        "Peaceful photograph of a winding forest path with dappled sunlight, journey forward, natural woodland setting, shot on mirrorless camera, soft morning light, authentic nature scene, warm earth tones",
+        "Cozy candid photo of warm cup of tea on a windowsill with rain outside, comfort and healing, natural ambient light, authentic home setting, soft focus background, warm inviting atmosphere",
+        "Documentary style photo of spring flowers pushing through soil, new growth and resilience, natural garden setting, morning dew, authentic macro photography, soft natural lighting"
     ]
 
     def generate_image(
