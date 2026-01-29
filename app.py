@@ -7,20 +7,44 @@ import os
 import sys
 import json
 import sqlite3
-import threading
-import time
+import logging
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from dotenv import load_dotenv
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.content import TextGenerator, ImageGenerator
-from src.utils.image_hosting import get_uploader
-from src.scheduler import start_web_scheduler, stop_web_scheduler
-
 load_dotenv()
+
+# Import components with error handling
+TextGenerator = None
+ImageGenerator = None
+get_uploader = None
+start_web_scheduler = None
+stop_web_scheduler = None
+
+try:
+    from src.content import TextGenerator, ImageGenerator
+    logger.info("Content generators imported successfully")
+except ImportError as e:
+    logger.warning(f"Could not import content generators: {e}")
+
+try:
+    from src.utils.image_hosting import get_uploader
+    logger.info("Image uploader imported successfully")
+except ImportError as e:
+    logger.warning(f"Could not import image uploader: {e}")
+
+try:
+    from src.scheduler import start_web_scheduler, stop_web_scheduler
+    logger.info("Scheduler imported successfully")
+except ImportError as e:
+    logger.warning(f"Could not import scheduler: {e}")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -173,28 +197,47 @@ img_gen = None
 uploader = None
 initialization_errors = []
 
+logger.info("Starting component initialization...")
+
 try:
-    if os.getenv('OPENAI_API_KEY'):
+    if TextGenerator and ImageGenerator and os.getenv('OPENAI_API_KEY'):
         text_gen = TextGenerator(
             niche='domestic violence awareness',
             style='warm, personal, and empowering',
             hashtag_count=10
         )
         img_gen = ImageGenerator(output_dir='generated_images')
-    else:
+        logger.info("AI generators initialized successfully")
+    elif not os.getenv('OPENAI_API_KEY'):
         initialization_errors.append('OPENAI_API_KEY not configured - content generation disabled')
+        logger.warning('OPENAI_API_KEY not configured')
+    else:
+        initialization_errors.append('Content generator modules not available')
+        logger.warning('Content generator modules not available')
 except Exception as e:
     initialization_errors.append(f'Failed to initialize AI generators: {str(e)}')
+    logger.error(f'Failed to initialize AI generators: {e}')
 
 try:
-    uploader = get_uploader()
+    if get_uploader:
+        uploader = get_uploader()
+        logger.info("Image uploader initialized successfully")
 except Exception as e:
     initialization_errors.append(f'Image hosting not configured: {str(e)}')
+    logger.warning(f'Image hosting not configured: {e}')
+
+logger.info(f"Initialization complete. Errors: {initialization_errors if initialization_errors else 'None'}")
+
+
+@app.route('/health')
+def health():
+    """Simple health check for load balancers."""
+    return jsonify({'status': 'ok', 'message': 'DVCCC Instagram Manager is running'})
 
 
 @app.route('/status')
 def status():
-    """Health check and configuration status."""
+    """Detailed configuration status."""
     api_issues = check_api_keys()
     return jsonify({
         'status': 'ok' if not api_issues else 'degraded',
@@ -998,7 +1041,13 @@ def api_calendar_events():
 
 
 # Initialize database on startup
-init_db()
+try:
+    init_db()
+    logger.info("Database initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize database: {e}")
+
+logger.info("DVCCC Instagram Content Manager - Ready")
 
 
 if __name__ == '__main__':
@@ -1009,13 +1058,15 @@ if __name__ == '__main__':
     print("  DVCCC Instagram Content Manager")
     print("="*60)
     print(f"\n  Open in browser: http://127.0.0.1:{port}")
-    print("  Background scheduler: ACTIVE")
+    print("  Background scheduler: " + ("ACTIVE" if start_web_scheduler else "DISABLED"))
     print("="*60 + "\n")
 
-    # Start background scheduler
-    start_web_scheduler()
+    # Start background scheduler if available
+    if start_web_scheduler:
+        start_web_scheduler()
 
     try:
         app.run(host='0.0.0.0', debug=False, port=port, use_reloader=False)
     finally:
-        stop_web_scheduler()
+        if stop_web_scheduler:
+            stop_web_scheduler()
