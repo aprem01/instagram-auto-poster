@@ -1,7 +1,11 @@
 import os
 from typing import Dict, Optional
+import httpx
 from openai import OpenAI
 from src.utils.logger import setup_logger
+
+# Longer timeout for cloud deployments (Render free tier can be slow)
+OPENAI_TIMEOUT = httpx.Timeout(120.0, connect=30.0)  # 120 sec total, 30 sec connect
 
 
 class TextGenerator:
@@ -27,7 +31,7 @@ class TextGenerator:
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
 
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(api_key=self.api_key, timeout=OPENAI_TIMEOUT)
         self.niche = niche
         self.style = style
         self.hashtag_count = hashtag_count

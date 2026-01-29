@@ -1,10 +1,14 @@
 import os
 import requests
 from typing import Optional
+import httpx
 from openai import OpenAI
 from PIL import Image
 from io import BytesIO
 from src.utils.logger import setup_logger
+
+# Longer timeout for DALL-E (image generation takes longer)
+OPENAI_TIMEOUT = httpx.Timeout(180.0, connect=30.0)  # 180 sec total, 30 sec connect
 
 
 class ImageGenerator:
@@ -26,7 +30,7 @@ class ImageGenerator:
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
 
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(api_key=self.api_key, timeout=OPENAI_TIMEOUT)
         self.output_dir = output_dir
         self.logger = setup_logger("ImageGenerator")
 
