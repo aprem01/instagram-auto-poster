@@ -1,0 +1,19 @@
+name = "guidedog"
+main = "guidedog-worker.js"
+compatibility_date = "2024-01-01"
+
+# Your Cloudflare account settings
+# account_id = "your-account-id"
+
+# Custom domain (optional)
+# routes = [
+#   { pattern = "guidedog.kpremks.workers.dev", custom_domain = true }
+# ]
+
+# Environment variables (non-secret)
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via: wrangler secret put OPENAI_API_KEY)
+# - OPENAI_API_KEY
+# - ANTHROPIC_API_KEY
