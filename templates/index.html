@@ -95,6 +95,80 @@
             </div>
         </div>
     </div>
+
+    <!-- REACH Amplify - Discovery & SEO Insights -->
+    <div id="reachAmplify" class="reach-amplify-panel" style="display: none;">
+        <div class="reach-header">
+            <h3>📡 REACH Amplify</h3>
+            <span class="reach-subtitle">AI-Powered Discovery & SEO Optimization</span>
+        </div>
+
+        <div class="reach-grid">
+            <!-- Discovery Score -->
+            <div class="reach-card score-card">
+                <div class="score-circle" id="discoveryScoreCircle">
+                    <span class="score-grade" id="discoveryGrade">-</span>
+                    <span class="score-label">Score</span>
+                </div>
+                <div class="score-breakdown">
+                    <div class="breakdown-item">
+                        <span>Hashtags</span>
+                        <div class="progress-bar"><div id="hashtagProgress" class="progress-fill"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Alt Text</span>
+                        <div class="progress-bar"><div id="altTextProgress" class="progress-fill"></div></div>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Caption SEO</span>
+                        <div class="progress-bar"><div id="captionProgress" class="progress-fill"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hashtags -->
+            <div class="reach-card">
+                <h4>🏷️ Optimized Hashtags</h4>
+                <div id="hashtagContainer" class="hashtag-cloud"></div>
+                <button class="btn btn-secondary copy-btn" onclick="copyHashtags()">📋 Copy All Hashtags</button>
+            </div>
+
+            <!-- Alt Text -->
+            <div class="reach-card">
+                <h4>♿ Alt Text (Accessibility + SEO)</h4>
+                <div class="alt-text-box" id="altTextBox">-</div>
+                <button class="btn btn-secondary copy-btn" onclick="copyAltText()">📋 Copy Alt Text</button>
+            </div>
+
+            <!-- Keywords -->
+            <div class="reach-card">
+                <h4>🔑 Target Keywords</h4>
+                <div id="keywordsContainer" class="keyword-tags"></div>
+            </div>
+
+            <!-- SEO Analysis -->
+            <div class="reach-card">
+                <h4>📊 SEO Analysis</h4>
+                <div class="seo-score">
+                    <span>SEO Score: </span>
+                    <strong id="seoScoreValue">-</strong>/100
+                </div>
+                <ul id="seoRecommendations" class="seo-list"></ul>
+            </div>
+
+            <!-- Best Posting Times -->
+            <div class="reach-card">
+                <h4>⏰ Best Posting Times</h4>
+                <div id="postingTimes" class="posting-times"></div>
+            </div>
+
+            <!-- Tips -->
+            <div class="reach-card full-width">
+                <h4>💡 Engagement Tips</h4>
+                <ul id="engagementTips" class="tips-list"></ul>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="regenLoading" class="card" style="display: none;">
@@ -281,6 +355,234 @@
         gap: 10px;
         margin-top: 10px;
     }
+
+    /* REACH Amplify Styles */
+    .reach-amplify-panel {
+        margin-top: 30px;
+        padding: 25px;
+        background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+        border-radius: 16px;
+        border: 1px solid #c7d2fe;
+    }
+
+    .reach-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .reach-header h3 {
+        color: #4338ca;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .reach-subtitle {
+        color: #6366f1;
+        font-size: 0.9rem;
+    }
+
+    .reach-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .reach-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .reach-card.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .reach-card h4 {
+        margin: 0 0 15px 0;
+        color: #374151;
+        font-size: 1rem;
+    }
+
+    /* Score Card */
+    .score-card {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .score-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .score-grade {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .score-label {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+
+    .score-breakdown {
+        flex: 1;
+    }
+
+    .breakdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+    }
+
+    .breakdown-item span {
+        width: 80px;
+        color: #666;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    /* Hashtag Cloud */
+    .hashtag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .hashtag-tag {
+        background: #eef2ff;
+        color: #4338ca;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .hashtag-tag:hover {
+        background: #c7d2fe;
+    }
+
+    /* Alt Text */
+    .alt-text-box {
+        background: #f9fafb;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #374151;
+        border-left: 3px solid #667eea;
+        margin-bottom: 15px;
+    }
+
+    /* Keywords */
+    .keyword-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .keyword-tag {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+
+    /* SEO */
+    .seo-score {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+
+    .seo-score strong {
+        color: #059669;
+        font-size: 1.3rem;
+    }
+
+    .seo-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .seo-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .seo-list li:last-child {
+        border-bottom: none;
+    }
+
+    /* Posting Times */
+    .posting-times {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .time-badge {
+        background: #ecfdf5;
+        color: #059669;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+
+    /* Tips */
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 10px;
+    }
+
+    .tips-list li {
+        background: #fffbeb;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #92400e;
+        border-left: 3px solid #f59e0b;
+    }
+
+    /* Copy Button */
+    .copy-btn {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
 </style>
 {% endblock %}
 
@@ -357,6 +659,11 @@
             document.getElementById('imageLink').href = data.image_url;
             document.getElementById('caption').value = data.caption;
             updatePreview();
+
+            // Display REACH Amplify insights if available
+            if (data.reach_amplify) {
+                displayReachAmplify(data.reach_amplify);
+            }
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('preview').style.display = 'block';
@@ -471,6 +778,119 @@
         document.getElementById('createCard').style.display = 'block';
         document.getElementById('success').style.display = 'none';
         document.getElementById('errorCard').style.display = 'none';
+        document.getElementById('reachAmplify').style.display = 'none';
+    }
+
+    // REACH Amplify Functions
+    function displayReachAmplify(data) {
+        const panel = document.getElementById('reachAmplify');
+        panel.style.display = 'block';
+
+        // Discovery Score
+        if (data.discovery_score) {
+            document.getElementById('discoveryGrade').textContent = data.discovery_score.grade || '-';
+            const breakdown = data.discovery_score.breakdown || {};
+            document.getElementById('hashtagProgress').style.width = (breakdown.hashtags || 0) + '%';
+            document.getElementById('altTextProgress').style.width = (breakdown.alt_text || 0) * 5 + '%';
+            document.getElementById('captionProgress').style.width = (breakdown.caption || 0) * 2.5 + '%';
+        }
+
+        // Hashtags
+        const hashtagContainer = document.getElementById('hashtagContainer');
+        hashtagContainer.innerHTML = '';
+        if (data.hashtags && data.hashtags.length > 0) {
+            data.hashtags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = 'hashtag-tag';
+                span.textContent = tag;
+                span.onclick = () => copyToClipboard(tag);
+                hashtagContainer.appendChild(span);
+            });
+        }
+
+        // Alt Text
+        document.getElementById('altTextBox').textContent = data.alt_text || 'No alt text generated';
+
+        // Keywords
+        const keywordsContainer = document.getElementById('keywordsContainer');
+        keywordsContainer.innerHTML = '';
+        if (data.keywords && data.keywords.length > 0) {
+            data.keywords.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'keyword-tag';
+                span.textContent = keyword;
+                keywordsContainer.appendChild(span);
+            });
+        }
+
+        // SEO Analysis
+        if (data.seo_analysis) {
+            document.getElementById('seoScoreValue').textContent = data.seo_analysis.seo_score || 0;
+            const seoList = document.getElementById('seoRecommendations');
+            seoList.innerHTML = '';
+            const recommendations = data.seo_analysis.recommendations || [];
+            if (recommendations.length > 0) {
+                recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = '💡 ' + rec;
+                    seoList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = '✅ Great job! No major SEO issues found.';
+                seoList.appendChild(li);
+            }
+        }
+
+        // Posting Times
+        const postingTimesContainer = document.getElementById('postingTimes');
+        postingTimesContainer.innerHTML = '';
+        if (data.posting_times && data.posting_times.best_times) {
+            data.posting_times.best_times.forEach(time => {
+                const badge = document.createElement('span');
+                badge.className = 'time-badge';
+                badge.textContent = time.time;
+                badge.title = time.reason;
+                postingTimesContainer.appendChild(badge);
+            });
+        }
+
+        // Tips
+        const tipsList = document.getElementById('engagementTips');
+        tipsList.innerHTML = '';
+        if (data.tips && data.tips.length > 0) {
+            data.tips.forEach(tip => {
+                const li = document.createElement('li');
+                li.textContent = tip;
+                tipsList.appendChild(li);
+            });
+        }
+    }
+
+    function copyHashtags() {
+        if (currentData.reach_amplify && currentData.reach_amplify.hashtag_string) {
+            copyToClipboard(currentData.reach_amplify.hashtag_string);
+            alert('Hashtags copied to clipboard!');
+        }
+    }
+
+    function copyAltText() {
+        if (currentData.reach_amplify && currentData.reach_amplify.alt_text) {
+            copyToClipboard(currentData.reach_amplify.alt_text);
+            alert('Alt text copied to clipboard!');
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).catch(err => {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        });
     }
 </script>
 {% endblock %}

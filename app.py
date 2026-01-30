@@ -24,6 +24,7 @@ load_dotenv()
 # Import components with error handling
 TextGenerator = None
 ImageGenerator = None
+ReachAmplify = None
 get_uploader = None
 start_web_scheduler = None
 stop_web_scheduler = None
@@ -33,6 +34,12 @@ try:
     logger.info("Content generators imported successfully")
 except ImportError as e:
     logger.warning(f"Could not import content generators: {e}")
+
+try:
+    from src.content.reach_amplify import ReachAmplify
+    logger.info("REACH Amplify imported successfully")
+except ImportError as e:
+    logger.warning(f"Could not import REACH Amplify: {e}")
 
 try:
     from src.utils.image_hosting import get_uploader
@@ -194,6 +201,7 @@ def get_db():
 # Initialize components with error handling
 text_gen = None
 img_gen = None
+reach_amplify = None
 uploader = None
 initialization_errors = []
 
@@ -208,6 +216,11 @@ try:
         )
         img_gen = ImageGenerator(output_dir='generated_images')
         logger.info("AI generators initialized successfully")
+
+        # Initialize REACH Amplify for discovery optimization
+        if ReachAmplify:
+            reach_amplify = ReachAmplify(os.getenv('OPENAI_API_KEY'))
+            logger.info("REACH Amplify initialized successfully")
     elif not os.getenv('OPENAI_API_KEY'):
         initialization_errors.append('OPENAI_API_KEY not configured - content generation disabled')
         logger.warning('OPENAI_API_KEY not configured')
@@ -397,12 +410,37 @@ def generate():
         else:
             image_url = img_result['image_url']
 
-        return jsonify({
+        # REACH Amplify - AI-powered discovery & SEO optimization
+        discovery_data = None
+        if reach_amplify:
+            try:
+                discovery_data = reach_amplify.optimize_content(caption, prompt, theme)
+                logger.info(f"REACH Amplify score: {discovery_data.get('discovery_score', {}).get('grade', 'N/A')}")
+            except Exception as e:
+                logger.warning(f"REACH Amplify optimization failed: {e}")
+
+        response_data = {
             'success': True,
             'theme': theme,
             'caption': caption,
             'image_url': image_url
-        })
+        }
+
+        # Add REACH Amplify discovery optimization data (AI + SEO)
+        if discovery_data:
+            response_data['reach_amplify'] = {
+                'hashtags': discovery_data.get('hashtags', []),
+                'hashtag_string': discovery_data.get('hashtag_string', ''),
+                'alt_text': discovery_data.get('alt_text', ''),
+                'optimized_caption': discovery_data.get('optimized_caption', caption),
+                'keywords': discovery_data.get('keywords', []),
+                'discovery_score': discovery_data.get('discovery_score', {}),
+                'tips': discovery_data.get('tips', []),
+                'seo_analysis': discovery_data.get('seo_analysis', {}),
+                'posting_times': discovery_data.get('posting_times', {})
+            }
+
+        return jsonify(response_data)
 
     except Exception as e:
         error_info = parse_openai_error(e)
