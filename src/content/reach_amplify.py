@@ -6,6 +6,7 @@ through optimized hashtags, keywords, alt text, and engagement signals.
 """
 
 import logging
+import os
 import random
 from typing import Dict, List, Optional
 from openai import OpenAI
@@ -23,7 +24,12 @@ class ReachAmplify:
 
     def __init__(self, api_key: str):
         """Initialize with OpenAI API key."""
-        self.client = OpenAI(api_key=api_key, timeout=OPENAI_TIMEOUT)
+        # Support Cloudflare Worker proxy for API calls
+        base_url = os.getenv("OPENAI_BASE_URL")
+        if base_url:
+            self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=OPENAI_TIMEOUT)
+        else:
+            self.client = OpenAI(api_key=api_key, timeout=OPENAI_TIMEOUT)
         self.logger = logging.getLogger("ReachAmplify")
 
         # Core hashtag categories for domestic violence awareness
