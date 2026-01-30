@@ -31,12 +31,7 @@ class TextGenerator:
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
 
-        # Support Cloudflare Worker proxy for API calls
-        base_url = os.getenv("OPENAI_BASE_URL")
-        if base_url:
-            self.client = OpenAI(api_key=self.api_key, base_url=base_url, timeout=OPENAI_TIMEOUT)
-        else:
-            self.client = OpenAI(api_key=self.api_key, timeout=OPENAI_TIMEOUT)
+        self.client = OpenAI(api_key=self.api_key, timeout=OPENAI_TIMEOUT)
         self.niche = niche
         self.style = style
         self.hashtag_count = hashtag_count

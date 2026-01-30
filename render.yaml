@@ -9,8 +9,6 @@ services:
         value: 3.11.7
       - key: OPENAI_API_KEY
         sync: false
-      - key: OPENAI_BASE_URL
-        sync: false
       - key: IMGBB_API_KEY
         sync: false
       - key: INSTAGRAM_ACCESS_TOKEN
