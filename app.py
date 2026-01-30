@@ -1315,6 +1315,21 @@ def api_post_to_instagram():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/debug-config')
+def debug_config():
+    """Debug endpoint to check API key configuration."""
+    api_key = os.getenv('OPENAI_API_KEY', '')
+    return jsonify({
+        'openai_key_set': bool(api_key),
+        'openai_key_length': len(api_key) if api_key else 0,
+        'openai_key_prefix': api_key[:10] + '...' if api_key and len(api_key) > 10 else 'NOT SET',
+        'text_gen_initialized': text_gen is not None,
+        'img_gen_initialized': img_gen is not None,
+        'reach_amplify_initialized': reach_amplify is not None,
+        'initialization_errors': initialization_errors
+    })
+
+
 @app.route('/settings')
 def settings_page():
     """Settings page for API configuration."""
