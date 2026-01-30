@@ -426,7 +426,7 @@ def generate():
             'image_url': image_url
         }
 
-        # Add REACH Amplify discovery optimization data (AI + SEO)
+        # Add REACH Amplify discovery optimization data (AI + SEO + AIO/GEO/AEO)
         if discovery_data:
             response_data['reach_amplify'] = {
                 'hashtags': discovery_data.get('hashtags', []),
@@ -437,7 +437,8 @@ def generate():
                 'discovery_score': discovery_data.get('discovery_score', {}),
                 'tips': discovery_data.get('tips', []),
                 'seo_analysis': discovery_data.get('seo_analysis', {}),
-                'posting_times': discovery_data.get('posting_times', {})
+                'posting_times': discovery_data.get('posting_times', {}),
+                'aio_optimization': discovery_data.get('aio_optimization', {})
             }
 
         return jsonify(response_data)

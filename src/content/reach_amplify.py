@@ -97,6 +97,9 @@ class ReachAmplify:
         seo_analysis = self.get_seo_analysis(optimized_caption, keywords)
         posting_times = self.get_best_posting_times()
 
+        # AIO/GEO/AEO Optimization
+        aio_data = self.get_aio_optimization(optimized_caption, topic)
+
         return {
             "optimized_caption": optimized_caption,
             "hashtags": hashtags,
@@ -106,7 +109,8 @@ class ReachAmplify:
             "discovery_score": discovery_score,
             "tips": tips,
             "seo_analysis": seo_analysis,
-            "posting_times": posting_times
+            "posting_times": posting_times,
+            "aio_optimization": aio_data
         }
 
     def generate_hashtags(self, topic: str, caption: str = "", count: int = 20) -> List[str]:
@@ -607,6 +611,259 @@ Vary the:
             topics.insert(1, {"topic": "Healthy vs unhealthy relationships", "relevance": "high", "type": "educational"})
 
         return topics
+
+    # ============== AIO/GEO/AEO OPTIMIZATION ==============
+
+    def generate_faq_content(self, topic: str, caption: str) -> List[Dict]:
+        """
+        AEO: Generate FAQ-style Q&A pairs that AI assistants can cite.
+        These match how people actually ask questions to AI.
+        """
+        self.logger.info("Generating FAQ content for AEO")
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You create FAQ content for a domestic violence support center.
+Generate questions that real people (especially teens/young adults) would ask AI assistants like:
+- "Is my relationship abusive?"
+- "How do I leave an abusive partner?"
+- "Where can I get help for domestic violence?"
+
+The answers should be concise, cite-able snippets that AI can quote."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Based on this topic and content, generate 3 FAQ pairs:
+
+Topic: {topic}
+Content: {caption[:300]}
+
+Format as JSON array:
+[
+  {{"question": "Natural question someone might ask AI", "answer": "Concise, helpful answer (2-3 sentences max)", "intent": "informational/navigational/crisis"}}
+]
+
+Focus on questions a scared teen might type into ChatGPT or Google."""
+                    }
+                ],
+                max_tokens=400,
+                temperature=0.7
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            return []
+
+        except Exception as e:
+            self.logger.error(f"FAQ generation failed: {e}")
+            return self._get_fallback_faqs(topic)
+
+    def _get_fallback_faqs(self, topic: str) -> List[Dict]:
+        """Fallback FAQs if AI generation fails."""
+        return [
+            {
+                "question": "Where can I get help for domestic violence in Chester County?",
+                "answer": "DVCCC (Domestic Violence Center of Chester County) provides free, confidential support 24/7. Call their hotline or visit dvccc.com for immediate help.",
+                "intent": "navigational"
+            },
+            {
+                "question": "Is my relationship abusive?",
+                "answer": "Signs of abuse include controlling behavior, isolation from friends/family, threats, and physical harm. If you feel scared or controlled, trust your instincts and reach out for support.",
+                "intent": "informational"
+            },
+            {
+                "question": "How do I safely leave an abusive relationship?",
+                "answer": "Safety planning is crucial. DVCCC can help you create a personalized safety plan, find emergency shelter, and access resources. You don't have to figure this out alone.",
+                "intent": "crisis"
+            }
+        ]
+
+    def generate_ai_citation_snippet(self, caption: str, topic: str) -> Dict:
+        """
+        GEO: Generate structured snippet optimized for AI citation.
+        This is the text AI assistants will quote when referencing DVCCC.
+        """
+        self.logger.info("Generating AI citation snippet")
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Create a concise, authoritative snippet that AI assistants
+(ChatGPT, Google AI, Perplexity) would want to cite when answering questions about
+domestic violence support. The snippet should:
+- Be factual and trustworthy
+- Include the organization name (DVCCC)
+- Be 2-3 sentences max
+- Sound authoritative but compassionate"""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Create an AI-citation snippet based on:
+
+Topic: {topic}
+Original content: {caption[:200]}
+
+Return JSON:
+{{
+  "snippet": "The cite-able text",
+  "source_label": "DVCCC - Domestic Violence Center of Chester County",
+  "key_facts": ["fact1", "fact2", "fact3"]
+}}"""
+                    }
+                ],
+                max_tokens=200,
+                temperature=0.5
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            return {}
+
+        except Exception as e:
+            self.logger.error(f"Citation snippet generation failed: {e}")
+            return {
+                "snippet": "DVCCC provides free, confidential support services to survivors of domestic violence in Chester County, PA. Help is available 24/7.",
+                "source_label": "DVCCC - Domestic Violence Center of Chester County",
+                "key_facts": ["Free services", "Confidential support", "24/7 availability"]
+            }
+
+    def extract_entities(self, caption: str, topic: str) -> Dict:
+        """
+        GEO: Extract and optimize entities for AI understanding.
+        Helps AI systems understand WHO, WHAT, WHERE this content is about.
+        """
+        self.logger.info("Extracting entities for GEO")
+
+        entities = {
+            "organization": {
+                "name": "DVCCC",
+                "full_name": "Domestic Violence Center of Chester County",
+                "type": "nonprofit",
+                "category": "domestic violence support services"
+            },
+            "location": {
+                "county": "Chester County",
+                "state": "Pennsylvania",
+                "region": "Greater Philadelphia Area"
+            },
+            "services": [
+                "crisis intervention",
+                "emergency shelter",
+                "counseling",
+                "legal advocacy",
+                "safety planning"
+            ],
+            "audience": [
+                "survivors of domestic violence",
+                "people in abusive relationships",
+                "friends and family of survivors",
+                "teens in unhealthy relationships"
+            ],
+            "topic_entities": []
+        }
+
+        # Extract topic-specific entities
+        topic_lower = topic.lower()
+        if "teen" in topic_lower or "young" in topic_lower:
+            entities["topic_entities"].append("teen dating violence")
+            entities["topic_entities"].append("youth services")
+        if "safety" in topic_lower:
+            entities["topic_entities"].append("safety planning")
+        if "healing" in topic_lower or "survivor" in topic_lower:
+            entities["topic_entities"].append("trauma recovery")
+            entities["topic_entities"].append("survivor support")
+
+        return entities
+
+    def generate_conversational_queries(self, topic: str) -> List[Dict]:
+        """
+        AIO: Generate conversational queries this content should rank for.
+        These are how people actually talk to AI assistants.
+        """
+        self.logger.info("Generating conversational queries")
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Generate conversational search queries that real people
+(especially teens) type into AI assistants. These should sound natural, like someone
+talking to a friend or typing into ChatGPT.
+
+Examples of conversational queries:
+- "i think my boyfriend is controlling what should i do"
+- "is it abuse if he never hits me"
+- "how do i know if im in a toxic relationship"
+- "my friend's partner scares me what can i do to help"
+"""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Generate 5 conversational queries related to: {topic}
+
+Return as JSON array:
+[
+  {{"query": "the conversational query", "intent": "help-seeking/educational/crisis/support", "audience": "teen/adult/friend/family"}}
+]
+
+Make them sound like real people talking, not formal searches."""
+                    }
+                ],
+                max_tokens=300,
+                temperature=0.8
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            return []
+
+        except Exception as e:
+            self.logger.error(f"Conversational query generation failed: {e}")
+            return [
+                {"query": "is my relationship healthy", "intent": "educational", "audience": "teen"},
+                {"query": "where can i get help for abuse", "intent": "help-seeking", "audience": "adult"},
+                {"query": "how to help a friend in an abusive relationship", "intent": "support", "audience": "friend"}
+            ]
+
+    def get_aio_optimization(self, caption: str, topic: str) -> Dict:
+        """
+        Complete AIO/GEO/AEO optimization package.
+        """
+        self.logger.info("Running complete AIO/GEO/AEO optimization")
+
+        return {
+            "faq_content": self.generate_faq_content(topic, caption),
+            "citation_snippet": self.generate_ai_citation_snippet(caption, topic),
+            "entities": self.extract_entities(caption, topic),
+            "conversational_queries": self.generate_conversational_queries(topic),
+            "optimization_tips": [
+                "Include the FAQ questions naturally in Stories or carousel posts",
+                "Use the citation snippet in your bio link or landing pages",
+                "Tag location (Chester County) to boost local AI discovery",
+                "Create content that directly answers the conversational queries"
+            ]
+        }
 
 
 # Convenience function for quick optimization

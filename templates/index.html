@@ -167,6 +167,43 @@
                 <h4>💡 Engagement Tips</h4>
                 <ul id="engagementTips" class="tips-list"></ul>
             </div>
+
+            <!-- AIO/GEO/AEO Section -->
+            <div class="reach-card full-width aio-section">
+                <div class="aio-header">
+                    <h4>🤖 AI Optimization (AIO/GEO/AEO)</h4>
+                    <span class="aio-subtitle">Optimized for ChatGPT, Google AI & Perplexity</span>
+                </div>
+
+                <!-- FAQ Content for AEO -->
+                <div class="aio-subsection">
+                    <h5>❓ FAQ Content (Answer Engine Optimization)</h5>
+                    <p class="aio-description">Questions your content answers - optimized for AI assistants</p>
+                    <div id="faqContent" class="faq-list"></div>
+                </div>
+
+                <!-- Citation Snippet for GEO -->
+                <div class="aio-subsection">
+                    <h5>📝 AI Citation Snippet (Generative Engine Optimization)</h5>
+                    <p class="aio-description">Text AI assistants will quote when citing DVCCC</p>
+                    <div id="citationSnippet" class="citation-box"></div>
+                    <button class="btn btn-secondary copy-btn" onclick="copyCitation()">📋 Copy Citation</button>
+                </div>
+
+                <!-- Conversational Queries -->
+                <div class="aio-subsection">
+                    <h5>💬 Conversational Queries (AI Optimization)</h5>
+                    <p class="aio-description">How people ask AI about this topic</p>
+                    <div id="conversationalQueries" class="query-list"></div>
+                </div>
+
+                <!-- Entity Map -->
+                <div class="aio-subsection">
+                    <h5>🏢 Entity Recognition</h5>
+                    <p class="aio-description">How AI understands your content</p>
+                    <div id="entityMap" class="entity-grid"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -583,6 +620,183 @@
         padding: 8px 16px;
         font-size: 0.8rem;
     }
+
+    /* AIO/GEO/AEO Styles */
+    .aio-section {
+        background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%);
+        border: 1px solid #e879f9;
+    }
+
+    .aio-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e879f9;
+    }
+
+    .aio-header h4 {
+        color: #a21caf;
+        margin: 0;
+    }
+
+    .aio-subtitle {
+        color: #c026d3;
+        font-size: 0.85rem;
+    }
+
+    .aio-subsection {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .aio-subsection:last-child {
+        margin-bottom: 0;
+    }
+
+    .aio-subsection h5 {
+        color: #7e22ce;
+        margin: 0 0 5px 0;
+        font-size: 1rem;
+    }
+
+    .aio-description {
+        color: #9333ea;
+        font-size: 0.8rem;
+        margin: 0 0 15px 0;
+    }
+
+    /* FAQ List */
+    .faq-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .faq-item {
+        background: #faf5ff;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 3px solid #a855f7;
+    }
+
+    .faq-question {
+        font-weight: 600;
+        color: #581c87;
+        margin-bottom: 8px;
+    }
+
+    .faq-answer {
+        color: #6b21a8;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .faq-intent {
+        display: inline-block;
+        background: #e9d5ff;
+        color: #7e22ce;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-top: 8px;
+    }
+
+    /* Citation Box */
+    .citation-box {
+        background: #f5f3ff;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px dashed #a78bfa;
+        margin-bottom: 15px;
+    }
+
+    .citation-text {
+        font-style: italic;
+        color: #4c1d95;
+        line-height: 1.6;
+        margin-bottom: 10px;
+    }
+
+    .citation-source {
+        font-size: 0.8rem;
+        color: #7c3aed;
+    }
+
+    .citation-facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .fact-tag {
+        background: #ddd6fe;
+        color: #5b21b6;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+    }
+
+    /* Query List */
+    .query-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .query-item {
+        background: #fef3c7;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #92400e;
+        border: 1px solid #fbbf24;
+    }
+
+    .query-item .intent-badge {
+        background: #fde68a;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        margin-left: 8px;
+    }
+
+    /* Entity Grid */
+    .entity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .entity-category {
+        background: #f0fdf4;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #86efac;
+    }
+
+    .entity-category h6 {
+        color: #166534;
+        margin: 0 0 10px 0;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .entity-values {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .entity-tag {
+        background: #dcfce7;
+        color: #15803d;
+        padding: 3px 8px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+    }
 </style>
 {% endblock %}
 
@@ -865,6 +1079,112 @@
                 tipsList.appendChild(li);
             });
         }
+
+        // AIO/GEO/AEO Optimization
+        if (data.aio_optimization) {
+            displayAIOOptimization(data.aio_optimization);
+        }
+    }
+
+    function displayAIOOptimization(aio) {
+        // FAQ Content
+        const faqContainer = document.getElementById('faqContent');
+        faqContainer.innerHTML = '';
+        if (aio.faq_content && aio.faq_content.length > 0) {
+            aio.faq_content.forEach(faq => {
+                const item = document.createElement('div');
+                item.className = 'faq-item';
+                item.innerHTML = `
+                    <div class="faq-question">Q: ${faq.question}</div>
+                    <div class="faq-answer">A: ${faq.answer}</div>
+                    <span class="faq-intent">${faq.intent || 'general'}</span>
+                `;
+                faqContainer.appendChild(item);
+            });
+        }
+
+        // Citation Snippet
+        const citationContainer = document.getElementById('citationSnippet');
+        if (aio.citation_snippet) {
+            citationContainer.innerHTML = `
+                <div class="citation-text">"${aio.citation_snippet.snippet}"</div>
+                <div class="citation-source">— ${aio.citation_snippet.source_label}</div>
+                <div class="citation-facts">
+                    ${(aio.citation_snippet.key_facts || []).map(f => `<span class="fact-tag">${f}</span>`).join('')}
+                </div>
+            `;
+        }
+
+        // Conversational Queries
+        const queryContainer = document.getElementById('conversationalQueries');
+        queryContainer.innerHTML = '';
+        if (aio.conversational_queries && aio.conversational_queries.length > 0) {
+            aio.conversational_queries.forEach(q => {
+                const item = document.createElement('div');
+                item.className = 'query-item';
+                item.innerHTML = `"${q.query}" <span class="intent-badge">${q.intent}</span>`;
+                queryContainer.appendChild(item);
+            });
+        }
+
+        // Entity Map
+        const entityContainer = document.getElementById('entityMap');
+        entityContainer.innerHTML = '';
+        if (aio.entities) {
+            // Organization
+            if (aio.entities.organization) {
+                const orgDiv = document.createElement('div');
+                orgDiv.className = 'entity-category';
+                orgDiv.innerHTML = `
+                    <h6>🏢 Organization</h6>
+                    <div class="entity-values">
+                        <span class="entity-tag">${aio.entities.organization.name}</span>
+                        <span class="entity-tag">${aio.entities.organization.type}</span>
+                    </div>
+                `;
+                entityContainer.appendChild(orgDiv);
+            }
+
+            // Location
+            if (aio.entities.location) {
+                const locDiv = document.createElement('div');
+                locDiv.className = 'entity-category';
+                locDiv.innerHTML = `
+                    <h6>📍 Location</h6>
+                    <div class="entity-values">
+                        <span class="entity-tag">${aio.entities.location.county}</span>
+                        <span class="entity-tag">${aio.entities.location.state}</span>
+                    </div>
+                `;
+                entityContainer.appendChild(locDiv);
+            }
+
+            // Services
+            if (aio.entities.services && aio.entities.services.length > 0) {
+                const servDiv = document.createElement('div');
+                servDiv.className = 'entity-category';
+                servDiv.innerHTML = `
+                    <h6>🛠️ Services</h6>
+                    <div class="entity-values">
+                        ${aio.entities.services.slice(0, 4).map(s => `<span class="entity-tag">${s}</span>`).join('')}
+                    </div>
+                `;
+                entityContainer.appendChild(servDiv);
+            }
+
+            // Topic Entities
+            if (aio.entities.topic_entities && aio.entities.topic_entities.length > 0) {
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'entity-category';
+                topicDiv.innerHTML = `
+                    <h6>🎯 Topic</h6>
+                    <div class="entity-values">
+                        ${aio.entities.topic_entities.map(t => `<span class="entity-tag">${t}</span>`).join('')}
+                    </div>
+                `;
+                entityContainer.appendChild(topicDiv);
+            }
+        }
     }
 
     function copyHashtags() {
@@ -878,6 +1198,15 @@
         if (currentData.reach_amplify && currentData.reach_amplify.alt_text) {
             copyToClipboard(currentData.reach_amplify.alt_text);
             alert('Alt text copied to clipboard!');
+        }
+    }
+
+    function copyCitation() {
+        if (currentData.reach_amplify && currentData.reach_amplify.aio_optimization &&
+            currentData.reach_amplify.aio_optimization.citation_snippet) {
+            const snippet = currentData.reach_amplify.aio_optimization.citation_snippet.snippet;
+            copyToClipboard(snippet);
+            alert('Citation snippet copied to clipboard!');
         }
     }
 
