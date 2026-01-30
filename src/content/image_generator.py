@@ -30,7 +30,8 @@ class ImageGenerator:
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
 
-        self.client = OpenAI(api_key=self.api_key, timeout=OPENAI_TIMEOUT)
+        # Explicitly set base_url to override any OPENAI_BASE_URL env var
+        self.client = OpenAI(api_key=self.api_key, base_url="https://api.openai.com/v1", timeout=OPENAI_TIMEOUT)
         self.output_dir = output_dir
         self.logger = setup_logger("ImageGenerator")
 

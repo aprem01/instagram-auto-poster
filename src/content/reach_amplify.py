@@ -24,7 +24,8 @@ class ReachAmplify:
 
     def __init__(self, api_key: str):
         """Initialize with OpenAI API key."""
-        self.client = OpenAI(api_key=api_key, timeout=OPENAI_TIMEOUT)
+        # Explicitly set base_url to override any OPENAI_BASE_URL env var
+        self.client = OpenAI(api_key=api_key, base_url="https://api.openai.com/v1", timeout=OPENAI_TIMEOUT)
         self.logger = logging.getLogger("ReachAmplify")
 
         # Core hashtag categories for domestic violence awareness
