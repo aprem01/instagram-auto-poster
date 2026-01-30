@@ -41,12 +41,9 @@
             </div>
 
             <div class="theme-chips" id="themeChipsContainer">
-                <div class="loading-themes" id="themesLoading" style="display: none;">
+                <div class="loading-themes" id="themesLoading">
                     <span class="mini-spinner"></span> Loading AI suggestions...
                 </div>
-                {% for theme in themes %}
-                <span class="theme-chip" onclick="selectTheme('{{ theme }}')">{{ theme }}</span>
-                {% endfor %}
             </div>
 
             <!-- Selected Theme Details -->
@@ -1709,8 +1706,12 @@
         }
     }
 
-    // Check Instagram API status on load
+    // Check Instagram API status and load smart themes on page load
     document.addEventListener('DOMContentLoaded', async function() {
+        // Load smart themes immediately
+        loadSmartThemes();
+
+        // Check Instagram API status
         try {
             const response = await fetch('/api/instagram-status');
             const data = await response.json();
