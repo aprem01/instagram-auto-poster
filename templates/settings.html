@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Settings</h2>
+    <p style="color: #666; margin-bottom: 30px;">Configure API integrations for full functionality.</p>
+
+    <!-- Configuration Status -->
+    <div class="config-grid">
+        <!-- OpenAI -->
+        <div class="config-card {% if config_status.openai %}configured{% else %}not-configured{% endif %}">
+            <div class="config-header">
+                <span class="config-icon">{{ '✓' if config_status.openai else '✗' }}</span>
+                <h3>OpenAI API</h3>
+            </div>
+            <p class="config-description">Powers AI image and caption generation</p>
+            <div class="config-status">
+                {% if config_status.openai %}
+                <span class="status-badge success">Configured</span>
+                {% else %}
+                <span class="status-badge warning">Not Configured</span>
+                {% endif %}
+            </div>
+            <div class="config-var">OPENAI_API_KEY</div>
+        </div>
+
+        <!-- ImgBB -->
+        <div class="config-card {% if config_status.imgbb %}configured{% else %}not-configured{% endif %}">
+            <div class="config-header">
+                <span class="config-icon">{{ '✓' if config_status.imgbb else '✗' }}</span>
+                <h3>ImgBB Hosting</h3>
+            </div>
+            <p class="config-description">Hosts generated images for Instagram</p>
+            <div class="config-status">
+                {% if config_status.imgbb %}
+                <span class="status-badge success">Configured</span>
+                {% else %}
+                <span class="status-badge warning">Not Configured</span>
+                {% endif %}
+            </div>
+            <div class="config-var">IMGBB_API_KEY</div>
+        </div>
+
+        <!-- Instagram Token -->
+        <div class="config-card {% if config_status.instagram_token %}configured{% else %}not-configured{% endif %}">
+            <div class="config-header">
+                <span class="config-icon">{{ '✓' if config_status.instagram_token else '✗' }}</span>
+                <h3>Instagram Token</h3>
+            </div>
+            <p class="config-description">Access token for posting to Instagram</p>
+            <div class="config-status">
+                {% if config_status.instagram_token %}
+                <span class="status-badge success">Configured</span>
+                {% else %}
+                <span class="status-badge info">Optional</span>
+                {% endif %}
+            </div>
+            <div class="config-var">INSTAGRAM_ACCESS_TOKEN</div>
+        </div>
+
+        <!-- Instagram Account -->
+        <div class="config-card {% if config_status.instagram_account %}configured{% else %}not-configured{% endif %}">
+            <div class="config-header">
+                <span class="config-icon">{{ '✓' if config_status.instagram_account else '✗' }}</span>
+                <h3>Instagram Account ID</h3>
+            </div>
+            <p class="config-description">Your Instagram Business Account ID</p>
+            <div class="config-status">
+                {% if config_status.instagram_account %}
+                <span class="status-badge success">Configured</span>
+                {% else %}
+                <span class="status-badge info">Optional</span>
+                {% endif %}
+            </div>
+            <div class="config-var">INSTAGRAM_ACCOUNT_ID</div>
+        </div>
+    </div>
+</div>
+
+<!-- Instagram Setup Guide -->
+<div class="card">
+    <h2>Instagram Direct Posting Setup</h2>
+    <p style="color: #666; margin-bottom: 20px;">Enable direct posting to Instagram from this app.</p>
+
+    <div class="setup-steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>Convert to Business Account</h4>
+                <p>Go to Instagram Settings → Account → Switch to Professional Account → Choose "Business" or "Creator"</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>Create Facebook Page</h4>
+                <p>Visit <a href="https://facebook.com/pages/create" target="_blank">facebook.com/pages/create</a> and create a page for your organization</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>Link Instagram to Facebook Page</h4>
+                <p>On your Facebook Page → Settings → Linked Accounts → Instagram → Connect your Instagram Business account</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h4>Create Meta Developer App</h4>
+                <p>Go to <a href="https://developers.facebook.com" target="_blank">developers.facebook.com</a> → Create App → Business → Add "Instagram Graph API"</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+                <h4>Generate Access Token</h4>
+                <p>In your Meta App → Tools → Graph API Explorer → Select your app → Get User Access Token with permissions:</p>
+                <ul>
+                    <li><code>instagram_basic</code></li>
+                    <li><code>instagram_content_publish</code></li>
+                    <li><code>pages_read_engagement</code></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">6</div>
+            <div class="step-content">
+                <h4>Set Environment Variables</h4>
+                <p>In your Render dashboard → Environment → Add:</p>
+                <ul>
+                    <li><code>INSTAGRAM_ACCESS_TOKEN</code> - Your access token</li>
+                    <li><code>INSTAGRAM_ACCOUNT_ID</code> - Found in Meta Business Suite</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>Note:</strong> Direct posting is optional. You can always use the "Manual Post" option to copy your caption and download your image, then post directly on Instagram.
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .config-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.2s;
+    }
+
+    .config-card.configured {
+        border-color: #86efac;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+
+    .config-card.not-configured {
+        border-color: #fcd34d;
+        background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+    }
+
+    .config-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .config-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .configured .config-icon {
+        background: #22c55e;
+        color: white;
+    }
+
+    .not-configured .config-icon {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .config-header h3 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .config-description {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-bottom: 15px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .status-badge.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.info {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .config-var {
+        margin-top: 10px;
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        background: #f3f4f6;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
+    }
+
+    .setup-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .step {
+        display: flex;
+        gap: 15px;
+    }
+
+    .step-number {
+        width: 35px;
+        height: 35px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .step-content h4 {
+        margin: 0 0 5px;
+        font-size: 1rem;
+    }
+
+    .step-content p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .step-content ul {
+        margin: 10px 0 0 20px;
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .step-content code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    .step-content a {
+        color: #667eea;
+    }
+
+    .info-box {
+        margin-top: 30px;
+        padding: 15px 20px;
+        background: #e0e7ff;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}

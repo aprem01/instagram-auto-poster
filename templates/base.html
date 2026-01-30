@@ -284,6 +284,7 @@
                 <a href="{{ url_for('schedules') }}" class="{% if request.endpoint in ['schedules', 'new_schedule', 'view_schedule'] %}active{% endif %}">Schedules</a>
                 <a href="{{ url_for('pending_posts') }}" class="{% if request.endpoint == 'pending_posts' %}active{% endif %}">Pending</a>
                 <a href="{{ url_for('posts') }}" class="{% if request.endpoint == 'posts' %}active{% endif %}">All Posts</a>
+                <a href="{{ url_for('settings_page') }}" class="{% if request.endpoint == 'settings_page' %}active{% endif %}" style="margin-left: auto;">Settings</a>
             </nav>
         </header>
 

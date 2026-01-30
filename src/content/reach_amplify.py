@@ -871,6 +871,158 @@ Make them sound like real people talking, not formal searches."""
             ]
         }
 
+    def generate_smart_themes(self, count: int = 8) -> List[Dict]:
+        """
+        Generate smart theme ideas based on trends, SEO, and AIO/GEO/AEO.
+        These are AI-powered suggestions that are optimized for discoverability.
+        """
+        self.logger.info("Generating smart theme ideas...")
+
+        # Get current trending topics as context
+        trending = self.get_trending_topics()
+        trending_context = ", ".join([t["topic"] for t in trending[:5]])
+
+        from datetime import datetime
+        current_month = datetime.now().strftime("%B")
+        current_year = datetime.now().year
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are a social media strategist for DVCCC (Domestic Violence Center of Chester County).
+Generate theme ideas that are:
+1. SEO-optimized: Include searchable keywords people use
+2. AIO-optimized: Match how people ask AI assistants questions
+3. Emotionally resonant: Connect with survivors and supporters
+4. Action-oriented: Encourage engagement and help-seeking
+5. Varied: Mix educational, supportive, empowering, and awareness themes
+
+Each theme should be a complete message/concept that can inspire an Instagram post.
+Keep themes concise (under 60 characters when possible) but meaningful."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Generate {count} smart theme ideas for DVCCC Instagram posts.
+
+Current month: {current_month} {current_year}
+Current trending topics in DV space: {trending_context}
+
+For each theme, provide:
+- theme: The actual theme text (concise, inspiring)
+- type: One of [awareness, educational, supportive, empowerment, resource, seasonal]
+- seo_keywords: 2-3 SEO keywords this targets
+- aio_query: What question might someone ask an AI that this content answers?
+- priority: high, medium, or trending
+
+Format as JSON array. Make themes varied and emotionally authentic."""
+                    }
+                ],
+                max_tokens=800,
+                temperature=0.8
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                themes = json.loads(json_match.group())
+                self.logger.info(f"Generated {len(themes)} smart themes")
+                return themes
+
+            return self._get_fallback_smart_themes()
+
+        except Exception as e:
+            self.logger.error(f"Smart theme generation failed: {e}")
+            return self._get_fallback_smart_themes()
+
+    def _get_fallback_smart_themes(self) -> List[Dict]:
+        """Fallback themes when AI generation fails."""
+        from datetime import datetime
+        month = datetime.now().month
+
+        themes = [
+            {
+                "theme": "You are not alone - help is one call away",
+                "type": "supportive",
+                "seo_keywords": ["domestic violence help", "DV hotline"],
+                "aio_query": "where can i get help for domestic violence",
+                "priority": "high"
+            },
+            {
+                "theme": "Recognizing the signs of an unhealthy relationship",
+                "type": "educational",
+                "seo_keywords": ["abuse signs", "unhealthy relationship"],
+                "aio_query": "is my relationship abusive",
+                "priority": "high"
+            },
+            {
+                "theme": "Your healing journey is valid, no matter how long it takes",
+                "type": "empowerment",
+                "seo_keywords": ["healing from abuse", "trauma recovery"],
+                "aio_query": "how long does it take to heal from abuse",
+                "priority": "medium"
+            },
+            {
+                "theme": "Free confidential services for Chester County survivors",
+                "type": "resource",
+                "seo_keywords": ["Chester County DV services", "free abuse help"],
+                "aio_query": "free domestic violence help near me",
+                "priority": "high"
+            },
+            {
+                "theme": "How to support a loved one experiencing abuse",
+                "type": "educational",
+                "seo_keywords": ["help abuse victim", "support friend abuse"],
+                "aio_query": "how do i help someone in an abusive relationship",
+                "priority": "medium"
+            },
+            {
+                "theme": "Building healthy relationships after trauma",
+                "type": "empowerment",
+                "seo_keywords": ["healthy relationships", "dating after abuse"],
+                "aio_query": "can i have a healthy relationship after abuse",
+                "priority": "medium"
+            },
+            {
+                "theme": "Safety planning: preparing for your next steps",
+                "type": "resource",
+                "seo_keywords": ["safety plan", "leaving abusive relationship"],
+                "aio_query": "how to leave an abusive relationship safely",
+                "priority": "high"
+            },
+            {
+                "theme": "Every survivor has a story of incredible strength",
+                "type": "empowerment",
+                "seo_keywords": ["survivor stories", "DV awareness"],
+                "aio_query": "am i strong enough to leave",
+                "priority": "medium"
+            }
+        ]
+
+        # Add seasonal theme
+        if month == 10:  # October - DV Awareness Month
+            themes.insert(0, {
+                "theme": "October is Domestic Violence Awareness Month - we stand with survivors",
+                "type": "seasonal",
+                "seo_keywords": ["DVAM", "domestic violence awareness month"],
+                "aio_query": "what is domestic violence awareness month",
+                "priority": "trending"
+            })
+        elif month == 2:  # February - Teen Dating Violence
+            themes.insert(0, {
+                "theme": "Teen Dating Violence Awareness: Teaching healthy love early",
+                "type": "seasonal",
+                "seo_keywords": ["teen dating violence", "TDVAM"],
+                "aio_query": "signs of teen dating abuse",
+                "priority": "trending"
+            })
+
+        return themes[:8]
+
 
 # Convenience function for quick optimization
 def optimize_post(api_key: str, caption: str, image_prompt: str, topic: str) -> Dict:

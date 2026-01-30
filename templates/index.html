@@ -6,25 +6,135 @@
 <div class="card" id="createCard">
     <h2>Create New Post</h2>
 
-    <div class="form-group">
-        <label>Quick Theme Ideas (click to use)</label>
-        <div class="theme-chips">
-            {% for theme in themes %}
-            <span class="theme-chip" onclick="selectTheme('{{ theme }}')">{{ theme }}</span>
-            {% endfor %}
-        </div>
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+        <button type="button" class="mode-btn active" id="modeAI" onclick="setMode('ai')">
+            <span class="mode-icon">🤖</span> AI Generated
+        </button>
+        <button type="button" class="mode-btn" id="modeManual" onclick="setMode('manual')">
+            <span class="mode-icon">✏️</span> Manual
+        </button>
     </div>
 
-    <form id="generateForm">
-        <div class="form-group">
-            <label for="theme">Your Theme / Topic</label>
-            <input type="text" id="theme" name="theme" placeholder="Enter a theme for today's post..." required>
+    <!-- AI Mode Content -->
+    <div id="aiModeContent">
+        <div class="form-group smart-themes-section">
+            <div class="smart-themes-header">
+                <div>
+                    <label style="margin: 0;">Smart Theme Ideas</label>
+                    <span class="smart-themes-subtitle">AI-powered, SEO & AIO optimized</span>
+                </div>
+                <button type="button" onclick="loadSmartThemes()" class="btn-refresh" id="refreshThemesBtn" title="Get AI-powered suggestions">
+                    &#x21bb; Refresh
+                </button>
+            </div>
+
+            <!-- Preference Filters -->
+            <div class="theme-filters" id="themeFilters">
+                <span class="filter-label">Filter:</span>
+                <button type="button" class="filter-btn active" data-filter="all" onclick="filterThemes('all')">All</button>
+                <button type="button" class="filter-btn" data-filter="trending" onclick="filterThemes('trending')">🔥 Trending</button>
+                <button type="button" class="filter-btn" data-filter="educational" onclick="filterThemes('educational')">📚 Educational</button>
+                <button type="button" class="filter-btn" data-filter="supportive" onclick="filterThemes('supportive')">💜 Supportive</button>
+                <button type="button" class="filter-btn" data-filter="empowerment" onclick="filterThemes('empowerment')">💪 Empowerment</button>
+                <button type="button" class="filter-btn" data-filter="resource" onclick="filterThemes('resource')">📍 Resources</button>
+            </div>
+
+            <div class="theme-chips" id="themeChipsContainer">
+                <div class="loading-themes" id="themesLoading" style="display: none;">
+                    <span class="mini-spinner"></span> Loading AI suggestions...
+                </div>
+                {% for theme in themes %}
+                <span class="theme-chip" onclick="selectTheme('{{ theme }}')">{{ theme }}</span>
+                {% endfor %}
+            </div>
+
+            <!-- Selected Theme Details -->
+            <div class="theme-details" id="themeDetails" style="display: none;">
+                <div class="theme-details-header">
+                    <span class="theme-details-title">Theme Analysis</span>
+                    <button type="button" onclick="hideThemeDetails()" class="theme-details-close">&times;</button>
+                </div>
+                <div class="theme-details-content">
+                    <div class="theme-detail-row">
+                        <span class="detail-label">📝 Theme:</span>
+                        <span class="detail-value" id="detailTheme">-</span>
+                    </div>
+                    <div class="theme-detail-row">
+                        <span class="detail-label">🏷️ Type:</span>
+                        <span class="detail-value" id="detailType">-</span>
+                    </div>
+                    <div class="theme-detail-row">
+                        <span class="detail-label">🔍 SEO Keywords:</span>
+                        <div class="seo-keywords" id="detailSeoKeywords"></div>
+                    </div>
+                    <div class="theme-detail-row">
+                        <span class="detail-label">🤖 AI Query Match:</span>
+                        <span class="detail-value aio-query" id="detailAioQuery">-</span>
+                    </div>
+                    <div class="theme-detail-row">
+                        <span class="detail-label">📊 Priority:</span>
+                        <span class="detail-value" id="detailPriority">-</span>
+                    </div>
+                </div>
+                <button type="button" onclick="useSelectedTheme()" class="btn btn-primary btn-use-theme">
+                    Use This Theme
+                </button>
+            </div>
+
+            <div class="smart-themes-info" id="smartThemesInfo" style="display: none;">
+                <small>Click any theme to see SEO & AIO analysis</small>
+            </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">
-            <span>Generate Content</span>
-        </button>
-    </form>
+        <form id="generateForm">
+            <div class="form-group">
+                <label for="theme">Your Theme / Topic</label>
+                <input type="text" id="theme" name="theme" placeholder="Enter a theme for today's post..." required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <span>Generate Content</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Manual Mode Content -->
+    <div id="manualModeContent" style="display: none;">
+        <form id="manualForm">
+            <div class="form-group">
+                <label for="manualImage">Upload Image</label>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('manualImage').click()">
+                    <input type="file" id="manualImage" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    <div id="uploadPlaceholder">
+                        <span style="font-size: 2rem;">📷</span>
+                        <p>Click to upload or drag & drop</p>
+                        <small>Recommended: 1080x1080px (square)</small>
+                    </div>
+                    <img id="uploadedImagePreview" src="" alt="" style="display: none; max-width: 100%; border-radius: 8px;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="manualCaption">Caption</label>
+                <textarea id="manualCaption" placeholder="Write your caption here..." rows="5"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="manualTopic">Topic (for optimization)</label>
+                <input type="text" id="manualTopic" placeholder="e.g., domestic violence awareness, survivor support...">
+            </div>
+
+            <div class="manual-actions">
+                <button type="button" onclick="optimizeManualContent()" class="btn btn-secondary">
+                    📡 Optimize with REACH Amplify
+                </button>
+                <button type="button" onclick="previewManualContent()" class="btn btn-primary">
+                    Preview Post
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div id="loading" class="card loading">
@@ -92,6 +202,37 @@
             <div class="action-buttons">
                 <button onclick="savePost('draft')" class="btn btn-secondary">Save as Draft</button>
                 <button onclick="savePost('schedule')" class="btn btn-primary">Save & Schedule</button>
+            </div>
+
+            <!-- Instagram Posting Section -->
+            <div class="instagram-posting-section">
+                <h4>Post to Instagram</h4>
+                <div class="posting-options">
+                    <div class="posting-option manual-post">
+                        <h5>📋 Manual Post</h5>
+                        <p>Copy content and post directly on Instagram</p>
+                        <div class="copy-buttons">
+                            <button onclick="copyCaption()" class="btn btn-copy" id="copyCaptionBtn">
+                                📄 Copy Caption
+                            </button>
+                            <button onclick="downloadImage()" class="btn btn-copy">
+                                ⬇️ Download Image
+                            </button>
+                        </div>
+                        <a href="https://www.instagram.com/" target="_blank" class="btn btn-instagram">
+                            Open Instagram →
+                        </a>
+                    </div>
+
+                    <div class="posting-option direct-post" id="directPostOption">
+                        <h5>🚀 Direct Post</h5>
+                        <p id="directPostStatus">Configure Instagram API to enable</p>
+                        <button onclick="postToInstagram()" class="btn btn-primary btn-post" id="postToInstagramBtn" disabled>
+                            Post to Instagram
+                        </button>
+                        <a href="/settings" class="setup-link" id="setupApiLink">Set up Instagram API →</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -259,6 +400,178 @@
         margin-top: 15px;
         font-size: 0.9rem;
         border-left: 3px solid #667eea;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        padding: 5px;
+        background: #f3f4f6;
+        border-radius: 12px;
+    }
+    .mode-btn {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        background: transparent;
+        color: #6b7280;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .mode-btn:hover {
+        background: #e5e7eb;
+    }
+    .mode-btn.active {
+        background: white;
+        color: #667eea;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .mode-icon {
+        font-size: 1.1rem;
+    }
+
+    /* Upload Area */
+    .upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fafafa;
+    }
+    .upload-area:hover {
+        border-color: #667eea;
+        background: #f5f3ff;
+    }
+    .upload-area.dragover {
+        border-color: #667eea;
+        background: #ede9fe;
+    }
+    #uploadPlaceholder p {
+        margin: 10px 0 5px;
+        color: #4b5563;
+    }
+    #uploadPlaceholder small {
+        color: #9ca3af;
+    }
+
+    /* Manual Actions */
+    .manual-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .manual-actions button {
+        flex: 1;
+    }
+
+    /* Instagram Posting Section */
+    .instagram-posting-section {
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #f3f4f6;
+    }
+    .instagram-posting-section h4 {
+        margin: 0 0 15px;
+        color: #374151;
+        font-size: 1.1rem;
+    }
+    .posting-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    @media (max-width: 600px) {
+        .posting-options {
+            grid-template-columns: 1fr;
+        }
+    }
+    .posting-option {
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+    }
+    .posting-option h5 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+    }
+    .posting-option p {
+        margin: 0 0 15px;
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+    .manual-post {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-color: #86efac;
+    }
+    .direct-post {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-color: #fcd34d;
+    }
+    .copy-buttons {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    .btn-copy {
+        flex: 1;
+        padding: 10px;
+        font-size: 0.85rem;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-copy:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+    .btn-copy.copied {
+        background: #dcfce7;
+        border-color: #22c55e;
+        color: #16a34a;
+    }
+    .btn-instagram {
+        display: block;
+        text-align: center;
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-instagram:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(225, 48, 108, 0.4);
+    }
+    .btn-post {
+        width: 100%;
+        padding: 12px;
+    }
+    .btn-post:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .setup-link {
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+        font-size: 0.8rem;
+        color: #92400e;
+        text-decoration: underline;
     }
 </style>
 
@@ -797,15 +1110,680 @@
         border-radius: 8px;
         font-size: 0.75rem;
     }
+
+    /* Smart Themes Styles */
+    .btn-refresh {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-refresh:hover {
+        transform: scale(1.05);
+        box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+    }
+    .btn-refresh:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .loading-themes {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #667eea;
+        padding: 15px;
+    }
+    .mini-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #e0e7ff;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .smart-themes-info {
+        margin-top: 8px;
+        color: #667eea;
+        font-size: 0.75rem;
+    }
+    .theme-chip {
+        position: relative;
+    }
+    .theme-chip.smart {
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+        border: 1px solid #d8b4fe;
+    }
+    .theme-chip.smart:hover {
+        background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+        border-color: #c084fc;
+    }
+    .theme-type-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        border-radius: 8px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    .type-trending {
+        background: #fef08a;
+        color: #a16207;
+    }
+    .type-seasonal {
+        background: #fecaca;
+        color: #b91c1c;
+    }
+    .type-educational {
+        background: #bfdbfe;
+        color: #1e40af;
+    }
+    .type-empowerment {
+        background: #bbf7d0;
+        color: #166534;
+    }
+    .type-supportive {
+        background: #fce7f3;
+        color: #9d174d;
+    }
+    .type-resource {
+        background: #fed7aa;
+        color: #c2410c;
+    }
+    .type-awareness {
+        background: #e9d5ff;
+        color: #7c3aed;
+    }
+    .theme-meta {
+        display: block;
+        font-size: 0.65rem;
+        color: #6b7280;
+        margin-top: 4px;
+        font-style: italic;
+    }
+
+    /* Smart Themes Section */
+    .smart-themes-section {
+        background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e9d5ff;
+    }
+    .smart-themes-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    .smart-themes-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #7c3aed;
+        margin-top: 2px;
+    }
+
+    /* Theme Filters */
+    .theme-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+        align-items: center;
+    }
+    .filter-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-right: 5px;
+    }
+    .filter-btn {
+        padding: 5px 12px;
+        border: 1px solid #d8b4fe;
+        border-radius: 20px;
+        background: white;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #6b7280;
+    }
+    .filter-btn:hover {
+        background: #f3e8ff;
+        border-color: #c084fc;
+    }
+    .filter-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    /* Theme Details Panel */
+    .theme-details {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 15px;
+        border: 2px solid #c084fc;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.15);
+    }
+    .theme-details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9d5ff;
+    }
+    .theme-details-title {
+        font-weight: 600;
+        color: #7c3aed;
+        font-size: 0.95rem;
+    }
+    .theme-details-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #9ca3af;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .theme-details-close:hover {
+        color: #6b7280;
+    }
+    .theme-detail-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+        align-items: flex-start;
+    }
+    .detail-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+    .detail-value {
+        font-size: 0.9rem;
+        color: #374151;
+        flex: 1;
+    }
+    .seo-keywords {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex: 1;
+    }
+    .seo-keyword {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .aio-query {
+        background: #fef3c7;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-style: italic;
+        color: #92400e;
+        font-size: 0.85rem;
+    }
+    .btn-use-theme {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    /* Theme chip with click for details */
+    .theme-chip.smart {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .theme-chip.smart.selected {
+        background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+        color: white;
+        border-color: #9333ea;
+    }
+    .theme-chip.smart.selected .theme-type-badge {
+        background: white;
+    }
+
+    /* Priority badges */
+    .priority-high {
+        color: #dc2626;
+        font-weight: 600;
+    }
+    .priority-medium {
+        color: #d97706;
+    }
+    .priority-trending {
+        color: #059669;
+        font-weight: 600;
+    }
+    .priority-trending::before {
+        content: '🔥 ';
+    }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
     let currentData = {};
+    let currentMode = 'ai';
+    let uploadedImageData = null;
+    let smartThemesData = [];  // Store full theme data
+    let selectedThemeData = null;
+    let currentFilter = 'all';
 
     function selectTheme(theme) {
         document.getElementById('theme').value = theme;
+    }
+
+    function showThemeDetails(themeData, chipElement) {
+        // Store selected theme
+        selectedThemeData = themeData;
+
+        // Update chip selection
+        document.querySelectorAll('.theme-chip.smart').forEach(c => c.classList.remove('selected'));
+        if (chipElement) chipElement.classList.add('selected');
+
+        // Show details panel
+        const detailsPanel = document.getElementById('themeDetails');
+        detailsPanel.style.display = 'block';
+
+        // Populate details
+        document.getElementById('detailTheme').textContent = themeData.theme;
+        document.getElementById('detailType').innerHTML = `<span class="type-${themeData.type}" style="padding: 2px 8px; border-radius: 10px;">${themeData.type}</span>`;
+
+        // SEO Keywords
+        const keywordsContainer = document.getElementById('detailSeoKeywords');
+        keywordsContainer.innerHTML = '';
+        if (themeData.seo_keywords && themeData.seo_keywords.length > 0) {
+            themeData.seo_keywords.forEach(keyword => {
+                const span = document.createElement('span');
+                span.className = 'seo-keyword';
+                span.textContent = keyword;
+                keywordsContainer.appendChild(span);
+            });
+        } else {
+            keywordsContainer.textContent = 'No keywords available';
+        }
+
+        // AIO Query
+        const aioQuery = themeData.aio_query || 'No AI query match';
+        document.getElementById('detailAioQuery').textContent = `"${aioQuery}"`;
+
+        // Priority
+        const priority = themeData.priority || 'medium';
+        const priorityEl = document.getElementById('detailPriority');
+        priorityEl.textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+        priorityEl.className = `detail-value priority-${priority}`;
+    }
+
+    function hideThemeDetails() {
+        document.getElementById('themeDetails').style.display = 'none';
+        document.querySelectorAll('.theme-chip.smart').forEach(c => c.classList.remove('selected'));
+        selectedThemeData = null;
+    }
+
+    function useSelectedTheme() {
+        if (selectedThemeData) {
+            document.getElementById('theme').value = selectedThemeData.theme;
+            hideThemeDetails();
+            // Scroll to form
+            document.getElementById('generateForm').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function filterThemes(filter) {
+        currentFilter = filter;
+
+        // Update filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+
+        // Re-render themes with filter
+        renderThemes(smartThemesData, filter);
+    }
+
+    function renderThemes(themes, filter = 'all') {
+        const container = document.getElementById('themeChipsContainer');
+        container.innerHTML = '';
+
+        let filteredThemes = themes;
+        if (filter !== 'all') {
+            if (filter === 'trending') {
+                filteredThemes = themes.filter(t => t.priority === 'trending' || t.priority === 'high');
+            } else {
+                filteredThemes = themes.filter(t => t.type === filter);
+            }
+        }
+
+        if (filteredThemes.length === 0) {
+            container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">No themes found for this filter. Try "All" or refresh.</p>';
+            return;
+        }
+
+        filteredThemes.forEach(themeObj => {
+            const chip = document.createElement('span');
+            const themeText = themeObj.theme || themeObj;
+            const themeType = themeObj.type || 'supportive';
+            const priority = themeObj.priority || 'medium';
+
+            chip.className = 'theme-chip smart';
+            chip.dataset.type = themeType;
+            chip.dataset.priority = priority;
+            chip.onclick = () => showThemeDetails(themeObj, chip);
+            chip.innerHTML = themeText;
+
+            // Add priority badge for trending/high priority themes
+            if (priority === 'trending') {
+                const badge = document.createElement('span');
+                badge.className = 'theme-type-badge type-trending';
+                badge.textContent = 'Trending';
+                chip.appendChild(badge);
+            } else if (priority === 'high') {
+                const badge = document.createElement('span');
+                badge.className = `theme-type-badge type-${themeType}`;
+                badge.textContent = themeType.charAt(0).toUpperCase() + themeType.slice(1);
+                chip.appendChild(badge);
+            }
+
+            container.appendChild(chip);
+        });
+
+        // Show info
+        document.getElementById('smartThemesInfo').style.display = 'block';
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('modeAI').classList.toggle('active', mode === 'ai');
+        document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+        document.getElementById('aiModeContent').style.display = mode === 'ai' ? 'block' : 'none';
+        document.getElementById('manualModeContent').style.display = mode === 'manual' ? 'block' : 'none';
+    }
+
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImageData = e.target.result;
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                const preview = document.getElementById('uploadedImagePreview');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Drag and drop support
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    document.getElementById('manualImage').files = e.dataTransfer.files;
+                    handleImageUpload({ target: { files: [file] } });
+                }
+            });
+        }
+    });
+
+    async function previewManualContent() {
+        const imageData = uploadedImageData;
+        const caption = document.getElementById('manualCaption').value.trim();
+
+        if (!imageData) {
+            alert('Please upload an image first');
+            return;
+        }
+        if (!caption) {
+            alert('Please enter a caption');
+            return;
+        }
+
+        // Set preview data
+        currentData = {
+            theme: document.getElementById('manualTopic').value || 'Manual post',
+            caption: caption,
+            image_url: imageData,
+            isManual: true
+        };
+
+        // Show preview
+        document.getElementById('previewImage').src = imageData;
+        document.getElementById('phoneImage').src = imageData;
+        document.getElementById('imageLink').href = imageData;
+        document.getElementById('caption').value = caption;
+        updatePreview();
+
+        document.getElementById('createCard').style.display = 'none';
+        document.getElementById('preview').style.display = 'block';
+
+        // Hide AI regenerate buttons for manual mode
+        document.querySelectorAll('.regen-btn').forEach(btn => btn.style.display = 'none');
+    }
+
+    async function optimizeManualContent() {
+        const caption = document.getElementById('manualCaption').value.trim();
+        const topic = document.getElementById('manualTopic').value.trim() || 'domestic violence awareness';
+
+        if (!caption) {
+            alert('Please enter a caption to optimize');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/optimize-content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ caption, topic })
+            });
+            const data = await response.json();
+
+            if (data.success && data.reach_amplify) {
+                // Show optimization results in a modal or alert
+                const ra = data.reach_amplify;
+                let msg = `📡 REACH Amplify Results\n\n`;
+                msg += `Score: ${ra.discovery_score?.grade || 'N/A'}\n\n`;
+                msg += `Suggested Hashtags:\n${ra.hashtag_string || ''}\n\n`;
+                msg += `Alt Text:\n${ra.alt_text || ''}\n\n`;
+                if (ra.tips && ra.tips.length > 0) {
+                    msg += `Tips:\n• ${ra.tips.join('\n• ')}`;
+                }
+                alert(msg);
+
+                // Optionally append hashtags to caption
+                if (ra.hashtag_string && confirm('Add suggested hashtags to caption?')) {
+                    document.getElementById('manualCaption').value = caption + '\n\n' + ra.hashtag_string;
+                }
+            } else {
+                alert('Optimization completed but no suggestions available');
+            }
+        } catch (error) {
+            console.error('Optimization failed:', error);
+            alert('Failed to optimize content. Please try again.');
+        }
+    }
+
+    function copyCaption() {
+        const caption = document.getElementById('caption').value;
+        navigator.clipboard.writeText(caption).then(() => {
+            const btn = document.getElementById('copyCaptionBtn');
+            btn.textContent = '✓ Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '📄 Copy Caption';
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = caption;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Caption copied to clipboard!');
+        });
+    }
+
+    function downloadImage() {
+        const imageUrl = currentData.image_url;
+        if (!imageUrl) {
+            alert('No image to download');
+            return;
+        }
+
+        // For base64 images (manual upload)
+        if (imageUrl.startsWith('data:')) {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = 'instagram-post.jpg';
+            link.click();
+            return;
+        }
+
+        // For URL images, open in new tab (they can right-click save)
+        window.open(imageUrl, '_blank');
+    }
+
+    async function postToInstagram() {
+        if (!currentData.caption || !currentData.image_url) {
+            alert('Please generate or create content first');
+            return;
+        }
+
+        const btn = document.getElementById('postToInstagramBtn');
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+
+        try {
+            const response = await fetch('/api/post-to-instagram', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    caption: document.getElementById('caption').value,
+                    image_url: currentData.image_url
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                btn.textContent = '✓ Posted!';
+                btn.style.background = '#22c55e';
+                alert('Successfully posted to Instagram!');
+            } else {
+                throw new Error(data.error || 'Failed to post');
+            }
+        } catch (error) {
+            console.error('Post failed:', error);
+            alert('Failed to post to Instagram: ' + error.message);
+            btn.textContent = 'Post to Instagram';
+            btn.disabled = false;
+        }
+    }
+
+    // Check Instagram API status on load
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const response = await fetch('/api/instagram-status');
+            const data = await response.json();
+            if (data.configured) {
+                document.getElementById('postToInstagramBtn').disabled = false;
+                document.getElementById('directPostStatus').textContent = 'Ready to post!';
+                document.getElementById('setupApiLink').style.display = 'none';
+            }
+        } catch (e) {
+            // Instagram API not configured, keep defaults
+        }
+    });
+
+    async function loadSmartThemes(preferenceFilter = null) {
+        const container = document.getElementById('themeChipsContainer');
+        const loadingEl = document.getElementById('themesLoading');
+        const infoEl = document.getElementById('smartThemesInfo');
+        const refreshBtn = document.getElementById('refreshThemesBtn');
+
+        // Hide theme details when refreshing
+        hideThemeDetails();
+
+        // Show loading state
+        refreshBtn.disabled = true;
+        container.innerHTML = '';
+        loadingEl.style.display = 'flex';
+        container.appendChild(loadingEl);
+
+        try {
+            // Build URL with optional preference filter
+            let url = '/api/smart-themes';
+            if (preferenceFilter && preferenceFilter !== 'all') {
+                url += `?preference=${preferenceFilter}`;
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            loadingEl.style.display = 'none';
+
+            if (data.success && data.themes && data.themes.length > 0) {
+                // Store themes data globally
+                smartThemesData = data.themes;
+
+                // Render themes with current filter
+                renderThemes(smartThemesData, currentFilter);
+
+                // Update info text
+                infoEl.style.display = 'block';
+                infoEl.innerHTML = `<small>${data.source === 'ai' ? '🤖 Click any theme to see SEO & AIO analysis' : '📌 Click themes to see details'}</small>`;
+            } else {
+                // Fallback to static themes with proper structure
+                smartThemesData = [
+                    { theme: 'We see you, we believe you', type: 'supportive', priority: 'high', seo_keywords: ['domestic violence support'], aio_query: 'where can I get help' },
+                    { theme: 'Free confidential support', type: 'resource', priority: 'high', seo_keywords: ['free DV services'], aio_query: 'free domestic violence help' },
+                    { theme: 'Your healing journey', type: 'empowerment', priority: 'medium', seo_keywords: ['healing from abuse'], aio_query: 'how to heal from abuse' }
+                ];
+                renderThemes(smartThemesData, 'all');
+                infoEl.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Failed to load smart themes:', error);
+            loadingEl.style.display = 'none';
+            smartThemesData = [
+                { theme: 'We see you, we believe you', type: 'supportive', priority: 'high', seo_keywords: ['support'], aio_query: 'help for abuse' },
+                { theme: 'Free confidential support', type: 'resource', priority: 'high', seo_keywords: ['free help'], aio_query: 'free help near me' },
+                { theme: 'Your healing journey', type: 'empowerment', priority: 'medium', seo_keywords: ['healing'], aio_query: 'how to heal' }
+            ];
+            renderThemes(smartThemesData, 'all');
+            infoEl.style.display = 'none';
+        } finally {
+            refreshBtn.disabled = false;
+        }
     }
 
     function showError(title, message, action) {

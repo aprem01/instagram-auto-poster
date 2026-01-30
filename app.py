@@ -1079,6 +1079,255 @@ def api_calendar_events():
     return jsonify([dict(e) for e in events])
 
 
+@app.route('/api/smart-themes')
+def api_smart_themes():
+    """API endpoint for AI-generated smart theme ideas with optional preference filtering."""
+    preference = request.args.get('preference', None)
+
+    # Static fallback themes with full SEO/AIO data
+    static_themes = [
+        {
+            "theme": "We see you, we believe you, and we are here for you",
+            "type": "supportive",
+            "priority": "high",
+            "seo_keywords": ["domestic violence support", "DV help", "believe survivors"],
+            "aio_query": "where can i get help for domestic violence"
+        },
+        {
+            "theme": "Free confidential support in Chester County",
+            "type": "resource",
+            "priority": "high",
+            "seo_keywords": ["free DV services", "Chester County help", "confidential support"],
+            "aio_query": "free domestic violence help near me"
+        },
+        {
+            "theme": "Your journey to healing starts with one step",
+            "type": "empowerment",
+            "priority": "medium",
+            "seo_keywords": ["healing from abuse", "trauma recovery", "survivor healing"],
+            "aio_query": "how do i start healing from abuse"
+        },
+        {
+            "theme": "You deserve to feel safe - help is available",
+            "type": "supportive",
+            "priority": "high",
+            "seo_keywords": ["feel safe", "abuse help", "safety resources"],
+            "aio_query": "i dont feel safe at home what do i do"
+        },
+        {
+            "theme": "Recognizing warning signs in relationships",
+            "type": "educational",
+            "priority": "high",
+            "seo_keywords": ["red flags relationship", "abuse signs", "unhealthy relationship"],
+            "aio_query": "is my relationship abusive"
+        },
+        {
+            "theme": "Our counselors listen without judgment",
+            "type": "resource",
+            "priority": "medium",
+            "seo_keywords": ["DV counseling", "free counseling", "support services"],
+            "aio_query": "where can i talk to someone about abuse"
+        },
+        {
+            "theme": "Every survivor has a story of strength",
+            "type": "empowerment",
+            "priority": "medium",
+            "seo_keywords": ["survivor stories", "abuse survivor", "strength"],
+            "aio_query": "am i strong enough to leave"
+        },
+        {
+            "theme": "Building healthy relationships after trauma",
+            "type": "educational",
+            "priority": "medium",
+            "seo_keywords": ["healthy relationships", "dating after abuse", "trust again"],
+            "aio_query": "can i have a healthy relationship after abuse"
+        }
+    ]
+
+    if not reach_amplify:
+        # Filter by preference if specified
+        themes = static_themes
+        if preference and preference != 'all':
+            if preference == 'trending':
+                themes = [t for t in static_themes if t['priority'] in ['trending', 'high']]
+            else:
+                themes = [t for t in static_themes if t['type'] == preference]
+
+        return jsonify({
+            'success': True,
+            'source': 'static',
+            'themes': themes
+        })
+
+    try:
+        themes = reach_amplify.generate_smart_themes(count=8)
+
+        # Filter by preference if specified
+        if preference and preference != 'all':
+            if preference == 'trending':
+                themes = [t for t in themes if t.get('priority') in ['trending', 'high']]
+            else:
+                themes = [t for t in themes if t.get('type') == preference]
+
+        return jsonify({
+            'success': True,
+            'source': 'ai',
+            'themes': themes
+        })
+    except Exception as e:
+        logger.error(f"Smart themes generation failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'themes': []
+        }), 500
+
+
+@app.route('/api/optimize-content', methods=['POST'])
+def api_optimize_content():
+    """API endpoint to optimize manual content with REACH Amplify."""
+    data = request.json
+    caption = data.get('caption', '').strip()
+    topic = data.get('topic', 'domestic violence awareness').strip()
+
+    if not caption:
+        return jsonify({'success': False, 'error': 'Caption is required'}), 400
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'REACH Amplify not available. Please configure OPENAI_API_KEY.'
+        }), 503
+
+    try:
+        # Generate a simple image prompt for alt text generation
+        image_prompt = f"Supportive image for: {topic}"
+        discovery_data = reach_amplify.optimize_content(caption, image_prompt, topic)
+
+        return jsonify({
+            'success': True,
+            'reach_amplify': {
+                'hashtags': discovery_data.get('hashtags', []),
+                'hashtag_string': discovery_data.get('hashtag_string', ''),
+                'alt_text': discovery_data.get('alt_text', ''),
+                'keywords': discovery_data.get('keywords', []),
+                'discovery_score': discovery_data.get('discovery_score', {}),
+                'tips': discovery_data.get('tips', []),
+                'seo_analysis': discovery_data.get('seo_analysis', {})
+            }
+        })
+    except Exception as e:
+        logger.error(f"Content optimization failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/instagram-status')
+def api_instagram_status():
+    """Check if Instagram API is configured."""
+    # Check for required Instagram API environment variables
+    access_token = os.getenv('INSTAGRAM_ACCESS_TOKEN')
+    account_id = os.getenv('INSTAGRAM_ACCOUNT_ID')
+
+    configured = bool(access_token and account_id)
+
+    return jsonify({
+        'configured': configured,
+        'has_token': bool(access_token),
+        'has_account_id': bool(account_id)
+    })
+
+
+@app.route('/api/post-to-instagram', methods=['POST'])
+def api_post_to_instagram():
+    """Post content directly to Instagram using Graph API."""
+    access_token = os.getenv('INSTAGRAM_ACCESS_TOKEN')
+    account_id = os.getenv('INSTAGRAM_ACCOUNT_ID')
+
+    if not access_token or not account_id:
+        return jsonify({
+            'success': False,
+            'error': 'Instagram API not configured. Please set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_ACCOUNT_ID environment variables.'
+        }), 503
+
+    data = request.json
+    caption = data.get('caption', '').strip()
+    image_url = data.get('image_url', '').strip()
+
+    if not caption or not image_url:
+        return jsonify({'success': False, 'error': 'Caption and image URL are required'}), 400
+
+    # Instagram Graph API requires a publicly accessible image URL
+    if image_url.startswith('data:'):
+        return jsonify({
+            'success': False,
+            'error': 'Instagram requires a public image URL. Please use AI-generated content or upload to a hosting service first.'
+        }), 400
+
+    try:
+        import requests
+
+        # Step 1: Create media container
+        container_url = f"https://graph.facebook.com/v18.0/{account_id}/media"
+        container_response = requests.post(container_url, data={
+            'image_url': image_url,
+            'caption': caption,
+            'access_token': access_token
+        })
+        container_data = container_response.json()
+
+        if 'error' in container_data:
+            logger.error(f"Instagram container error: {container_data['error']}")
+            return jsonify({
+                'success': False,
+                'error': container_data['error'].get('message', 'Failed to create media container')
+            }), 400
+
+        container_id = container_data.get('id')
+        if not container_id:
+            return jsonify({'success': False, 'error': 'Failed to get container ID'}), 500
+
+        # Step 2: Publish the media
+        publish_url = f"https://graph.facebook.com/v18.0/{account_id}/media_publish"
+        publish_response = requests.post(publish_url, data={
+            'creation_id': container_id,
+            'access_token': access_token
+        })
+        publish_data = publish_response.json()
+
+        if 'error' in publish_data:
+            logger.error(f"Instagram publish error: {publish_data['error']}")
+            return jsonify({
+                'success': False,
+                'error': publish_data['error'].get('message', 'Failed to publish media')
+            }), 400
+
+        post_id = publish_data.get('id')
+        logger.info(f"Successfully posted to Instagram: {post_id}")
+
+        return jsonify({
+            'success': True,
+            'post_id': post_id,
+            'message': 'Successfully posted to Instagram!'
+        })
+
+    except Exception as e:
+        logger.error(f"Instagram posting failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/settings')
+def settings_page():
+    """Settings page for API configuration."""
+    # Check current configuration status
+    config_status = {
+        'openai': bool(os.getenv('OPENAI_API_KEY')),
+        'imgbb': bool(os.getenv('IMGBB_API_KEY')),
+        'instagram_token': bool(os.getenv('INSTAGRAM_ACCESS_TOKEN')),
+        'instagram_account': bool(os.getenv('INSTAGRAM_ACCOUNT_ID'))
+    }
+    return render_template('settings.html', config_status=config_status)
+
+
 # Initialize database on startup
 try:
     init_db()
