@@ -2816,11 +2816,40 @@
         }
     }
 
+    // Helper: Calculate Nth weekday of a month dynamically
+    function getNthWeekdayOfMonth(year, month, weekday, n) {
+        // weekday: 0=Sunday, 1=Monday, ..., 4=Thursday, 6=Saturday
+        // n: 1=first, 2=second, 3=third, 4=fourth, -1=last
+
+        if (n === -1) {
+            // Last occurrence of the weekday
+            const lastDay = new Date(year, month + 1, 0); // Last day of month
+            let date = lastDay.getDate();
+            while (new Date(year, month, date).getDay() !== weekday) {
+                date--;
+            }
+            return new Date(year, month, date);
+        }
+
+        // Find nth occurrence
+        let count = 0;
+        for (let day = 1; day <= 31; day++) {
+            const d = new Date(year, month, day);
+            if (d.getMonth() !== month) break; // Moved to next month
+            if (d.getDay() === weekday) {
+                count++;
+                if (count === n) {
+                    return d;
+                }
+            }
+        }
+        return null;
+    }
+
     function getStaticAwarenessDays() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
 
         const results = [];
 
@@ -2864,16 +2893,22 @@
             }
         });
 
-        // Define special DAYS with categories
-        const specialDays = [
+        // Define FIXED date special days
+        const fixedDays = [
             { month: 1, day: 14, name: 'V-Day / One Billion Rising', category: 'Women\'s Issues' },
             { month: 2, day: 8, name: 'International Women\'s Day', category: 'Women\'s Issues' },
-            { month: 9, day: 15, name: 'Purple Thursday', category: 'DV Related' },
             { month: 10, day: 25, name: 'International Day for the Elimination of Violence Against Women', category: 'DV Related' }
         ];
 
-        // Check special DAYS - only include if AFTER today
-        specialDays.forEach(special => {
+        // Define CALCULATED special days (Nth weekday of month)
+        const calculatedDays = [
+            { month: 9, weekday: 4, n: 3, name: 'Purple Thursday', category: 'DV Related' },  // 3rd Thursday of October
+            { month: 3, weekday: 3, n: -1, name: 'Denim Day', category: 'Sexual Assault' },   // Last Wednesday of April
+            { month: 9, weekday: 1, n: 1, name: 'National DV Remembrance Day', category: 'DV Related' }  // 1st Monday of October
+        ];
+
+        // Check FIXED date special days
+        fixedDays.forEach(special => {
             let year = currentYear;
             let eventDate = new Date(year, special.month, special.day);
 
@@ -2885,7 +2920,6 @@
 
             const daysAway = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
 
-            // Only include if it's in the future (daysAway > 0)
             if (daysAway > 0 && daysAway <= 90) {
                 results.push({
                     date: eventDate.toISOString(),
@@ -2895,6 +2929,31 @@
                     is_active: false,
                     category: special.category
                 });
+            }
+        });
+
+        // Check CALCULATED special days (dynamically calculated based on current year)
+        calculatedDays.forEach(special => {
+            // Try current year first, then next year
+            for (let yearOffset = 0; yearOffset <= 1; yearOffset++) {
+                const year = currentYear + yearOffset;
+                const eventDate = getNthWeekdayOfMonth(year, special.month, special.weekday, special.n);
+
+                if (eventDate && eventDate > today) {
+                    const daysAway = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+
+                    if (daysAway > 0 && daysAway <= 90) {
+                        results.push({
+                            date: eventDate.toISOString(),
+                            name: special.name,
+                            type: 'Day',
+                            days_away: daysAway,
+                            is_active: false,
+                            category: special.category
+                        });
+                    }
+                    break; // Found a valid date, don't check next year
+                }
             }
         });
 
