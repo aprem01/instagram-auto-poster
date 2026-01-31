@@ -2040,57 +2040,113 @@ Make themes varied, authentic, and actionable."""
 
         return result
 
+    def _get_awareness_category(self, key: str) -> str:
+        """
+        Get the category label for an awareness event.
+
+        Args:
+            key: The key identifier for the awareness event
+
+        Returns:
+            Category label string
+        """
+        key_lower = key.lower()
+
+        if key_lower in ["october", "purple_thursday", "domestic_violence_memorial_day"]:
+            return "DV Related"
+        elif key_lower in ["february"]:
+            return "Youth"
+        elif key_lower in ["april", "denim_day"]:
+            return "Sexual Assault"
+        elif key_lower in ["march", "international_womens_day"]:
+            return "Women's Issues"
+        elif key_lower in ["january"]:
+            return "Human Trafficking"
+        else:
+            return "Community"
+
     def get_upcoming_awareness_days(self, days_ahead: int = 30) -> List[Dict]:
         """
         Get awareness days coming up in the next N days.
+        Only returns FUTURE events (strictly greater than today).
+        For awareness MONTHS: shows if we're currently IN the month (active) OR if it's coming up.
+        For special DAYS: calculates exact date using helper method.
 
         Args:
             days_ahead: Number of days to look ahead (default 30)
 
         Returns:
-            List of upcoming awareness days with dates and info
+            List of upcoming awareness days with dates, days_away, is_active, and category
         """
         from datetime import datetime, timedelta
+        import calendar
 
-        today = datetime.now()
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = today + timedelta(days=days_ahead)
         upcoming = []
 
         # Check current month awareness
         current_month = today.month
+        current_year = today.year
         month_names = {
             1: "january", 2: "february", 3: "march", 4: "april",
             5: "may", 6: "june", 7: "july", 8: "august",
             9: "september", 10: "october", 11: "november", 12: "december"
         }
 
-        # Check if current or next month has awareness
-        for month_offset in [0, 1]:
+        # Check awareness MONTHS - include if we're IN the month (active) OR if it's upcoming
+        for month_offset in range(0, 13):  # Check up to a year ahead
             check_month = ((current_month - 1 + month_offset) % 12) + 1
-            check_year = today.year if check_month >= current_month else today.year + 1
+            check_year = current_year + ((current_month - 1 + month_offset) // 12)
             month_name = month_names[check_month]
 
             if month_name in self.AWARENESS_CALENDAR:
                 awareness = self.AWARENESS_CALENDAR[month_name]
                 month_start = datetime(check_year, check_month, 1)
-                if month_start <= end_date and month_start >= today.replace(day=1):
+                # Get the last day of the month
+                last_day = calendar.monthrange(check_year, check_month)[1]
+                month_end = datetime(check_year, check_month, last_day)
+
+                # Check if we're currently IN this month (active) or if it's upcoming
+                is_active = month_start <= today <= month_end
+                is_upcoming = month_start > today and month_start <= end_date
+
+                if is_active or is_upcoming:
+                    # Calculate days_away based on whether active or upcoming
+                    if is_active:
+                        days_away = 0  # We're in the month now
+                        sort_date = today  # Sort active months by today's date
+                    else:
+                        days_away = (month_start - today).days
+                        sort_date = month_start
+
                     upcoming.append({
                         "type": "month",
                         "key": month_name,
                         "name": awareness["name"],
                         "short": awareness["short"],
+                        "date": sort_date.strftime("%Y-%m-%d"),
                         "start_date": month_start.strftime("%Y-%m-%d"),
+                        "end_date": month_end.strftime("%Y-%m-%d"),
                         "hashtags": awareness["hashtags"],
-                        "days_away": (month_start - today).days if month_start > today else 0
+                        "days_away": days_away,
+                        "is_active": is_active,
+                        "category": self._get_awareness_category(month_name)
                     })
 
-        # Check special days
+            # Stop if we've found enough months
+            if len([u for u in upcoming if u["type"] == "month"]) >= 3:
+                break
+
+        # Check special days - only include if AFTER today (strictly greater than)
         special_days = self.AWARENESS_CALENDAR.get("special_days", {})
         for day_key, day_info in special_days.items():
             # Try current year and next year
             for year in [today.year, today.year + 1]:
                 actual_date = self._calculate_special_day_date(day_info, year)
-                if actual_date and today <= actual_date <= end_date:
+                # Only include if the date is AFTER today (strictly greater than)
+                if actual_date and actual_date > today and actual_date <= end_date:
+                    days_away = (actual_date - today).days
                     upcoming.append({
                         "type": "special_day",
                         "key": day_key,
@@ -2099,12 +2155,14 @@ Make themes varied, authentic, and actionable."""
                         "date": actual_date.strftime("%Y-%m-%d"),
                         "formatted_date": actual_date.strftime("%B %d, %Y"),
                         "hashtags": day_info.get("hashtags", []),
-                        "days_away": (actual_date - today).days
+                        "days_away": days_away,
+                        "is_active": False,  # Special days are never "active", just upcoming
+                        "category": self._get_awareness_category(day_key)
                     })
                     break  # Don't add same day from next year if found this year
 
-        # Sort by date
-        upcoming.sort(key=lambda x: x.get("date", x.get("start_date", "")))
+        # Sort by days_away ascending (nearest first), then by date
+        upcoming.sort(key=lambda x: (x.get("days_away", 999), x.get("date", x.get("start_date", ""))))
 
         return upcoming
 

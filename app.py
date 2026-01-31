@@ -1592,6 +1592,141 @@ def api_upcoming_awareness():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/awareness-calendar')
+def api_awareness_calendar_frontend():
+    """
+    Get awareness calendar for frontend display.
+    This endpoint is specifically formatted for the frontend JavaScript.
+
+    Query params:
+        - days: int (optional) - Number of days to look ahead (default 90)
+
+    Returns:
+        {success: true, days: [...]} format for frontend consumption
+    """
+    days_ahead = request.args.get('days', 90, type=int)
+
+    # Static fallback data with proper future date calculations
+    def get_static_awareness_days():
+        from datetime import datetime, timedelta
+        import calendar
+
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        days = []
+
+        # Define awareness months with their details
+        awareness_months = {
+            1: {"name": "Human Trafficking Awareness Month", "category": "Human Trafficking"},
+            2: {"name": "Teen Dating Violence Awareness Month", "category": "Youth"},
+            4: {"name": "Sexual Assault Awareness Month", "category": "Sexual Assault"},
+            10: {"name": "Domestic Violence Awareness Month", "category": "DV Related"}
+        }
+
+        # Check current and upcoming months
+        for month_num, info in awareness_months.items():
+            # Calculate the start of this awareness month
+            year = today.year
+            if month_num < today.month:
+                year += 1  # Next year
+
+            month_start = datetime(year, month_num, 1)
+            last_day = calendar.monthrange(year, month_num)[1]
+            month_end = datetime(year, month_num, last_day)
+
+            # Check if we're currently IN this month (active) or if it's upcoming
+            is_active = month_start <= today <= month_end
+
+            if is_active:
+                days_away = 0
+                days.append({
+                    "date": today.strftime("%Y-%m-%d"),
+                    "name": info["name"],
+                    "type": "Month",
+                    "days_away": days_away,
+                    "is_active": True,
+                    "category": info["category"]
+                })
+            elif month_start > today:
+                days_away = (month_start - today).days
+                if days_away <= days_ahead:
+                    days.append({
+                        "date": month_start.strftime("%Y-%m-%d"),
+                        "name": info["name"],
+                        "type": "Month",
+                        "days_away": days_away,
+                        "is_active": False,
+                        "category": info["category"]
+                    })
+
+        # Add some special days
+        special_days = [
+            {"month": 2, "day": 14, "name": "V-Day / One Billion Rising", "category": "Women's Issues"},
+            {"month": 3, "day": 8, "name": "International Women's Day", "category": "Women's Issues"},
+            {"month": 11, "day": 25, "name": "International Day for the Elimination of Violence Against Women", "category": "DV Related"}
+        ]
+
+        for special in special_days:
+            year = today.year
+            special_date = datetime(year, special["month"], special["day"])
+
+            # If the date has passed this year, use next year
+            if special_date <= today:
+                year += 1
+                special_date = datetime(year, special["month"], special["day"])
+
+            days_away = (special_date - today).days
+            if days_away > 0 and days_away <= days_ahead:
+                days.append({
+                    "date": special_date.strftime("%Y-%m-%d"),
+                    "name": special["name"],
+                    "type": "Day",
+                    "days_away": days_away,
+                    "is_active": False,
+                    "category": special["category"]
+                })
+
+        # Sort by days_away (nearest first)
+        days.sort(key=lambda x: x["days_away"])
+
+        return days[:6]  # Return top 6
+
+    if not reach_amplify:
+        return jsonify({
+            'success': True,
+            'source': 'static',
+            'days': get_static_awareness_days()
+        })
+
+    try:
+        upcoming = reach_amplify.get_upcoming_awareness_days(days_ahead)
+
+        # Transform the data to match frontend expectations
+        days = []
+        for item in upcoming:
+            day_data = {
+                "date": item.get("date", item.get("start_date", "")),
+                "name": item.get("name", ""),
+                "type": "Month" if item.get("type") == "month" else "Day",
+                "days_away": item.get("days_away", 0),
+                "is_active": item.get("is_active", False),
+                "category": item.get("category", "Community")
+            }
+            days.append(day_data)
+
+        return jsonify({
+            'success': True,
+            'days': days[:6]  # Return top 6 items
+        })
+    except Exception as e:
+        logger.error(f"Awareness calendar failed: {e}")
+        # Fall back to static data on error
+        return jsonify({
+            'success': True,
+            'source': 'static_fallback',
+            'days': get_static_awareness_days()
+        })
+
+
 @app.route('/api/awareness/generate', methods=['POST'])
 def api_generate_awareness_post():
     """

@@ -141,8 +141,10 @@
     <!-- Awareness Calendar Section -->
     <div class="awareness-calendar-section" id="awarenessCalendar">
         <div class="awareness-header">
-            <label>📅 Awareness Calendar</label>
-            <span class="awareness-subtitle">Never miss an important awareness day</span>
+            <div>
+                <label>Awareness Calendar</label>
+                <span class="awareness-subtitle">Never miss an important awareness day</span>
+            </div>
         </div>
         <div class="upcoming-awareness-days" id="upcomingDays">
             <div class="awareness-loading">
@@ -1474,16 +1476,29 @@
         accent-color: #f59e0b;
     }
 
-    /* Awareness Calendar Styles */
+    /* Awareness Calendar Styles - Professional Design */
     .awareness-calendar-section {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         padding: 20px;
         border-radius: 12px;
-        border: 1px solid #93c5fd;
+        border: 1px solid #e2e8f0;
         margin-bottom: 20px;
     }
     .awareness-header {
         margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .awareness-header::before {
+        content: '';
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231e40af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        flex-shrink: 0;
     }
     .awareness-header label {
         display: block;
@@ -1494,7 +1509,7 @@
     .awareness-subtitle {
         display: block;
         font-size: 0.75rem;
-        color: #3b82f6;
+        color: #64748b;
     }
     .upcoming-awareness-days {
         display: flex;
@@ -1508,20 +1523,24 @@
         display: flex;
         align-items: center;
         gap: 15px;
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid #94a3b8;
         cursor: pointer;
         transition: all 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
     .awareness-day-card:hover {
         transform: translateX(5px);
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-    .awareness-day-card.today {
-        border-left-color: #dc2626;
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    /* Active Now - Green left border */
+    .awareness-day-card.active-now {
+        border-left-color: #16a34a;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     }
+    /* This Week - Amber left border */
     .awareness-day-card.this-week {
         border-left-color: #f59e0b;
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
     }
     .awareness-date {
         text-align: center;
@@ -1530,13 +1549,14 @@
     .awareness-month {
         font-size: 0.7rem;
         text-transform: uppercase;
-        color: #6b7280;
+        color: #64748b;
         font-weight: 600;
+        letter-spacing: 0.5px;
     }
     .awareness-day-num {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1e40af;
+        color: #1e293b;
         line-height: 1;
     }
     .awareness-info {
@@ -1544,21 +1564,65 @@
     }
     .awareness-name {
         font-weight: 600;
-        color: #1e3a8a;
-        margin-bottom: 4px;
+        color: #1e293b;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+    .awareness-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .awareness-category {
+        font-size: 0.75rem;
+        color: #475569;
+        font-weight: 500;
+    }
+    .awareness-type-divider {
+        color: #cbd5e1;
+        font-size: 0.75rem;
     }
     .awareness-type {
         font-size: 0.75rem;
-        color: #6b7280;
+        color: #64748b;
     }
+    /* Category colored dots */
+    .category-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    .category-dot.category-dv {
+        background-color: #9333ea; /* Purple for DV */
+    }
+    .category-dot.category-youth {
+        background-color: #3b82f6; /* Blue for Youth */
+    }
+    .category-dot.category-sa {
+        background-color: #6366f1; /* Indigo for Sexual Assault */
+    }
+    .category-dot.category-women {
+        background-color: #ec4899; /* Pink for Women's Issues */
+    }
+    .category-dot.category-ht {
+        background-color: #f97316; /* Orange for Human Trafficking */
+    }
+    .category-dot.category-community {
+        background-color: #10b981; /* Green for Community */
+    }
+    /* Badges - Professional styling */
     .awareness-badge {
-        padding: 4px 10px;
+        padding: 4px 12px;
         border-radius: 15px;
         font-size: 0.7rem;
         font-weight: 600;
+        white-space: nowrap;
     }
-    .badge-today {
-        background: #dc2626;
+    .badge-active {
+        background: #16a34a;
         color: white;
     }
     .badge-this-week {
@@ -1566,14 +1630,14 @@
         color: #78350f;
     }
     .badge-upcoming {
-        background: #dbeafe;
-        color: #1e40af;
+        background: #e2e8f0;
+        color: #475569;
     }
     .awareness-loading {
         display: flex;
         align-items: center;
         gap: 10px;
-        color: #3b82f6;
+        color: #64748b;
         padding: 15px;
     }
 
@@ -2738,7 +2802,8 @@
             const response = await fetch('/api/awareness-calendar');
             const data = await response.json();
 
-            if (data.success && data.days && data.days.length > 0) {
+            // Parse response.days (the new format)
+            if (data.success && data.days && Array.isArray(data.days) && data.days.length > 0) {
                 renderAwarenessDays(data.days);
             } else {
                 // Show static awareness days as fallback
@@ -2753,27 +2818,91 @@
 
     function getStaticAwarenessDays() {
         const today = new Date();
-        const month = today.getMonth();
+        today.setHours(0, 0, 0, 0);
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
 
-        // Common awareness days
-        const awarenessCalendar = [
-            { date: new Date(today.getFullYear(), 0, 1), name: 'Human Trafficking Awareness Month Begins', type: 'Month' },
-            { date: new Date(today.getFullYear(), 1, 14), name: 'V-Day / One Billion Rising', type: 'Day' },
-            { date: new Date(today.getFullYear(), 3, 1), name: 'Sexual Assault Awareness Month Begins', type: 'Month' },
-            { date: new Date(today.getFullYear(), 9, 1), name: 'Domestic Violence Awareness Month Begins', type: 'Month' },
-            { date: new Date(today.getFullYear(), 9, 15), name: 'Purple Thursday', type: 'Day' },
-            { date: new Date(today.getFullYear(), 10, 25), name: 'International Day for the Elimination of Violence Against Women', type: 'Day' }
+        const results = [];
+
+        // Define awareness MONTHS with categories
+        const awarenessMonths = [
+            { month: 0, name: 'Human Trafficking Awareness Month', category: 'Human Trafficking' },
+            { month: 1, name: 'Teen Dating Violence Awareness Month', category: 'Youth' },
+            { month: 3, name: 'Sexual Assault Awareness Month', category: 'Sexual Assault' },
+            { month: 9, name: 'Domestic Violence Awareness Month', category: 'DV Related' }
         ];
 
-        // Filter to upcoming days
-        return awarenessCalendar
-            .filter(d => d.date >= today || d.date.getMonth() === month)
-            .slice(0, 3)
-            .map(d => ({
-                date: d.date.toISOString(),
-                name: d.name,
-                type: d.type
-            }));
+        // Check awareness MONTHS
+        awarenessMonths.forEach(awareness => {
+            let year = currentYear;
+            let monthStart = new Date(year, awareness.month, 1);
+            let monthEnd = new Date(year, awareness.month + 1, 0); // Last day of month
+
+            // If the month has fully passed this year, use next year
+            if (monthEnd < today) {
+                year = currentYear + 1;
+                monthStart = new Date(year, awareness.month, 1);
+                monthEnd = new Date(year, awareness.month + 1, 0);
+            }
+
+            // Check if we're currently IN this month (active) or if it's upcoming
+            const isActive = today >= monthStart && today <= monthEnd;
+            const isUpcoming = monthStart > today;
+
+            if (isActive || isUpcoming) {
+                const daysAway = isActive ? 0 : Math.ceil((monthStart - today) / (1000 * 60 * 60 * 24));
+                const sortDate = isActive ? today : monthStart;
+
+                results.push({
+                    date: sortDate.toISOString(),
+                    name: awareness.name,
+                    type: 'Month',
+                    days_away: daysAway,
+                    is_active: isActive,
+                    category: awareness.category
+                });
+            }
+        });
+
+        // Define special DAYS with categories
+        const specialDays = [
+            { month: 1, day: 14, name: 'V-Day / One Billion Rising', category: 'Women\'s Issues' },
+            { month: 2, day: 8, name: 'International Women\'s Day', category: 'Women\'s Issues' },
+            { month: 9, day: 15, name: 'Purple Thursday', category: 'DV Related' },
+            { month: 10, day: 25, name: 'International Day for the Elimination of Violence Against Women', category: 'DV Related' }
+        ];
+
+        // Check special DAYS - only include if AFTER today
+        specialDays.forEach(special => {
+            let year = currentYear;
+            let eventDate = new Date(year, special.month, special.day);
+
+            // If the date has passed this year, use next year
+            if (eventDate <= today) {
+                year = currentYear + 1;
+                eventDate = new Date(year, special.month, special.day);
+            }
+
+            const daysAway = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+
+            // Only include if it's in the future (daysAway > 0)
+            if (daysAway > 0 && daysAway <= 90) {
+                results.push({
+                    date: eventDate.toISOString(),
+                    name: special.name,
+                    type: 'Day',
+                    days_away: daysAway,
+                    is_active: false,
+                    category: special.category
+                });
+            }
+        });
+
+        // Sort by days_away (nearest first)
+        results.sort((a, b) => a.days_away - b.days_away);
+
+        // Return top 6 results
+        return results.slice(0, 6);
     }
 
     function renderAwarenessDays(days) {
@@ -2783,16 +2912,51 @@
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        // Map categories to CSS class names
+        const categoryClasses = {
+            'DV Related': 'category-dv',
+            'Youth': 'category-youth',
+            'Sexual Assault': 'category-sa',
+            'Women\'s Issues': 'category-women',
+            'Human Trafficking': 'category-ht',
+            'Community': 'category-community'
+        };
+
         days.forEach(day => {
             const dayDate = new Date(day.date);
-            const isToday = dayDate.toDateString() === today.toDateString();
-            const isThisWeek = dayDate >= today && dayDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const isActive = day.is_active === true;
+            const daysAway = day.days_away !== undefined ? day.days_away : Math.ceil((dayDate - today) / (1000 * 60 * 60 * 24));
+            const isThisWeek = !isActive && daysAway > 0 && daysAway <= 7;
+
+            // Determine card class based on status
+            let cardClass = 'awareness-day-card';
+            if (isActive) {
+                cardClass += ' active-now';
+            } else if (isThisWeek) {
+                cardClass += ' this-week';
+            }
 
             const card = document.createElement('div');
-            card.className = `awareness-day-card ${isToday ? 'today' : isThisWeek ? 'this-week' : ''}`;
+            card.className = cardClass;
             card.onclick = () => useAwarenessDay(day);
 
             const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+            // Get category class
+            const categoryClass = categoryClasses[day.category] || 'category-community';
+
+            // Determine badge text and class
+            let badgeText, badgeClass;
+            if (isActive) {
+                badgeText = 'Active Now';
+                badgeClass = 'badge-active';
+            } else if (isThisWeek) {
+                badgeText = `In ${daysAway} day${daysAway === 1 ? '' : 's'}`;
+                badgeClass = 'badge-this-week';
+            } else {
+                badgeText = `In ${daysAway} days`;
+                badgeClass = 'badge-upcoming';
+            }
 
             card.innerHTML = `
                 <div class="awareness-date">
@@ -2801,10 +2965,15 @@
                 </div>
                 <div class="awareness-info">
                     <div class="awareness-name">${day.name}</div>
-                    <div class="awareness-type">${day.type || 'Awareness Day'}</div>
+                    <div class="awareness-meta">
+                        <span class="category-dot ${categoryClass}"></span>
+                        <span class="awareness-category">${day.category || 'Community'}</span>
+                        <span class="awareness-type-divider">|</span>
+                        <span class="awareness-type">${day.type || 'Awareness Day'}</span>
+                    </div>
                 </div>
-                <span class="awareness-badge ${isToday ? 'badge-today' : isThisWeek ? 'badge-this-week' : 'badge-upcoming'}">
-                    ${isToday ? 'Today' : isThisWeek ? 'This Week' : 'Upcoming'}
+                <span class="awareness-badge ${badgeClass}">
+                    ${badgeText}
                 </span>
             `;
 
