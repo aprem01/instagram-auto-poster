@@ -18,6 +18,81 @@
 
     <!-- AI Mode Content -->
     <div id="aiModeContent">
+        <!-- Keyword Search Section -->
+        <div class="form-group keyword-search-section">
+            <div class="keyword-search-header">
+                <div>
+                    <label style="margin: 0;">🔍 Find Trends by Keywords</label>
+                    <span class="keyword-search-subtitle">Enter keywords to discover SEO & AIO optimized themes</span>
+                </div>
+            </div>
+
+            <div class="keyword-input-container">
+                <div class="keyword-chips" id="keywordChips"></div>
+                <input type="text"
+                       id="keywordInput"
+                       placeholder="Type keyword and press Enter (e.g., healing, support, teen safety...)"
+                       onkeydown="handleKeywordInput(event)">
+            </div>
+
+            <div class="keyword-suggestions" id="keywordSuggestions">
+                <span class="suggestion-label">Quick add:</span>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('healing')">healing</button>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('safety')">safety</button>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('teen')">teen</button>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('support')">support</button>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('awareness')">awareness</button>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('self-care')">self-care</button>
+                <button type="button" class="keyword-suggestion" onclick="addKeyword('hope')">hope</button>
+            </div>
+
+            <div class="keyword-actions">
+                <button type="button" onclick="findKeywordTrends()" class="btn btn-keyword-search" id="findTrendsBtn">
+                    <span class="btn-icon">🚀</span> Find Trends with SEO/AIO
+                </button>
+                <button type="button" onclick="clearKeywords()" class="btn btn-clear-keywords" id="clearKeywordsBtn">
+                    Clear All
+                </button>
+            </div>
+
+            <!-- Keyword Trends Results -->
+            <div id="keywordTrendsResults" class="keyword-trends-results" style="display: none;">
+                <div class="trends-header">
+                    <span class="trends-title">📊 Keyword Analysis Results</span>
+                    <button type="button" onclick="hideKeywordResults()" class="trends-close">&times;</button>
+                </div>
+
+                <!-- SEO Analysis -->
+                <div class="trends-section">
+                    <h5>🔍 SEO Insights</h5>
+                    <div id="seoInsightsContainer" class="seo-insights"></div>
+                </div>
+
+                <!-- AIO Queries -->
+                <div class="trends-section">
+                    <h5>🤖 AI Search Queries (AIO)</h5>
+                    <p class="trends-description">Questions people ask AI about these topics</p>
+                    <div id="aioQueriesContainer" class="aio-queries"></div>
+                </div>
+
+                <!-- Related Themes -->
+                <div class="trends-section">
+                    <h5>💡 Suggested Themes</h5>
+                    <div id="keywordThemesContainer" class="keyword-themes"></div>
+                </div>
+
+                <!-- Trending Hashtags -->
+                <div class="trends-section">
+                    <h5>🏷️ Trending Hashtags</h5>
+                    <div id="trendingHashtagsContainer" class="trending-hashtags"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-divider">
+            <span>OR choose from AI suggestions</span>
+        </div>
+
         <div class="form-group smart-themes-section">
             <div class="smart-themes-header">
                 <div>
@@ -373,6 +448,373 @@
 </div>
 
 <style>
+    /* Keyword Search Section Styles */
+    .keyword-search-section {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #6ee7b7;
+        margin-bottom: 20px;
+    }
+    .keyword-search-header {
+        margin-bottom: 15px;
+    }
+    .keyword-search-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #059669;
+        margin-top: 2px;
+    }
+    .keyword-input-container {
+        background: white;
+        border: 2px solid #a7f3d0;
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        min-height: 50px;
+        transition: border-color 0.2s;
+    }
+    .keyword-input-container:focus-within {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+    .keyword-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .keyword-chip {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        animation: chipAppear 0.2s ease-out;
+    }
+    @keyframes chipAppear {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    .keyword-chip .remove-chip {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0.8;
+        padding: 0;
+    }
+    .keyword-chip .remove-chip:hover {
+        opacity: 1;
+    }
+    .keyword-input-container input {
+        flex: 1;
+        min-width: 200px;
+        border: none;
+        outline: none;
+        font-size: 0.95rem;
+        padding: 5px;
+        background: transparent;
+    }
+    .keyword-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0;
+        align-items: center;
+    }
+    .suggestion-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+    .keyword-suggestion {
+        background: white;
+        border: 1px solid #d1d5db;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #374151;
+    }
+    .keyword-suggestion:hover {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+    }
+    .keyword-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .btn-keyword-search {
+        flex: 1;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    .btn-keyword-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+    .btn-keyword-search:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-clear-keywords {
+        background: white;
+        border: 1px solid #d1d5db;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        color: #6b7280;
+        transition: all 0.2s;
+    }
+    .btn-clear-keywords:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+    .btn-icon {
+        font-size: 1.1rem;
+    }
+
+    /* Keyword Trends Results */
+    .keyword-trends-results {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 2px solid #10b981;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+        animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .trends-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .trends-title {
+        font-weight: 600;
+        color: #059669;
+        font-size: 1.1rem;
+    }
+    .trends-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #9ca3af;
+        cursor: pointer;
+    }
+    .trends-close:hover {
+        color: #6b7280;
+    }
+    .trends-section {
+        margin-bottom: 20px;
+    }
+    .trends-section:last-child {
+        margin-bottom: 0;
+    }
+    .trends-section h5 {
+        color: #374151;
+        margin: 0 0 10px 0;
+        font-size: 0.95rem;
+    }
+    .trends-description {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin: 0 0 10px 0;
+    }
+
+    /* SEO Insights */
+    .seo-insights {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .seo-insight-card {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        padding: 12px 15px;
+        border-radius: 10px;
+        flex: 1;
+        min-width: 150px;
+    }
+    .seo-insight-label {
+        font-size: 0.75rem;
+        color: #1e40af;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    .seo-insight-value {
+        font-size: 1.1rem;
+        color: #1e3a8a;
+        font-weight: 600;
+        margin-top: 5px;
+    }
+    .seo-keyword-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .seo-related-keyword {
+        background: #eff6ff;
+        color: #1e40af;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    /* AIO Queries */
+    .aio-queries {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .aio-query-item {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        padding: 12px 15px;
+        border-radius: 10px;
+        border-left: 4px solid #f59e0b;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .aio-query-item:hover {
+        transform: translateX(5px);
+    }
+    .aio-query-text {
+        color: #92400e;
+        font-style: italic;
+    }
+    .aio-query-intent {
+        display: inline-block;
+        background: #fbbf24;
+        color: #78350f;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        margin-top: 5px;
+        text-transform: uppercase;
+    }
+
+    /* Keyword Themes */
+    .keyword-themes {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .keyword-theme-card {
+        background: #f9fafb;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .keyword-theme-card:hover {
+        background: #f3f4f6;
+        border-color: #10b981;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    }
+    .keyword-theme-title {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    .keyword-theme-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+    .theme-type-tag {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .theme-priority-tag {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+    }
+    .theme-priority-high {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    .theme-priority-trending {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    .theme-priority-medium {
+        background: #e5e7eb;
+        color: #6b7280;
+    }
+
+    /* Trending Hashtags */
+    .trending-hashtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .trending-hashtag {
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+        color: #7c3aed;
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .trending-hashtag:hover {
+        background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+        transform: scale(1.05);
+    }
+
+    /* Section Divider */
+    .section-divider {
+        display: flex;
+        align-items: center;
+        margin: 25px 0;
+        color: #9ca3af;
+        font-size: 0.85rem;
+    }
+    .section-divider::before,
+    .section-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+    }
+    .section-divider span {
+        padding: 0 15px;
+    }
+
     .error-card {
         background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
         border: 1px solid #fc8181;
@@ -1382,6 +1824,237 @@
     let smartThemesData = [];  // Store full theme data
     let selectedThemeData = null;
     let currentFilter = 'all';
+    let userKeywords = [];  // Store user-entered keywords
+
+    // ============== KEYWORD SEARCH FUNCTIONS ==============
+
+    function handleKeywordInput(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = document.getElementById('keywordInput');
+            const keyword = input.value.trim().toLowerCase();
+            if (keyword && !userKeywords.includes(keyword)) {
+                addKeyword(keyword);
+            }
+            input.value = '';
+        }
+    }
+
+    function addKeyword(keyword) {
+        keyword = keyword.trim().toLowerCase();
+        if (!keyword || userKeywords.includes(keyword)) return;
+
+        userKeywords.push(keyword);
+        renderKeywordChips();
+
+        // Hide the suggestion if it was clicked
+        const suggestions = document.querySelectorAll('.keyword-suggestion');
+        suggestions.forEach(btn => {
+            if (btn.textContent.toLowerCase() === keyword) {
+                btn.style.opacity = '0.5';
+                btn.disabled = true;
+            }
+        });
+    }
+
+    function removeKeyword(keyword) {
+        userKeywords = userKeywords.filter(k => k !== keyword);
+        renderKeywordChips();
+
+        // Re-enable suggestion button
+        const suggestions = document.querySelectorAll('.keyword-suggestion');
+        suggestions.forEach(btn => {
+            if (btn.textContent.toLowerCase() === keyword) {
+                btn.style.opacity = '1';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    function renderKeywordChips() {
+        const container = document.getElementById('keywordChips');
+        container.innerHTML = '';
+
+        userKeywords.forEach(keyword => {
+            const chip = document.createElement('span');
+            chip.className = 'keyword-chip';
+            chip.innerHTML = `
+                ${keyword}
+                <button type="button" class="remove-chip" onclick="removeKeyword('${keyword}')">&times;</button>
+            `;
+            container.appendChild(chip);
+        });
+
+        // Update button state
+        const findBtn = document.getElementById('findTrendsBtn');
+        const clearBtn = document.getElementById('clearKeywordsBtn');
+        findBtn.disabled = userKeywords.length === 0;
+        clearBtn.style.display = userKeywords.length > 0 ? 'block' : 'none';
+    }
+
+    function clearKeywords() {
+        userKeywords = [];
+        renderKeywordChips();
+
+        // Re-enable all suggestion buttons
+        const suggestions = document.querySelectorAll('.keyword-suggestion');
+        suggestions.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.disabled = false;
+        });
+
+        // Hide results
+        hideKeywordResults();
+    }
+
+    async function findKeywordTrends() {
+        if (userKeywords.length === 0) {
+            alert('Please add at least one keyword');
+            return;
+        }
+
+        const findBtn = document.getElementById('findTrendsBtn');
+        const originalText = findBtn.innerHTML;
+        findBtn.innerHTML = '<span class="mini-spinner"></span> Analyzing...';
+        findBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/keyword-trends', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keywords: userKeywords })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                displayKeywordResults(data);
+            } else {
+                alert('Failed to find trends: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error finding trends:', error);
+            alert('Failed to connect to server. Please try again.');
+        } finally {
+            findBtn.innerHTML = originalText;
+            findBtn.disabled = false;
+        }
+    }
+
+    function displayKeywordResults(data) {
+        const resultsContainer = document.getElementById('keywordTrendsResults');
+        resultsContainer.style.display = 'block';
+
+        // SEO Insights
+        const seoContainer = document.getElementById('seoInsightsContainer');
+        seoContainer.innerHTML = '';
+        if (data.seo_insights) {
+            // Search Volume Card
+            const volumeCard = document.createElement('div');
+            volumeCard.className = 'seo-insight-card';
+            volumeCard.innerHTML = `
+                <div class="seo-insight-label">Search Potential</div>
+                <div class="seo-insight-value">${data.seo_insights.search_potential || 'High'}</div>
+            `;
+            seoContainer.appendChild(volumeCard);
+
+            // Competition Card
+            const compCard = document.createElement('div');
+            compCard.className = 'seo-insight-card';
+            compCard.innerHTML = `
+                <div class="seo-insight-label">Competition</div>
+                <div class="seo-insight-value">${data.seo_insights.competition || 'Medium'}</div>
+            `;
+            seoContainer.appendChild(compCard);
+
+            // Related Keywords Card
+            if (data.seo_insights.related_keywords && data.seo_insights.related_keywords.length > 0) {
+                const relatedCard = document.createElement('div');
+                relatedCard.className = 'seo-insight-card';
+                relatedCard.style.flex = '2';
+                relatedCard.innerHTML = `
+                    <div class="seo-insight-label">Related Keywords</div>
+                    <div class="seo-keyword-list">
+                        ${data.seo_insights.related_keywords.map(k => `<span class="seo-related-keyword">${k}</span>`).join('')}
+                    </div>
+                `;
+                seoContainer.appendChild(relatedCard);
+            }
+        }
+
+        // AIO Queries
+        const aioContainer = document.getElementById('aioQueriesContainer');
+        aioContainer.innerHTML = '';
+        if (data.aio_queries && data.aio_queries.length > 0) {
+            data.aio_queries.forEach(query => {
+                const item = document.createElement('div');
+                item.className = 'aio-query-item';
+                item.onclick = () => {
+                    document.getElementById('theme').value = query.theme_suggestion || query.query;
+                    document.getElementById('generateForm').scrollIntoView({ behavior: 'smooth' });
+                };
+                item.innerHTML = `
+                    <div class="aio-query-text">"${query.query}"</div>
+                    <span class="aio-query-intent">${query.intent || 'general'}</span>
+                `;
+                aioContainer.appendChild(item);
+            });
+        } else {
+            aioContainer.innerHTML = '<p style="color: #6b7280; font-size: 0.9rem;">No AI queries generated</p>';
+        }
+
+        // Keyword Themes
+        const themesContainer = document.getElementById('keywordThemesContainer');
+        themesContainer.innerHTML = '';
+        if (data.themes && data.themes.length > 0) {
+            data.themes.forEach(theme => {
+                const card = document.createElement('div');
+                card.className = 'keyword-theme-card';
+                card.onclick = () => {
+                    document.getElementById('theme').value = theme.theme;
+                    document.getElementById('generateForm').scrollIntoView({ behavior: 'smooth' });
+                };
+
+                const priorityClass = theme.priority === 'high' ? 'theme-priority-high' :
+                                      theme.priority === 'trending' ? 'theme-priority-trending' : 'theme-priority-medium';
+
+                card.innerHTML = `
+                    <div class="keyword-theme-title">${theme.theme}</div>
+                    <div class="keyword-theme-meta">
+                        <span class="theme-type-tag type-${theme.type || 'supportive'}">${theme.type || 'supportive'}</span>
+                        <span class="theme-priority-tag ${priorityClass}">${theme.priority || 'medium'}</span>
+                        ${theme.seo_keywords ? `<span style="color: #6b7280; font-size: 0.75rem;">SEO: ${theme.seo_keywords.slice(0, 2).join(', ')}</span>` : ''}
+                    </div>
+                `;
+                themesContainer.appendChild(card);
+            });
+        } else {
+            themesContainer.innerHTML = '<p style="color: #6b7280; font-size: 0.9rem;">No themes generated</p>';
+        }
+
+        // Trending Hashtags
+        const hashtagsContainer = document.getElementById('trendingHashtagsContainer');
+        hashtagsContainer.innerHTML = '';
+        if (data.hashtags && data.hashtags.length > 0) {
+            data.hashtags.forEach(hashtag => {
+                const tag = document.createElement('span');
+                tag.className = 'trending-hashtag';
+                tag.textContent = hashtag;
+                tag.onclick = () => copyToClipboard(hashtag);
+                tag.title = 'Click to copy';
+                hashtagsContainer.appendChild(tag);
+            });
+        } else {
+            hashtagsContainer.innerHTML = '<p style="color: #6b7280; font-size: 0.9rem;">No hashtags generated</p>';
+        }
+
+        // Scroll to results
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideKeywordResults() {
+        document.getElementById('keywordTrendsResults').style.display = 'none';
+    }
 
     function selectTheme(theme) {
         document.getElementById('theme').value = theme;
@@ -1708,6 +2381,9 @@
 
     // Check Instagram API status and load smart themes on page load
     document.addEventListener('DOMContentLoaded', async function() {
+        // Initialize keyword search UI state
+        renderKeywordChips();  // This will disable the button and hide clear by default
+
         // Load smart themes immediately
         loadSmartThemes();
 

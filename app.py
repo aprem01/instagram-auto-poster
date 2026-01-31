@@ -1221,6 +1221,41 @@ def api_optimize_content():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/keyword-trends', methods=['POST'])
+def api_keyword_trends():
+    """API endpoint to find trends based on user keywords using SEO/AIO analysis."""
+    data = request.json
+    keywords = data.get('keywords', [])
+
+    if not keywords or not isinstance(keywords, list):
+        return jsonify({'success': False, 'error': 'Keywords array is required'}), 400
+
+    if len(keywords) > 10:
+        keywords = keywords[:10]  # Limit to 10 keywords
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'REACH Amplify not available. Please configure OPENAI_API_KEY.'
+        }), 503
+
+    try:
+        # Generate keyword-based trends using REACH Amplify
+        trend_data = reach_amplify.analyze_keywords_for_trends(keywords)
+
+        return jsonify({
+            'success': True,
+            'keywords': keywords,
+            'seo_insights': trend_data.get('seo_insights', {}),
+            'aio_queries': trend_data.get('aio_queries', []),
+            'themes': trend_data.get('themes', []),
+            'hashtags': trend_data.get('hashtags', [])
+        })
+    except Exception as e:
+        logger.error(f"Keyword trend analysis failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/instagram-status')
 def api_instagram_status():
     """Check if Instagram API is configured."""

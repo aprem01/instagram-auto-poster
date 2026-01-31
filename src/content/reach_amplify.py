@@ -1020,6 +1020,386 @@ Format as JSON array. Make themes varied and emotionally authentic."""
         return themes[:8]
 
 
+    def analyze_keywords_for_trends(self, keywords: List[str]) -> Dict:
+        """
+        Analyze user-provided keywords to find related trends, SEO insights, and AIO queries.
+        This is the core method for keyword-based trend discovery.
+
+        Args:
+            keywords: List of user-provided keywords (e.g., ["healing", "teen", "safety"])
+
+        Returns:
+            Dict with:
+            - seo_insights: SEO analysis for the keywords
+            - aio_queries: AI search queries people might use
+            - themes: Suggested content themes based on keywords
+            - hashtags: Relevant hashtags for the keywords
+        """
+        self.logger.info(f"Analyzing keywords for trends: {keywords}")
+
+        keywords_str = ", ".join(keywords)
+
+        # Generate all components
+        seo_insights = self._get_keyword_seo_insights(keywords)
+        aio_queries = self._generate_keyword_aio_queries(keywords)
+        themes = self._generate_keyword_themes(keywords)
+        hashtags = self._generate_keyword_hashtags(keywords)
+
+        return {
+            "seo_insights": seo_insights,
+            "aio_queries": aio_queries,
+            "themes": themes,
+            "hashtags": hashtags
+        }
+
+    def _get_keyword_seo_insights(self, keywords: List[str]) -> Dict:
+        """Generate SEO insights for the given keywords."""
+        self.logger.info("Generating SEO insights for keywords")
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are an SEO expert for nonprofit domestic violence support organizations.
+Analyze keywords and provide insights about their search potential, competition, and related terms.
+Focus on how these keywords can help reach people who need help - especially teens and young adults."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Analyze these keywords for DVCCC (Domestic Violence Center of Chester County):
+Keywords: {', '.join(keywords)}
+
+Return JSON:
+{{
+    "search_potential": "High/Medium/Low - based on likely search volume for DV-related queries",
+    "competition": "High/Medium/Low - how competitive these terms are",
+    "related_keywords": ["5-8 related keywords that expand on these topics"],
+    "long_tail_suggestions": ["3-5 longer, more specific keyword phrases"],
+    "optimization_tips": ["2-3 tips for using these keywords effectively"]
+}}"""
+                    }
+                ],
+                max_tokens=400,
+                temperature=0.6
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+
+            return self._get_fallback_seo_insights(keywords)
+
+        except Exception as e:
+            self.logger.error(f"SEO insights generation failed: {e}")
+            return self._get_fallback_seo_insights(keywords)
+
+    def _get_fallback_seo_insights(self, keywords: List[str]) -> Dict:
+        """Fallback SEO insights if AI generation fails."""
+        # Map common keywords to related terms
+        keyword_expansions = {
+            "healing": ["trauma recovery", "abuse recovery", "emotional healing", "survivor healing"],
+            "safety": ["safety planning", "safe relationships", "domestic safety", "feeling safe"],
+            "teen": ["teen dating violence", "teen relationships", "youth help", "young adult support"],
+            "support": ["survivor support", "emotional support", "crisis support", "help services"],
+            "awareness": ["DV awareness", "abuse awareness", "education", "prevention"],
+            "hope": ["hope after abuse", "new beginnings", "future hope", "recovery hope"],
+            "help": ["get help", "crisis help", "free help", "confidential help"],
+            "self-care": ["survivor self-care", "mental health", "wellness", "coping strategies"]
+        }
+
+        related = []
+        for kw in keywords:
+            kw_lower = kw.lower()
+            if kw_lower in keyword_expansions:
+                related.extend(keyword_expansions[kw_lower])
+            else:
+                related.append(f"{kw_lower} support")
+                related.append(f"domestic violence {kw_lower}")
+
+        return {
+            "search_potential": "Medium",
+            "competition": "Medium",
+            "related_keywords": list(set(related))[:8],
+            "long_tail_suggestions": [
+                f"how to {keywords[0]} after abuse" if keywords else "how to heal after abuse",
+                "domestic violence support near me",
+                "free confidential help for abuse"
+            ],
+            "optimization_tips": [
+                "Include location (Chester County) for local SEO",
+                "Use natural language that survivors might search for"
+            ]
+        }
+
+    def _generate_keyword_aio_queries(self, keywords: List[str]) -> List[Dict]:
+        """Generate AI search queries based on keywords."""
+        self.logger.info("Generating AIO queries for keywords")
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Generate conversational search queries that people (especially teens/young adults)
+might ask AI assistants about domestic violence topics. These should sound like natural questions
+someone might type into ChatGPT, Google, or Perplexity when looking for help or information."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Based on these keywords: {', '.join(keywords)}
+
+Generate 5 conversational AI queries that someone might ask about these topics in relation to
+domestic violence, abusive relationships, or seeking help.
+
+Return as JSON array:
+[
+    {{"query": "natural conversational question", "intent": "help-seeking/educational/crisis/support", "theme_suggestion": "content theme idea based on this query"}}
+]
+
+Make queries sound like real people talking - informal, emotional, personal."""
+                    }
+                ],
+                max_tokens=400,
+                temperature=0.8
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+
+            return self._get_fallback_aio_queries(keywords)
+
+        except Exception as e:
+            self.logger.error(f"AIO queries generation failed: {e}")
+            return self._get_fallback_aio_queries(keywords)
+
+    def _get_fallback_aio_queries(self, keywords: List[str]) -> List[Dict]:
+        """Fallback AIO queries if AI generation fails."""
+        base_queries = [
+            {"query": "is my relationship healthy or abusive", "intent": "educational", "theme_suggestion": "Signs of healthy vs unhealthy relationships"},
+            {"query": "where can i get help for domestic violence near me", "intent": "help-seeking", "theme_suggestion": "Free confidential support in Chester County"},
+            {"query": "how do i know if i should leave my partner", "intent": "support", "theme_suggestion": "Trusting your instincts about your safety"},
+            {"query": "im scared to ask for help what do i do", "intent": "crisis", "theme_suggestion": "It's okay to reach out - you're not alone"},
+            {"query": "can i heal from an abusive relationship", "intent": "support", "theme_suggestion": "Your journey to healing starts with one step"}
+        ]
+
+        # Customize based on keywords
+        for kw in keywords:
+            kw_lower = kw.lower()
+            if "teen" in kw_lower:
+                base_queries.insert(0, {
+                    "query": "is my boyfriend being controlling or is this normal",
+                    "intent": "educational",
+                    "theme_suggestion": "Understanding healthy boundaries in teen relationships"
+                })
+            elif "healing" in kw_lower:
+                base_queries.insert(0, {
+                    "query": "how long does it take to recover from an abusive relationship",
+                    "intent": "support",
+                    "theme_suggestion": "Healing takes time - be patient with yourself"
+                })
+            elif "safety" in kw_lower:
+                base_queries.insert(0, {
+                    "query": "how do i make a safety plan to leave",
+                    "intent": "crisis",
+                    "theme_suggestion": "Safety planning: your first step to freedom"
+                })
+
+        return base_queries[:5]
+
+    def _generate_keyword_themes(self, keywords: List[str]) -> List[Dict]:
+        """Generate content themes based on keywords."""
+        self.logger.info("Generating themes for keywords")
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are a content strategist for DVCCC (Domestic Violence Center of Chester County).
+Generate Instagram post theme ideas that incorporate the given keywords while being:
+- SEO optimized (searchable)
+- AIO optimized (answers questions people ask AI)
+- Emotionally resonant for survivors
+- Appropriate for a support organization's voice"""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Create 5 Instagram post theme ideas based on these keywords: {', '.join(keywords)}
+
+Return as JSON array:
+[
+    {{
+        "theme": "concise theme text (under 60 chars)",
+        "type": "supportive/educational/empowerment/resource/awareness",
+        "priority": "high/medium/trending",
+        "seo_keywords": ["2-3 SEO keywords this targets"],
+        "aio_query": "question this content answers"
+    }}
+]
+
+Make themes varied, authentic, and actionable."""
+                    }
+                ],
+                max_tokens=600,
+                temperature=0.8
+            )
+
+            content = response.choices[0].message.content.strip()
+            import re
+            import json
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+
+            return self._get_fallback_keyword_themes(keywords)
+
+        except Exception as e:
+            self.logger.error(f"Keyword themes generation failed: {e}")
+            return self._get_fallback_keyword_themes(keywords)
+
+    def _get_fallback_keyword_themes(self, keywords: List[str]) -> List[Dict]:
+        """Fallback themes if AI generation fails."""
+        themes = []
+
+        # Generate themes based on keyword combinations
+        keyword_themes = {
+            "healing": {
+                "theme": "Your healing journey is valid, no matter how long",
+                "type": "empowerment",
+                "priority": "high",
+                "seo_keywords": ["healing from abuse", "trauma recovery"],
+                "aio_query": "how do i heal from abuse"
+            },
+            "safety": {
+                "theme": "You deserve to feel safe - help is available",
+                "type": "supportive",
+                "priority": "high",
+                "seo_keywords": ["safety planning", "feel safe"],
+                "aio_query": "how to feel safe again"
+            },
+            "teen": {
+                "theme": "Healthy relationships start with respect",
+                "type": "educational",
+                "priority": "high",
+                "seo_keywords": ["teen dating", "healthy relationships"],
+                "aio_query": "signs of unhealthy teen relationship"
+            },
+            "support": {
+                "theme": "We're here for you - free confidential support",
+                "type": "resource",
+                "priority": "high",
+                "seo_keywords": ["DV support", "confidential help"],
+                "aio_query": "where can i get support for abuse"
+            },
+            "hope": {
+                "theme": "There is hope - a new chapter awaits you",
+                "type": "empowerment",
+                "priority": "medium",
+                "seo_keywords": ["hope after abuse", "new beginning"],
+                "aio_query": "is there hope after abusive relationship"
+            },
+            "awareness": {
+                "theme": "Knowledge is power - recognize the signs",
+                "type": "educational",
+                "priority": "medium",
+                "seo_keywords": ["DV awareness", "abuse signs"],
+                "aio_query": "what are signs of domestic abuse"
+            }
+        }
+
+        for kw in keywords:
+            kw_lower = kw.lower()
+            if kw_lower in keyword_themes:
+                themes.append(keyword_themes[kw_lower])
+
+        # Add default themes if not enough
+        if len(themes) < 3:
+            default_themes = [
+                {
+                    "theme": "You are not alone - we believe you",
+                    "type": "supportive",
+                    "priority": "high",
+                    "seo_keywords": ["DV help", "believe survivors"],
+                    "aio_query": "where can i get help"
+                },
+                {
+                    "theme": "Free confidential services in Chester County",
+                    "type": "resource",
+                    "priority": "high",
+                    "seo_keywords": ["free DV services", "Chester County"],
+                    "aio_query": "free domestic violence help near me"
+                },
+                {
+                    "theme": "Every survivor has a story of incredible strength",
+                    "type": "empowerment",
+                    "priority": "medium",
+                    "seo_keywords": ["survivor strength", "resilience"],
+                    "aio_query": "am i strong enough to leave"
+                }
+            ]
+            for t in default_themes:
+                if len(themes) < 5:
+                    themes.append(t)
+
+        return themes[:5]
+
+    def _generate_keyword_hashtags(self, keywords: List[str]) -> List[str]:
+        """Generate relevant hashtags for the keywords."""
+        self.logger.info("Generating hashtags for keywords")
+
+        hashtags = []
+
+        # Add core hashtags
+        hashtags.extend([
+            "#DomesticViolenceAwareness", "#DVCCC", "#ChesterCounty",
+            "#YouAreNotAlone", "#SurvivorSupport"
+        ])
+
+        # Add keyword-specific hashtags
+        keyword_hashtags = {
+            "healing": ["#HealingJourney", "#TraumaRecovery", "#HopeAndHealing"],
+            "safety": ["#SafetyFirst", "#SafetyPlanning", "#FeelSafe"],
+            "teen": ["#TeenDatingViolence", "#HealthyRelationships", "#TeenSafety"],
+            "support": ["#SupportSurvivors", "#HelpIsAvailable", "#ReachOut"],
+            "hope": ["#ThereIsHope", "#NewBeginnings", "#Strength"],
+            "awareness": ["#DVAwareness", "#BreakTheSilence", "#SpeakOut"],
+            "help": ["#GetHelp", "#CrisisHelp", "#HelpLine"],
+            "self-care": ["#SelfCare", "#MentalHealth", "#Wellness"],
+            "empowerment": ["#Empowerment", "#SurvivorStrong", "#ReclaimYourLife"]
+        }
+
+        for kw in keywords:
+            kw_lower = kw.lower()
+            if kw_lower in keyword_hashtags:
+                hashtags.extend(keyword_hashtags[kw_lower])
+            else:
+                # Create custom hashtag from keyword
+                clean_kw = kw.replace(" ", "").replace("-", "")
+                hashtags.append(f"#{clean_kw.title()}")
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_hashtags = []
+        for tag in hashtags:
+            tag_lower = tag.lower()
+            if tag_lower not in seen:
+                seen.add(tag_lower)
+                unique_hashtags.append(tag)
+
+        return unique_hashtags[:15]
+
+
 # Convenience function for quick optimization
 def optimize_post(api_key: str, caption: str, image_prompt: str, topic: str) -> Dict:
     """Quick function to optimize a post."""
