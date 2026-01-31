@@ -105,75 +105,98 @@ class TextGenerator:
             self.logger.error(f"Error generating caption: {e}")
             raise
 
-    def generate_image_prompt(self, topic: str, style_hints: str = "") -> str:
+    def generate_image_prompt(self, topic: str, style_hints: str = "", campaign_mode: str = None) -> str:
         """
-        Generate a DALL-E prompt for image generation.
+        Generate a DALL-E prompt using diverse visual themes.
 
         Args:
             topic: The topic for the image
             style_hints: Additional style guidance
+            campaign_mode: Optional campaign mode for theme matching
 
         Returns:
-            Optimized prompt for DALL-E
+            Optimized prompt for DALL-E that looks authentic and varied
         """
         self.logger.info(f"Generating image prompt for topic: {topic}")
 
+        # Try to use the visual themes system for diversity
+        try:
+            from src.content.visual_themes import get_diverse_prompt, theme_selector
+
+            # Get diverse prompt from theme system
+            base_prompt = get_diverse_prompt(topic=topic, campaign_mode=campaign_mode)
+
+            self.logger.info(f"Using visual theme system - theme: {theme_selector.recently_used[-1] if theme_selector.recently_used else 'unknown'}")
+
+            return base_prompt
+
+        except ImportError:
+            self.logger.warning("Visual themes module not available, using GPT-4 generation")
+
+        # Fallback: Use GPT-4 with improved prompting
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert at creating DALL-E prompts that generate "
-                                   "authentic, candid-looking photographs that DON'T look AI-generated. "
-                                   "Your prompts create images that look like real photos taken by real people - "
-                                   "slightly imperfect, natural, with real-world textures and lighting."
+                        "content": "You are an expert at creating DALL-E prompts for authentic-looking photographs. "
+                                   "Create images that look like real smartphone photos - slightly imperfect, natural lighting, "
+                                   "real-world textures. AVOID: trees, forests, nature paths (overused). "
+                                   "PREFER: urban scenes, hands/connection, cozy interiors, abstract light, community spaces."
                     },
                     {
                         "role": "user",
-                        "content": f"Create a DALL-E prompt for an Instagram post about: {topic}\n"
-                                   f"Organization: Domestic Violence Center of Chester County (DVCCC)\n"
+                        "content": f"Create a DALL-E prompt for: {topic}\n"
                                    f"Style hints: {style_hints}\n\n"
-                                   "BE CREATIVE with symbolic imagery. Choose ONE from these themes:\n"
-                                   "- HOPE: sunrise/sunset, light through clouds, open window, dawn sky\n"
-                                   "- STRENGTH: oak tree, mountain, sturdy bridge, roots growing\n"
-                                   "- FREEDOM: birds in flight, butterfly, open road, kite in sky\n"
-                                   "- HEALING: garden growing, rain on flowers, warm cup of tea, cozy blanket\n"
-                                   "- SUPPORT: two hands holding, supportive gesture, linked arms (no faces)\n"
-                                   "- PEACE: calm water, lavender field, soft morning light, quiet forest path\n"
-                                   "- NEW BEGINNINGS: seedling sprouting, first spring flowers, empty journal\n"
-                                   "- REMEMBRANCE: single candle, memorial flowers, soft candlelight\n"
-                                   "- COMMUNITY: Chester County landscape, local park, community garden\n"
-                                   "Don't always use purple ribbons - be varied and creative!\n\n"
-                                   "CRITICAL - Make it look REAL, not AI-generated:\n"
-                                   "- Documentary/candid photography style, NOT studio perfect\n"
-                                   "- Natural imperfections: slightly uneven lighting, real textures\n"
-                                   "- Shot on iPhone or mirrorless camera look\n"
-                                   "- Natural color grading, slight warmth, NOT oversaturated\n"
-                                   "- Subtle film grain for authenticity\n"
-                                   "- NO faces or identifiable people\n"
-                                   "- NO text, words, or letters in the image\n\n"
-                                   "Return ONLY the prompt, nothing else."
+                                   "Choose a UNIQUE theme (avoid trees/forests):\n"
+                                   "- Warm bokeh lights at dusk\n"
+                                   "- Hands holding (no faces)\n"
+                                   "- Cozy interior with tea/coffee\n"
+                                   "- Rain on window glass\n"
+                                   "- Empty park bench at dawn\n"
+                                   "- Single flower, minimal composition\n"
+                                   "- Community garden gate\n"
+                                   "- Candle flame in darkness\n"
+                                   "- Rolling hills at golden hour\n"
+                                   "- Old bridge with character\n\n"
+                                   "Make it look REAL: shot on iPhone 14, slight grain, "
+                                   "not perfectly centered, natural imperfections.\n"
+                                   "NO faces, NO text. Return ONLY the prompt."
                     }
                 ],
-                max_tokens=300,
-                temperature=0.7
+                max_tokens=250,
+                temperature=0.9  # Higher temperature for more variety
             )
 
             prompt = response.choices[0].message.content.strip()
 
-            # Add authenticity modifiers to the prompt
-            authenticity_suffix = ", candid authentic photo, natural imperfections, realistic textures, not AI generated, documentary photography style, subtle film grain"
-            prompt = prompt.rstrip('.') + authenticity_suffix
+            # Add varied authenticity modifiers
+            import random
+            modifiers = random.choice([
+                ", shot on iPhone 14, slight film grain, candid moment, not perfectly composed",
+                ", smartphone snapshot aesthetic, natural uneven lighting, documentary style",
+                ", Fujifilm colors, nostalgic film look, authentic captured moment",
+                ", Canon mirrorless, soft natural light, accidentally aesthetic"
+            ])
 
-            self.logger.info("Image prompt generated successfully")
+            prompt = prompt.rstrip('.') + modifiers + ", no faces, no text"
 
+            self.logger.info("Image prompt generated successfully via GPT-4")
             return prompt
 
         except Exception as e:
             self.logger.error(f"Error generating image prompt: {e}")
-            # Return a simple fallback prompt with authenticity markers
-            return f"Candid photograph of {topic}, authentic documentary style, natural ambient lighting, slight film grain, realistic textures, shot on iPhone, warm natural tones, not AI generated, no text, no faces"
+            # Return diverse fallback
+            import random
+            fallbacks = [
+                "Warm bokeh lights at evening dusk, shallow depth of field, nostalgic film grain, soft focus, cozy atmosphere, no text",
+                "Close-up of hands holding warm mug, natural window light, cozy sweater texture, documentary detail, no faces, no text",
+                "Rain droplets on window glass, blurred warm interior lights, moody contemplative atmosphere, authentic weather moment, no text",
+                "Single candle flame in soft darkness, warm gentle glow, remembrance and hope, low light iPhone photo, no text",
+                "Empty park bench at dawn, morning dew, soft pink sky, documentary photography, Chester County park, no text"
+            ]
+            return random.choice(fallbacks)
 
     def _build_caption_prompt(
         self,

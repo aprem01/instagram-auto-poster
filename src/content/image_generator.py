@@ -38,15 +38,54 @@ class ImageGenerator:
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
 
-    # Fallback prompts - varied themes for DVCCC (not always purple ribbons)
+    # Fallback prompts - 25+ diverse themes (not just trees/nature)
     SAFE_FALLBACK_PROMPTS = [
-        "Candid photograph of golden sunrise breaking through clouds over a peaceful meadow, natural morning light, hope and new beginnings, shot on iPhone, authentic landscape, slight film grain, warm tones, documentary style",
-        "Authentic photo of two hands gently holding in supportive gesture, natural daylight from window, no faces, real skin texture, candid moment of connection, warm supportive atmosphere, documentary photography",
-        "Real photograph of a single oak tree standing strong in a Chester County field, morning golden hour light, symbol of strength and resilience, shot on smartphone, natural colors, slight bokeh, authentic nature",
-        "Candid photo of birds taking flight at sunrise, silhouetted against warm sky, freedom and hope, natural outdoor lighting, documentary wildlife photography, slight motion blur, authentic moment",
-        "Peaceful photograph of a winding forest path with dappled sunlight, journey forward, natural woodland setting, shot on mirrorless camera, soft morning light, authentic nature scene, warm earth tones",
-        "Cozy candid photo of warm cup of tea on a windowsill with rain outside, comfort and healing, natural ambient light, authentic home setting, soft focus background, warm inviting atmosphere",
-        "Documentary style photo of spring flowers pushing through soil, new growth and resilience, natural garden setting, morning dew, authentic macro photography, soft natural lighting"
+        # ABSTRACT HOPE/LIGHT
+        "Soft golden light rays filtering through morning mist, warm atmosphere, shot on iPhone 14, slight lens flare, natural overexposure, grainy film texture, no people, no text",
+        "Out-of-focus warm evening lights creating gentle bokeh, golden hour fading to dusk, shallow depth of field, nostalgic film grain, accidentally aesthetic, no text",
+
+        # URBAN/COMMUNITY
+        "Empty Chester County main street at first light, small town morning, puddles from overnight rain, documentary photography, authentic local scene, no people visible, no text",
+        "Local community garden gate slightly ajar, morning light on weathered wood, authentic neighborhood vibe, iPhone candid style, earth tones, no text",
+        "Empty farmers market stall at dawn with morning setup, authentic vendor tables, documentary moment, Chester County community space, no faces, no text",
+
+        # HANDS/CONNECTION
+        "Close-up of two hands holding gently in natural window light, real skin texture, warm supportive moment, iPhone photo, slight motion blur, no faces visible, no text",
+        "Hands wrapped around warm ceramic mug, natural indoor light, cozy sweater sleeve visible, documentary detail shot, comfort and care, no text",
+
+        # COZY COMFORT
+        "Steaming cup of tea on rainy windowsill, condensation on glass, soft grey outdoor light, cozy indoor atmosphere, authentic home moment, no text",
+        "Rain droplets on window glass with blurred warm interior lights, moody contemplative atmosphere, authentic weather moment, soft focus, no text",
+        "Soft knit blanket draped over chair arm, afternoon window light, cozy texture detail, warm neutral tones, hygge aesthetic, no text",
+
+        # STRENGTH SYMBOLS
+        "Chester County rolling hills at golden hour, grounding earth tones, morning mist in valleys, documentary landscape, natural colors not oversaturated, no text",
+        "Old covered bridge in Chester County, weathered wood textures, afternoon light, authentic Pennsylvania landmark, sturdy structure, no people, no text",
+        "Large boulder in meadow with wildflowers around base, grounding presence, morning light, stability symbol, documentary style, no text",
+
+        # GROWTH/RENEWAL
+        "Small green seedling pushing through soil, natural garden light, macro detail, real dirt textures, new growth symbol, slightly imperfect framing, no text",
+        "Open blank journal on wooden desk with morning light, pen beside it, new beginnings symbol, cozy workspace, minimal composition, no visible writing, no text",
+        "Early crocuses emerging through last snow, hopeful spring moment, natural garden setting, candid outdoor photo, film grain, no text",
+
+        # MOVEMENT/FREEDOM
+        "Single bird silhouette against soft morning sky, not perfectly centered, motion blur on wings, documentary wildlife, freedom symbol, muted colors, no text",
+        "Country road stretching through Chester County farmland, morning mist, journey ahead, documentary landscape, authentic rural scene, no text",
+        "Monarch butterfly on wildflower, natural meadow setting, slightly imperfect focus, transformation symbol, Pennsylvania garden, no text",
+
+        # SEASONAL VARIETY
+        "Fallen autumn leaves on wet pavement after rain, rich orange and brown tones, Chester County fall, iPhone snapshot aesthetic, no text",
+        "Frosted window with warm interior light glowing through, winter morning, cozy inside, authentic home moment, no text",
+        "Sunflowers in Chester County field, natural afternoon light, not perfectly arranged, authentic farm aesthetic, summer warmth, no text",
+
+        # PEACE/HEALING
+        "Still pond reflecting sky at dawn, mist on water surface, peaceful Chester County scene, calm and healing, soft natural colors, no text",
+        "Single candle flame in soft dark background, warm gentle glow, remembrance and hope, not perfectly centered, authentic low light, no text",
+
+        # MINIMALIST/TRENDING
+        "Single purple flower against simple background, natural windowsill placement, minimalist hope symbol, candid still life, soft light, no text",
+        "Smooth river stone on weathered driftwood, simple grounding moment, natural textures, minimal composition, calming simplicity, no text",
+        "Soft focus morning through sheer curtains, ethereal diffused light, dreamy sanctuary atmosphere, gentle bokeh, film grain, no text"
     ]
 
     def generate_image(
@@ -233,7 +272,7 @@ class ImageGenerator:
 
     def _add_authenticity_effects(self, image: Image.Image) -> Image.Image:
         """
-        Add subtle effects to make AI images look more authentic/real.
+        Add stronger effects to make AI images look more authentic/real.
 
         Args:
             image: PIL Image object
@@ -245,38 +284,109 @@ class ImageGenerator:
         from PIL import ImageEnhance, ImageFilter
         import numpy as np
 
-        # Convert to numpy for grain
+        # Choose a random "camera style" for consistent effects
+        camera_style = random.choice(['iphone', 'film', 'mirrorless', 'vintage'])
+
         img_array = np.array(image)
 
-        # 1. Add subtle film grain/noise
-        noise_intensity = random.uniform(3, 8)
+        # 1. Add realistic film grain/noise (stronger than before)
+        if camera_style == 'film':
+            noise_intensity = random.uniform(8, 14)  # Stronger for film look
+        elif camera_style == 'vintage':
+            noise_intensity = random.uniform(10, 16)  # Even stronger for vintage
+        else:
+            noise_intensity = random.uniform(5, 10)  # Moderate for digital
+
         noise = np.random.normal(0, noise_intensity, img_array.shape).astype(np.int16)
         img_array = np.clip(img_array.astype(np.int16) + noise, 0, 255).astype(np.uint8)
 
         image = Image.fromarray(img_array)
 
-        # 2. Slightly reduce saturation (AI images are often oversaturated)
+        # 2. Reduce saturation more noticeably (AI images are often oversaturated)
         enhancer = ImageEnhance.Color(image)
-        saturation = random.uniform(0.92, 0.98)
+        if camera_style == 'vintage':
+            saturation = random.uniform(0.80, 0.88)  # More faded
+        elif camera_style == 'film':
+            saturation = random.uniform(0.85, 0.92)  # Film-like
+        else:
+            saturation = random.uniform(0.88, 0.95)  # Subtle
+
         image = enhancer.enhance(saturation)
 
-        # 3. Add very subtle warmth by adjusting color balance
+        # 3. Color temperature shift (warmer or cooler based on style)
         r, g, b = image.split()
-        r = r.point(lambda x: min(255, int(x * random.uniform(1.01, 1.03))))
-        b = b.point(lambda x: int(x * random.uniform(0.97, 0.99)))
+        if camera_style in ['film', 'vintage']:
+            # Warm vintage look
+            r = r.point(lambda x: min(255, int(x * random.uniform(1.03, 1.07))))
+            b = b.point(lambda x: int(x * random.uniform(0.93, 0.97)))
+        elif random.random() > 0.5:
+            # Slight warmth
+            r = r.point(lambda x: min(255, int(x * random.uniform(1.01, 1.04))))
+            b = b.point(lambda x: int(x * random.uniform(0.96, 0.99)))
+
         image = Image.merge('RGB', (r, g, b))
 
-        # 4. Very slight blur to reduce AI sharpness
-        if random.random() > 0.5:
-            image = image.filter(ImageFilter.GaussianBlur(radius=0.3))
+        # 4. Reduce sharpness (AI images are unnaturally sharp)
+        if camera_style == 'iphone':
+            # iPhones have some processing but not razor sharp
+            if random.random() > 0.3:
+                image = image.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.3, 0.6)))
+        else:
+            # Film/vintage have softer look
+            image = image.filter(ImageFilter.GaussianBlur(radius=random.uniform(0.4, 0.8)))
 
-        # 5. Subtle contrast adjustment
+        # 5. Contrast adjustment (often slightly lower in real photos)
         enhancer = ImageEnhance.Contrast(image)
-        contrast = random.uniform(0.97, 1.03)
+        if camera_style == 'vintage':
+            contrast = random.uniform(0.90, 0.96)  # Lower contrast for vintage
+        else:
+            contrast = random.uniform(0.94, 1.02)
+
         image = enhancer.enhance(contrast)
 
-        # 6. Very slight vignette effect (darker corners like real cameras)
-        image = self._add_vignette(image, intensity=random.uniform(0.05, 0.12))
+        # 6. Brightness variation (real photos often slightly over/under exposed)
+        enhancer = ImageEnhance.Brightness(image)
+        brightness = random.uniform(0.97, 1.05)
+        image = enhancer.enhance(brightness)
+
+        # 7. Add vignette (more noticeable for vintage/film)
+        if camera_style in ['vintage', 'film']:
+            vignette_intensity = random.uniform(0.10, 0.18)
+        else:
+            vignette_intensity = random.uniform(0.05, 0.10)
+
+        image = self._add_vignette(image, intensity=vignette_intensity)
+
+        # 8. Add subtle color cast (photos often have slight color biases)
+        if random.random() > 0.6:
+            image = self._add_color_cast(image)
+
+        return image
+
+    def _add_color_cast(self, image: Image.Image) -> Image.Image:
+        """Add subtle color cast like real photos often have."""
+        import random
+        import numpy as np
+
+        img_array = np.array(image).astype(np.float32)
+
+        # Choose a subtle color cast
+        cast_type = random.choice(['warm', 'cool', 'green', 'magenta'])
+
+        if cast_type == 'warm':
+            img_array[:, :, 0] *= random.uniform(1.01, 1.03)  # More red
+            img_array[:, :, 2] *= random.uniform(0.97, 0.99)  # Less blue
+        elif cast_type == 'cool':
+            img_array[:, :, 0] *= random.uniform(0.97, 0.99)  # Less red
+            img_array[:, :, 2] *= random.uniform(1.01, 1.03)  # More blue
+        elif cast_type == 'green':
+            img_array[:, :, 1] *= random.uniform(1.01, 1.02)  # Slight green
+        elif cast_type == 'magenta':
+            img_array[:, :, 0] *= random.uniform(1.01, 1.02)  # Slight red
+            img_array[:, :, 2] *= random.uniform(1.01, 1.02)  # Slight blue
+
+        img_array = np.clip(img_array, 0, 255).astype(np.uint8)
+        return Image.fromarray(img_array)
 
         return image
 
