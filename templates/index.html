@@ -3047,6 +3047,22 @@
 
         // Update UI text based on language
         updateUILanguage(currentLanguage);
+
+        // Switch caption content if both versions exist
+        if (currentData && currentData.caption_en) {
+            const captionField = document.getElementById('caption');
+            if (currentLanguage === 'es' && currentData.caption_es) {
+                captionField.value = currentData.caption_es;
+                showToast('Texto en Espanol');
+            } else if (currentLanguage === 'en') {
+                captionField.value = currentData.caption_en;
+                showToast('English caption');
+            } else if (currentLanguage === 'es' && !currentData.caption_es) {
+                // Spanish not available, prompt to regenerate
+                showToast('Click "Regenerate" for Spanish caption');
+            }
+            updatePreview();
+        }
     }
 
     function updateUILanguage(lang) {
@@ -4604,6 +4620,7 @@
         try {
             const formData = new FormData();
             formData.append('theme', theme);
+            formData.append('language', currentLanguage);  // Pass current language
 
             const response = await fetch('/generate', {
                 method: 'POST',
@@ -4619,6 +4636,9 @@
 
             // Show preview
             currentData = data;
+            // Store both language versions for easy switching
+            currentData.caption_en = data.caption_en;
+            currentData.caption_es = data.caption_es;
             document.getElementById('previewImage').src = data.image_url;
             document.getElementById('phoneImage').src = data.image_url;
             document.getElementById('imageLink').href = data.image_url;
@@ -4639,7 +4659,8 @@
     });
 
     async function regenerateCaption() {
-        document.getElementById('regenMessage').textContent = 'Regenerating caption...';
+        const langLabel = currentLanguage === 'es' ? 'Regenerando texto...' : 'Regenerating caption...';
+        document.getElementById('regenMessage').textContent = langLabel;
         document.getElementById('regenLoading').style.display = 'block';
         document.getElementById('preview').style.display = 'none';
 
@@ -4647,7 +4668,10 @@
             const response = await fetch('/regenerate/caption', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ theme: currentData.theme })
+                body: JSON.stringify({
+                    theme: currentData.theme,
+                    language: currentLanguage  // Pass current language
+                })
             });
 
             const data = await response.json();
@@ -4657,6 +4681,9 @@
                 return;
             }
 
+            // Store both versions
+            currentData.caption_en = data.caption_en;
+            currentData.caption_es = data.caption_es;
             document.getElementById('caption').value = data.caption;
             updatePreview();
             document.getElementById('regenLoading').style.display = 'none';

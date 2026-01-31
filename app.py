@@ -376,6 +376,7 @@ def calendar():
 def generate():
     """Generate content based on theme."""
     theme = request.form.get('theme', '').strip()
+    language = request.form.get('language', 'en').strip()
 
     if not theme:
         return jsonify({'error': 'Please provide a theme', 'title': 'Missing Theme'}), 400
@@ -398,6 +399,18 @@ def generate():
 
         result = text_gen.generate_caption(theme, channel_description=channel_desc)
         caption = result['caption']
+
+        # Translate to Spanish if requested
+        spanish_caption = None
+        if language == 'es' and reach_amplify:
+            try:
+                translation = reach_amplify.translate_caption(caption, 'es')
+                if translation.get('translated'):
+                    spanish_caption = translation['translated']
+                    caption = spanish_caption  # Use Spanish as main caption
+                    logger.info("Caption translated to Spanish successfully")
+            except Exception as e:
+                logger.warning(f"Spanish translation failed: {e}")
 
         # Generate image
         prompt = text_gen.generate_image_prompt(theme)
@@ -423,6 +436,9 @@ def generate():
             'success': True,
             'theme': theme,
             'caption': caption,
+            'caption_en': result['caption'],  # Always include English
+            'caption_es': spanish_caption,     # Spanish if translated
+            'language': language,
             'image_url': image_url
         }
 
@@ -897,6 +913,7 @@ def regenerate_caption():
     """Regenerate only the caption for a theme."""
     data = request.json
     theme = data.get('theme', '').strip()
+    language = data.get('language', 'en')
 
     if not theme:
         return jsonify({'error': 'Please provide a theme', 'title': 'Missing Theme'}), 400
@@ -914,9 +931,25 @@ def regenerate_caption():
         in Chester County, PA.'''
 
         result = text_gen.generate_caption(theme, channel_description=channel_desc)
+        caption = result['caption']
+        spanish_caption = None
+
+        # Translate to Spanish if requested
+        if language == 'es' and reach_amplify:
+            try:
+                translation = reach_amplify.translate_caption(caption, 'es')
+                if translation.get('translated'):
+                    spanish_caption = translation['translated']
+                    caption = spanish_caption
+            except Exception as e:
+                logger.warning(f"Spanish translation failed: {e}")
+
         return jsonify({
             'success': True,
-            'caption': result['caption']
+            'caption': caption,
+            'caption_en': result['caption'],
+            'caption_es': spanish_caption,
+            'language': language
         })
 
     except Exception as e:
