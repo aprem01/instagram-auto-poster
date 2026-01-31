@@ -28,6 +28,86 @@ class ReachAmplify:
         self.client = OpenAI(api_key=api_key, base_url="https://api.openai.com/v1", timeout=OPENAI_TIMEOUT)
         self.logger = logging.getLogger("ReachAmplify")
 
+        # Campaign mode configurations
+        self.CAMPAIGN_MODES = {
+            "awareness": {
+                "name": "Awareness",
+                "icon": "📢",
+                "description": "General DV awareness and education",
+                "hashtag_focus": ["awareness", "support", "mental_health", "local"],
+                "tone": "educational, compassionate, informative",
+                "keywords_focus": ["awareness", "education", "signs", "prevention", "resources"],
+                "priority_hashtags": ["#DomesticViolenceAwareness", "#BreakTheSilence", "#DVAwareness", "#EndDV"]
+            },
+            "fundraising": {
+                "name": "Fundraising",
+                "icon": "💝",
+                "description": "Donor engagement and giving campaigns",
+                "hashtag_focus": ["support", "local", "empowerment"],
+                "tone": "grateful, impactful, community-focused",
+                "keywords_focus": ["donate", "support", "impact", "community", "give", "help"],
+                "priority_hashtags": ["#GivingTuesday", "#NonprofitLove", "#SupportSurvivors", "#ChesterCountyGives", "#CharityMatters"]
+            },
+            "events": {
+                "name": "Events",
+                "icon": "📅",
+                "description": "Event promotion and RSVPs",
+                "hashtag_focus": ["local", "awareness", "support"],
+                "tone": "inviting, exciting, community-oriented",
+                "keywords_focus": ["event", "join", "community", "Chester County", "RSVP", "attend"],
+                "priority_hashtags": ["#ChesterCountyEvents", "#CommunityEvent", "#DVCCC", "#LocalEvent"]
+            },
+            "youth": {
+                "name": "Youth Outreach",
+                "icon": "🎯",
+                "description": "Reaching teens and young adults",
+                "hashtag_focus": ["youth_focused", "support", "mental_health"],
+                "tone": "relatable, non-judgmental, authentic, Gen-Z friendly",
+                "keywords_focus": ["teen", "relationship", "toxic", "healthy", "help", "dating"],
+                "priority_hashtags": ["#TeenDatingViolence", "#HealthyRelationships", "#LoveIsRespect", "#TeenHelp", "#RedFlags"]
+            }
+        }
+
+        # Cross-platform optimization configs
+        self.PLATFORM_CONFIG = {
+            "facebook": {
+                "name": "Facebook",
+                "icon": "📘",
+                "hashtag_count": 3,
+                "caption_length": 250,
+                "tips": [
+                    "Keep captions conversational - Facebook is more personal",
+                    "Use 1-3 hashtags max (unlike Instagram's 20-30)",
+                    "Tag your location for local reach",
+                    "Consider boosting posts for wider reach"
+                ]
+            },
+            "linkedin": {
+                "name": "LinkedIn",
+                "icon": "💼",
+                "hashtag_count": 5,
+                "caption_length": 700,
+                "tips": [
+                    "Focus on organizational impact and professional tone",
+                    "Share statistics and research findings",
+                    "Highlight corporate partnerships and giving programs",
+                    "Tag partner organizations"
+                ]
+            },
+            "tiktok": {
+                "name": "TikTok",
+                "icon": "🎵",
+                "hashtag_count": 5,
+                "caption_length": 80,
+                "tips": [
+                    "Keep captions SHORT and punchy (under 80 chars)",
+                    "Use trending sounds and music",
+                    "Hook viewers in first 3 seconds",
+                    "Be authentic - TikTok rewards real over polished"
+                ]
+            }
+        }
+
         # Core hashtag categories for domestic violence awareness
         self.core_hashtags = {
             "awareness": [
@@ -1398,6 +1478,114 @@ Make themes varied, authentic, and actionable."""
                 unique_hashtags.append(tag)
 
         return unique_hashtags[:15]
+
+
+    def get_campaign_modes(self) -> Dict:
+        """Return all campaign mode configurations."""
+        return self.CAMPAIGN_MODES
+
+    def optimize_for_campaign(self, caption: str, topic: str, campaign_mode: str) -> Dict:
+        """Optimize content for a specific campaign mode."""
+        if campaign_mode not in self.CAMPAIGN_MODES:
+            campaign_mode = "awareness"
+
+        config = self.CAMPAIGN_MODES[campaign_mode]
+
+        # Generate mode-specific hashtags
+        hashtags = self._generate_campaign_hashtags(topic, campaign_mode)
+
+        # Get mode-specific keywords
+        keywords = config["keywords_focus"][:5]
+
+        # Generate alt text
+        alt_text = self.generate_alt_text(f"{topic} - {config['description']}")
+
+        return {
+            "campaign_mode": campaign_mode,
+            "config": config,
+            "hashtags": hashtags,
+            "hashtag_string": " ".join(hashtags),
+            "keywords": keywords,
+            "tone_guidance": config["tone"],
+            "alt_text": alt_text
+        }
+
+    def _generate_campaign_hashtags(self, topic: str, campaign_mode: str) -> List[str]:
+        """Generate hashtags specific to campaign mode."""
+        config = self.CAMPAIGN_MODES.get(campaign_mode, self.CAMPAIGN_MODES["awareness"])
+
+        hashtags = []
+        # Add priority hashtags for this mode
+        hashtags.extend(config["priority_hashtags"][:5])
+
+        # Add from relevant categories
+        for category in config["hashtag_focus"]:
+            if category in self.core_hashtags:
+                hashtags.extend(random.sample(self.core_hashtags[category], min(3, len(self.core_hashtags[category]))))
+
+        # Remove duplicates
+        seen = set()
+        unique = []
+        for tag in hashtags:
+            if tag.lower() not in seen:
+                seen.add(tag.lower())
+                unique.append(tag)
+
+        return unique[:15]
+
+    def get_platform_tips(self, platform: str) -> Dict:
+        """Get optimization tips for a specific platform."""
+        return self.PLATFORM_CONFIG.get(platform, {})
+
+    def get_all_platforms(self) -> Dict:
+        """Return all platform configurations."""
+        return self.PLATFORM_CONFIG
+
+    def optimize_for_event(self, event_name: str, event_type: str, event_date: str = None, location: str = "Chester County") -> Dict:
+        """Generate event-specific optimization."""
+        event_hashtags = [
+            "#ChesterCountyEvents", "#CommunityEvent", "#DVCCC",
+            f"#{event_type.replace(' ', '')}" if event_type else "#Event"
+        ]
+
+        # Add local hashtags
+        event_hashtags.extend(["#ChesterCounty", "#ChesterCountyPA", "#LocalEvent"])
+
+        # Generate event CTA
+        ctas = [
+            f"Join us for {event_name}! RSVP at dvccc.com/events",
+            f"Save the date for {event_name} - link in bio to register",
+            f"You're invited! {event_name} - details and registration in bio"
+        ]
+
+        return {
+            "event_name": event_name,
+            "event_type": event_type,
+            "hashtags": event_hashtags,
+            "hashtag_string": " ".join(event_hashtags),
+            "suggested_ctas": ctas,
+            "local_keywords": ["Chester County", "local event", location]
+        }
+
+    def get_fundraising_optimization(self) -> Dict:
+        """Get fundraising-specific hashtags and tips."""
+        return {
+            "donor_hashtags": [
+                "#GivingTuesday", "#NonprofitLove", "#CharityMatters",
+                "#SupportSurvivors", "#ChesterCountyGives", "#GiveBack",
+                "#MakeADifference", "#DonateForGood"
+            ],
+            "impact_statements": [
+                "Your gift provides safety and hope to survivors",
+                "Every donation funds critical services for families in crisis",
+                "100% of donations stay local in Chester County"
+            ],
+            "tips": [
+                "Share specific impact metrics (e.g., '$50 provides X hours of counseling')",
+                "Use storytelling to connect emotionally with donors",
+                "Include clear donation CTA with link"
+            ]
+        }
 
 
 # Convenience function for quick optimization

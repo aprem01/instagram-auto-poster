@@ -16,6 +16,45 @@
         </button>
     </div>
 
+    <!-- Campaign Mode Selector -->
+    <div class="campaign-mode-section" id="campaignModeSection">
+        <div class="campaign-header">
+            <label>🎯 Campaign Mode</label>
+            <span class="campaign-subtitle">Select your content focus</span>
+        </div>
+
+        <div class="campaign-toggle-grid" id="campaignModeSelector">
+            <button type="button" class="campaign-btn active" data-mode="awareness" onclick="setCampaignMode('awareness')">
+                <span class="campaign-icon">📢</span>
+                <span class="campaign-label">Awareness</span>
+                <span class="campaign-desc">Education & prevention</span>
+            </button>
+
+            <button type="button" class="campaign-btn" data-mode="fundraising" onclick="setCampaignMode('fundraising')">
+                <span class="campaign-icon">💝</span>
+                <span class="campaign-label">Fundraising</span>
+                <span class="campaign-desc">Donor engagement</span>
+            </button>
+
+            <button type="button" class="campaign-btn" data-mode="events" onclick="setCampaignMode('events')">
+                <span class="campaign-icon">📅</span>
+                <span class="campaign-label">Events</span>
+                <span class="campaign-desc">Event promotion</span>
+            </button>
+
+            <button type="button" class="campaign-btn" data-mode="youth" onclick="setCampaignMode('youth')">
+                <span class="campaign-icon">🎯</span>
+                <span class="campaign-label">Youth</span>
+                <span class="campaign-desc">Teen outreach</span>
+            </button>
+        </div>
+
+        <div class="campaign-info" id="campaignInfo">
+            <span class="info-icon">💡</span>
+            <span id="campaignInfoText">Optimizes hashtags, keywords, and tone for awareness content</span>
+        </div>
+    </div>
+
     <!-- AI Mode Content -->
     <div id="aiModeContent">
         <!-- Keyword Search Section -->
@@ -415,6 +454,32 @@
                     <h5>🏢 Entity Recognition</h5>
                     <p class="aio-description">How AI understands your content</p>
                     <div id="entityMap" class="entity-grid"></div>
+                </div>
+            </div>
+
+            <!-- Cross-Platform Tips -->
+            <div class="reach-card full-width cross-platform-section">
+                <div class="cross-platform-header">
+                    <h4>🌐 Cross-Platform Tips</h4>
+                    <span class="cross-platform-subtitle">Adapt your content for other platforms</span>
+                </div>
+
+                <div class="platform-tabs" id="platformTabs">
+                    <button type="button" class="platform-tab active" data-platform="facebook" onclick="showPlatformTips('facebook')">
+                        📘 Facebook
+                    </button>
+                    <button type="button" class="platform-tab" data-platform="linkedin" onclick="showPlatformTips('linkedin')">
+                        💼 LinkedIn
+                    </button>
+                    <button type="button" class="platform-tab" data-platform="tiktok" onclick="showPlatformTips('tiktok')">
+                        🎵 TikTok
+                    </button>
+                </div>
+
+                <div class="platform-content" id="platformContent">
+                    <div class="platform-tips-list" id="platformTipsList">
+                        <!-- Tips loaded dynamically -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1011,6 +1076,150 @@
         font-size: 0.8rem;
         color: #92400e;
         text-decoration: underline;
+    }
+
+    /* Campaign Mode Selector Styles */
+    .campaign-mode-section {
+        background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e9d5ff;
+        margin-bottom: 20px;
+    }
+    .campaign-header {
+        margin-bottom: 15px;
+    }
+    .campaign-header label {
+        display: block;
+        font-weight: 600;
+        color: #7c3aed;
+        margin-bottom: 4px;
+    }
+    .campaign-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #a78bfa;
+    }
+    .campaign-toggle-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+    @media (max-width: 700px) {
+        .campaign-toggle-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    .campaign-btn {
+        padding: 15px 10px;
+        background: white;
+        border: 1px solid #e9d5ff;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        text-align: center;
+    }
+    .campaign-btn:hover {
+        background: #f3e8ff;
+        border-color: #c084fc;
+    }
+    .campaign-btn.active {
+        background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+        border-color: #9333ea;
+        color: white;
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+    }
+    .campaign-icon {
+        font-size: 1.5rem;
+    }
+    .campaign-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .campaign-desc {
+        font-size: 0.65rem;
+        opacity: 0.7;
+    }
+    .campaign-btn.active .campaign-desc {
+        opacity: 0.9;
+    }
+    .campaign-info {
+        margin-top: 12px;
+        padding: 10px 15px;
+        background: white;
+        border-radius: 8px;
+        border-left: 3px solid #a855f7;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85rem;
+        color: #6b21a8;
+    }
+    .info-icon {
+        font-size: 1rem;
+    }
+
+    /* Cross-Platform Styles */
+    .cross-platform-section {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #7dd3fc;
+    }
+    .cross-platform-header {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .cross-platform-header h4 {
+        color: #0369a1;
+        margin: 0;
+    }
+    .cross-platform-subtitle {
+        color: #0ea5e9;
+        font-size: 0.8rem;
+    }
+    .platform-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+        justify-content: center;
+    }
+    .platform-tab {
+        padding: 8px 16px;
+        border: 1px solid #bae6fd;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .platform-tab:hover {
+        background: #e0f2fe;
+    }
+    .platform-tab.active {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+        border-color: #0369a1;
+    }
+    .platform-content {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    .platform-tips-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .platform-tip {
+        padding: 10px 15px;
+        background: #f0f9ff;
+        border-radius: 8px;
+        border-left: 3px solid #0ea5e9;
+        font-size: 0.85rem;
+        color: #0c4a6e;
     }
 </style>
 
@@ -1825,6 +2034,65 @@
     let selectedThemeData = null;
     let currentFilter = 'all';
     let userKeywords = [];  // Store user-entered keywords
+    let currentCampaignMode = 'awareness';
+    let platformTipsData = {};
+
+    // ============== CAMPAIGN MODE FUNCTIONS ==============
+
+    function setCampaignMode(mode) {
+        currentCampaignMode = mode;
+
+        // Update button states
+        document.querySelectorAll('.campaign-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+
+        // Update info text
+        const infoTexts = {
+            'awareness': 'Optimizes hashtags, keywords, and tone for awareness content',
+            'fundraising': 'Focuses on donor engagement with impact-driven messaging',
+            'events': 'Promotes events with local hashtags and RSVP calls-to-action',
+            'youth': 'Uses relatable, authentic tone for teen and young adult reach'
+        };
+        document.getElementById('campaignInfoText').textContent = infoTexts[mode] || infoTexts['awareness'];
+
+        // Reload smart themes with campaign filter
+        loadSmartThemes();
+    }
+
+    // ============== PLATFORM TIPS FUNCTIONS ==============
+
+    async function loadPlatformTips() {
+        try {
+            const response = await fetch('/api/platforms');
+            const data = await response.json();
+            if (data.success) {
+                platformTipsData = data.platforms;
+                showPlatformTips('facebook'); // Show Facebook by default
+            }
+        } catch (e) {
+            console.error('Failed to load platform tips:', e);
+        }
+    }
+
+    function showPlatformTips(platform) {
+        // Update tab states
+        document.querySelectorAll('.platform-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.platform === platform);
+        });
+
+        // Show tips
+        const container = document.getElementById('platformTipsList');
+        const config = platformTipsData[platform];
+
+        if (config && config.tips) {
+            container.innerHTML = config.tips.map(tip =>
+                `<div class="platform-tip">💡 ${tip}</div>`
+            ).join('');
+        } else {
+            container.innerHTML = '<div class="platform-tip">Tips loading...</div>';
+        }
+    }
 
     // ============== KEYWORD SEARCH FUNCTIONS ==============
 
@@ -2386,6 +2654,9 @@
 
         // Load smart themes immediately
         loadSmartThemes();
+
+        // Load platform tips
+        loadPlatformTips();
 
         // Check Instagram API status
         try {

@@ -1256,6 +1256,117 @@ def api_keyword_trends():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/campaign-modes')
+def api_campaign_modes():
+    """Get all available campaign modes."""
+    if not reach_amplify:
+        # Return static config if REACH Amplify not available
+        return jsonify({
+            'success': True,
+            'modes': {
+                "awareness": {"name": "Awareness", "icon": "📢", "description": "General DV awareness"},
+                "fundraising": {"name": "Fundraising", "icon": "💝", "description": "Donor engagement"},
+                "events": {"name": "Events", "icon": "📅", "description": "Event promotion"},
+                "youth": {"name": "Youth Outreach", "icon": "🎯", "description": "Teen outreach"}
+            }
+        })
+
+    return jsonify({
+        'success': True,
+        'modes': reach_amplify.get_campaign_modes()
+    })
+
+
+@app.route('/api/campaign-optimize', methods=['POST'])
+def api_campaign_optimize():
+    """Optimize content for a specific campaign mode."""
+    data = request.json
+    caption = data.get('caption', '')
+    topic = data.get('topic', '')
+    campaign_mode = data.get('campaign_mode', 'awareness')
+
+    if not reach_amplify:
+        return jsonify({'success': False, 'error': 'REACH Amplify not available'}), 503
+
+    try:
+        result = reach_amplify.optimize_for_campaign(caption, topic, campaign_mode)
+        return jsonify({'success': True, **result})
+    except Exception as e:
+        logger.error(f"Campaign optimization failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/platforms')
+def api_platforms():
+    """Get all platform configurations."""
+    if not reach_amplify:
+        return jsonify({
+            'success': True,
+            'platforms': {
+                "facebook": {"name": "Facebook", "icon": "📘", "tips": ["Use 1-3 hashtags"]},
+                "linkedin": {"name": "LinkedIn", "icon": "💼", "tips": ["Professional tone"]},
+                "tiktok": {"name": "TikTok", "icon": "🎵", "tips": ["Short captions"]}
+            }
+        })
+
+    return jsonify({
+        'success': True,
+        'platforms': reach_amplify.get_all_platforms()
+    })
+
+
+@app.route('/api/platform-tips/<platform>')
+def api_platform_tips(platform):
+    """Get tips for a specific platform."""
+    if not reach_amplify:
+        return jsonify({'success': False, 'error': 'Not available'}), 503
+
+    tips = reach_amplify.get_platform_tips(platform)
+    if not tips:
+        return jsonify({'success': False, 'error': 'Platform not found'}), 404
+
+    return jsonify({'success': True, 'platform': platform, **tips})
+
+
+@app.route('/api/event-optimize', methods=['POST'])
+def api_event_optimize():
+    """Optimize content for an event."""
+    data = request.json
+    event_name = data.get('event_name', '')
+    event_type = data.get('event_type', 'community')
+    event_date = data.get('event_date', '')
+    location = data.get('location', 'Chester County')
+
+    if not event_name:
+        return jsonify({'success': False, 'error': 'Event name required'}), 400
+
+    if not reach_amplify:
+        return jsonify({'success': False, 'error': 'Not available'}), 503
+
+    try:
+        result = reach_amplify.optimize_for_event(event_name, event_type, event_date, location)
+        return jsonify({'success': True, **result})
+    except Exception as e:
+        logger.error(f"Event optimization failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/fundraising')
+def api_fundraising():
+    """Get fundraising optimization data."""
+    if not reach_amplify:
+        return jsonify({
+            'success': True,
+            'donor_hashtags': ["#GivingTuesday", "#NonprofitLove"],
+            'tips': ["Share impact metrics"]
+        })
+
+    return jsonify({
+        'success': True,
+        **reach_amplify.get_fundraising_optimization()
+    })
+
+
 @app.route('/api/instagram-status')
 def api_instagram_status():
     """Check if Instagram API is configured."""
