@@ -3776,17 +3776,8 @@
                 platformCaptions[platform] = data.adapted_caption;
                 captionField.value = data.adapted_caption;
 
-                // Update character count
+                // Update character count and status based on actual content length
                 updatePlatformCharCount(platform);
-
-                // Update status
-                if (data.within_limit) {
-                    statusBadge.textContent = 'Ready';
-                    statusBadge.className = 'platform-status-badge badge-ready';
-                } else {
-                    statusBadge.textContent = 'Too Long';
-                    statusBadge.className = 'platform-status-badge badge-too-long';
-                }
 
                 // Update tips if available
                 if (data.tips && data.tips.length > 0) {
