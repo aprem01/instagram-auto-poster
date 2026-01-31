@@ -1476,6 +1476,451 @@ def debug_config():
     })
 
 
+# ============== FUNDRAISING IMPACT CALCULATOR ==============
+
+@app.route('/api/fundraising/impact-calculator', methods=['POST'])
+def api_impact_calculator():
+    """
+    Calculate the real-world impact of a donation amount.
+
+    Request body:
+        - amount: int (required) - Donation amount in dollars
+        - impact_type: str (optional) - Specific impact type to calculate
+
+    Returns:
+        Impact breakdown with messaging suggestions
+    """
+    data = request.json or {}
+    amount = data.get('amount')
+    impact_type = data.get('impact_type')
+
+    if not amount or not isinstance(amount, (int, float)) or amount <= 0:
+        return jsonify({
+            'success': False,
+            'error': 'A positive donation amount is required'
+        }), 400
+
+    if not reach_amplify:
+        # Use static calculation if REACH Amplify not available
+        presets = [25, 50, 100, 250, 500, 1000]
+        return jsonify({
+            'success': True,
+            'amount': int(amount),
+            'formatted_amount': f"${int(amount):,}",
+            'presets': presets,
+            'message': f"Your gift of ${int(amount)} makes a difference in survivors' lives.",
+            'source': 'static'
+        })
+
+    try:
+        result = reach_amplify.calculate_donation_impact(int(amount), impact_type)
+        result['success'] = True
+        result['presets'] = reach_amplify.get_impact_presets()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Impact calculator failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============== AWARENESS CALENDAR ==============
+
+@app.route('/api/awareness/calendar')
+def api_awareness_calendar():
+    """
+    Get awareness calendar information.
+
+    Query params:
+        - month: int (optional) - Specific month (1-12)
+        - year: int (optional) - Specific year
+
+    Returns:
+        Awareness months and special days
+    """
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    if not reach_amplify:
+        # Return static calendar data
+        return jsonify({
+            'success': True,
+            'source': 'static',
+            'months': {
+                10: {'name': 'Domestic Violence Awareness Month', 'short': 'DVAM'},
+                2: {'name': 'Teen Dating Violence Awareness Month', 'short': 'TDVAM'}
+            },
+            'special_days': []
+        })
+
+    try:
+        result = reach_amplify.get_awareness_calendar(month, year)
+        result['success'] = True
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Awareness calendar failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/awareness/upcoming')
+def api_upcoming_awareness():
+    """
+    Get upcoming awareness days.
+
+    Query params:
+        - days: int (optional) - Number of days to look ahead (default 30)
+
+    Returns:
+        List of upcoming awareness events
+    """
+    days_ahead = request.args.get('days', 30, type=int)
+
+    if not reach_amplify:
+        return jsonify({
+            'success': True,
+            'source': 'static',
+            'upcoming': []
+        })
+
+    try:
+        upcoming = reach_amplify.get_upcoming_awareness_days(days_ahead)
+        return jsonify({
+            'success': True,
+            'days_ahead': days_ahead,
+            'upcoming': upcoming
+        })
+    except Exception as e:
+        logger.error(f"Upcoming awareness failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/awareness/generate', methods=['POST'])
+def api_generate_awareness_post():
+    """
+    Generate a post for an awareness period or special day.
+
+    Request body:
+        - awareness_type: str (required) - Type of awareness (e.g., 'october', 'purple_thursday')
+        - date: str (optional) - Date for context
+
+    Returns:
+        Post content and suggestions
+    """
+    data = request.json or {}
+    awareness_type = data.get('awareness_type')
+    date = data.get('date')
+
+    if not awareness_type:
+        return jsonify({
+            'success': False,
+            'error': 'awareness_type is required'
+        }), 400
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'REACH Amplify not available'
+        }), 503
+
+    try:
+        result = reach_amplify.generate_awareness_post(awareness_type, date)
+        if 'error' in result:
+            return jsonify({'success': False, **result}), 400
+        result['success'] = True
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Awareness post generation failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============== VOLUNTEER RECRUITMENT ==============
+
+@app.route('/api/volunteer/roles')
+def api_volunteer_roles():
+    """
+    Get all available volunteer roles.
+
+    Returns:
+        Dict of volunteer roles with requirements
+    """
+    if not reach_amplify:
+        # Return static volunteer roles
+        return jsonify({
+            'success': True,
+            'source': 'static',
+            'roles': {
+                'hotline': {'title': 'Crisis Hotline Volunteer', 'commitment': '4 hrs/week'},
+                'shelter': {'title': 'Shelter Support', 'commitment': 'Flexible'},
+                'children': {'title': "Children's Program", 'commitment': '2-4 hrs/week'},
+                'admin': {'title': 'Administrative', 'commitment': 'Remote OK'},
+                'event': {'title': 'Event Support', 'commitment': 'As needed'}
+            }
+        })
+
+    try:
+        roles = reach_amplify.get_volunteer_roles()
+        return jsonify({
+            'success': True,
+            'roles': roles
+        })
+    except Exception as e:
+        logger.error(f"Volunteer roles failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/volunteer/generate', methods=['POST'])
+def api_generate_volunteer_post():
+    """
+    Generate a volunteer recruitment post.
+
+    Request body:
+        - role: str (optional) - Specific volunteer role
+        - urgency: str (optional) - Urgency level (ongoing, urgent, immediate)
+
+    Returns:
+        Volunteer recruitment post content
+    """
+    data = request.json or {}
+    role = data.get('role')
+    urgency = data.get('urgency', 'ongoing')
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'REACH Amplify not available'
+        }), 503
+
+    try:
+        result = reach_amplify.generate_volunteer_post(role, urgency)
+        result['success'] = True
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Volunteer post generation failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============== GIVING TUESDAY ==============
+
+@app.route('/api/giving-tuesday/<int:year>')
+def api_giving_tuesday(year):
+    """
+    Get Giving Tuesday information for a specific year.
+
+    Path params:
+        - year: int - Year to get Giving Tuesday date for
+
+    Query params:
+        - goal: int (optional) - Fundraising goal for campaign generation
+        - matching: bool (optional) - Whether matching gifts are available
+
+    Returns:
+        Giving Tuesday date and optional campaign content
+    """
+    goal = request.args.get('goal', type=int)
+    matching = request.args.get('matching', 'false').lower() == 'true'
+
+    if not reach_amplify:
+        # Calculate date without REACH Amplify
+        from datetime import datetime, timedelta
+        import calendar
+
+        november = calendar.Calendar().itermonthdays2(year, 11)
+        thursdays = [day for day, weekday in november if day != 0 and weekday == 3]
+
+        if len(thursdays) >= 4:
+            thanksgiving_day = thursdays[3]
+            thanksgiving = datetime(year, 11, thanksgiving_day)
+            giving_tuesday = thanksgiving + timedelta(days=5)
+            date_str = giving_tuesday.strftime("%Y-%m-%d")
+        else:
+            date_str = ""
+
+        return jsonify({
+            'success': True,
+            'year': year,
+            'date': date_str,
+            'source': 'static'
+        })
+
+    try:
+        date = reach_amplify.get_giving_tuesday_date(year)
+        result = {
+            'success': True,
+            'year': year,
+            'date': date
+        }
+
+        # Generate full campaign if goal is provided
+        if goal and goal > 0:
+            campaign = reach_amplify.generate_giving_tuesday_campaign(goal, matching)
+            result['campaign'] = campaign
+
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Giving Tuesday failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============== TRANSLATION / MULTI-LANGUAGE ==============
+
+@app.route('/api/translate', methods=['POST'])
+def api_translate():
+    """
+    Translate a caption to another language.
+
+    Request body:
+        - caption: str (required) - Text to translate
+        - target_lang: str (optional) - Target language code (default: 'es')
+
+    Returns:
+        Translated text with language-specific hashtags
+    """
+    data = request.json or {}
+    caption = data.get('caption', '').strip()
+    target_lang = data.get('target_lang', 'es')
+
+    if not caption:
+        return jsonify({
+            'success': False,
+            'error': 'Caption text is required'
+        }), 400
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'REACH Amplify not available for translation'
+        }), 503
+
+    try:
+        result = reach_amplify.translate_caption(caption, target_lang)
+        if 'error' in result and not result.get('translated'):
+            return jsonify({'success': False, 'error': result['error']}), 500
+        result['success'] = True
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Translation failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/languages')
+def api_languages():
+    """
+    Get available languages and their hashtags.
+
+    Returns:
+        List of supported languages with hashtag sets
+    """
+    if not reach_amplify:
+        return jsonify({
+            'success': True,
+            'source': 'static',
+            'languages': {
+                'en': {'name': 'English', 'hashtags': ['#DomesticViolenceAwareness']},
+                'es': {'name': 'Spanish', 'hashtags': ['#ViolenciaDomestica', '#NoEstasSola']}
+            }
+        })
+
+    try:
+        languages = {
+            'en': {
+                'name': 'English',
+                'native_name': 'English',
+                'hashtags': reach_amplify.get_language_hashtags('en')
+            },
+            'es': {
+                'name': 'Spanish',
+                'native_name': 'Espanol',
+                'hashtags': reach_amplify.get_language_hashtags('es')
+            },
+            'fr': {
+                'name': 'French',
+                'native_name': 'Francais',
+                'hashtags': reach_amplify.get_language_hashtags('fr')
+            },
+            'pt': {
+                'name': 'Portuguese',
+                'native_name': 'Portugues',
+                'hashtags': reach_amplify.get_language_hashtags('pt')
+            }
+        }
+
+        # Add common translations
+        if hasattr(reach_amplify, 'TRANSLATIONS'):
+            for lang_code, translations in reach_amplify.TRANSLATIONS.items():
+                if lang_code in languages:
+                    languages[lang_code]['common_phrases'] = translations
+
+        return jsonify({
+            'success': True,
+            'languages': languages
+        })
+    except Exception as e:
+        logger.error(f"Languages endpoint failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============== BUSINESS CHALLENGE ==============
+
+@app.route('/api/business-challenge/generate', methods=['POST'])
+def api_generate_business_challenge():
+    """
+    Generate a business challenge post or spotlight.
+
+    Request body:
+        - type: str (required) - 'challenge' or 'spotlight'
+        - challenge_name: str (for challenge) - Name of the challenge
+        - business_count: int (for challenge) - Number of participating businesses
+        - business_name: str (for spotlight) - Name of business to spotlight
+        - custom_message: str (for spotlight, optional) - Custom thank you message
+
+    Returns:
+        Business-focused post content
+    """
+    data = request.json or {}
+    post_type = data.get('type')
+
+    if post_type not in ['challenge', 'spotlight']:
+        return jsonify({
+            'success': False,
+            'error': 'type must be either "challenge" or "spotlight"'
+        }), 400
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'REACH Amplify not available'
+        }), 503
+
+    try:
+        if post_type == 'challenge':
+            challenge_name = data.get('challenge_name')
+            if not challenge_name:
+                return jsonify({
+                    'success': False,
+                    'error': 'challenge_name is required for challenge posts'
+                }), 400
+
+            business_count = data.get('business_count', 0)
+            result = reach_amplify.generate_business_challenge_post(challenge_name, business_count)
+
+        else:  # spotlight
+            business_name = data.get('business_name')
+            if not business_name:
+                return jsonify({
+                    'success': False,
+                    'error': 'business_name is required for spotlight posts'
+                }), 400
+
+            custom_message = data.get('custom_message', '')
+            result = reach_amplify.generate_business_spotlight(business_name, custom_message)
+
+        result['success'] = True
+        result['type'] = post_type
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Business challenge generation failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/settings')
 def settings_page():
     """Settings page for API configuration."""

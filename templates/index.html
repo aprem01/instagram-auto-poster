@@ -4,6 +4,15 @@
 
 {% block content %}
 <div class="card" id="createCard">
+    <!-- Language Toggle - Top Right -->
+    <div class="language-toggle-container">
+        <button class="language-toggle" onclick="toggleLanguage()">
+            <span class="lang-option active" data-lang="en">EN</span>
+            <span class="lang-divider">/</span>
+            <span class="lang-option" data-lang="es">ES</span>
+        </button>
+    </div>
+
     <h2>Create New Post</h2>
 
     <!-- Mode Toggle -->
@@ -47,12 +56,110 @@
                 <span class="campaign-label">Youth</span>
                 <span class="campaign-desc">Teen outreach</span>
             </button>
+
+            <button type="button" class="campaign-btn" data-mode="volunteer" onclick="setCampaignMode('volunteer')">
+                <span class="campaign-icon">🙋</span>
+                <span class="campaign-label">Volunteer</span>
+                <span class="campaign-desc">Recruit helpers</span>
+            </button>
+
+            <button type="button" class="campaign-btn giving-tuesday" data-mode="giving_tuesday" onclick="openGivingTuesday()">
+                <span class="campaign-icon">💝</span>
+                <span class="campaign-label">Giving Tuesday</span>
+                <span class="campaign-desc">Annual campaign</span>
+            </button>
         </div>
 
         <div class="campaign-info" id="campaignInfo">
             <span class="info-icon">💡</span>
             <span id="campaignInfoText">Optimizes hashtags, keywords, and tone for awareness content</span>
         </div>
+    </div>
+
+    <!-- Impact Calculator Section - Shows when fundraising mode selected -->
+    <div class="impact-calculator-section" id="impactCalculator" style="display: none;">
+        <div class="impact-header">
+            <label>💰 Impact Calculator</label>
+            <span class="impact-subtitle">Show donors what their gift provides</span>
+        </div>
+        <div class="impact-amount-selector">
+            <button type="button" class="impact-amount-btn" onclick="calculateImpact(25)">$25</button>
+            <button type="button" class="impact-amount-btn" onclick="calculateImpact(50)">$50</button>
+            <button type="button" class="impact-amount-btn active" onclick="calculateImpact(100)">$100</button>
+            <button type="button" class="impact-amount-btn" onclick="calculateImpact(250)">$250</button>
+            <button type="button" class="impact-amount-btn" onclick="calculateImpact(500)">$500</button>
+            <button type="button" class="impact-amount-btn custom-btn" onclick="showCustomAmount()">Custom</button>
+        </div>
+        <div class="impact-custom-input" id="customAmountInput" style="display: none;">
+            <input type="number" id="customAmount" placeholder="Enter amount" min="1">
+            <button type="button" class="btn btn-secondary" onclick="calculateCustomImpact()">Calculate</button>
+        </div>
+        <div class="impact-visualization" id="impactResult">
+            <div class="impact-icon">🏠</div>
+            <div class="impact-statement">$100 provides <strong>one night of safe shelter</strong> for a survivor and their children</div>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="addImpactToCaption()">Add to Caption</button>
+    </div>
+
+    <!-- Volunteer Panel - Shows when volunteer mode selected -->
+    <div class="volunteer-panel" id="volunteerPanel" style="display: none;">
+        <div class="volunteer-header">
+            <label>🙋 Volunteer Recruitment</label>
+            <span class="volunteer-subtitle">Target specific volunteer needs</span>
+        </div>
+        <div class="volunteer-type-chips">
+            <button type="button" class="volunteer-chip active" data-type="general" onclick="setVolunteerType('general')">
+                <span class="chip-icon">👥</span> General
+            </button>
+            <button type="button" class="volunteer-chip" data-type="event" onclick="setVolunteerType('event')">
+                <span class="chip-icon">🎪</span> Event
+            </button>
+            <button type="button" class="volunteer-chip" data-type="hotline" onclick="setVolunteerType('hotline')">
+                <span class="chip-icon">📞</span> Hotline
+            </button>
+            <button type="button" class="volunteer-chip" data-type="professional" onclick="setVolunteerType('professional')">
+                <span class="chip-icon">💼</span> Professional
+            </button>
+            <button type="button" class="volunteer-chip" data-type="board" onclick="setVolunteerType('board')">
+                <span class="chip-icon">📋</span> Board
+            </button>
+        </div>
+        <div class="urgency-options">
+            <span class="urgency-label">Urgency:</span>
+            <label class="urgency-radio">
+                <input type="radio" name="volunteerUrgency" value="ongoing" checked> Ongoing Need
+            </label>
+            <label class="urgency-radio">
+                <input type="radio" name="volunteerUrgency" value="upcoming"> Upcoming Event
+            </label>
+            <label class="urgency-radio">
+                <input type="radio" name="volunteerUrgency" value="urgent"> Urgent Need
+            </label>
+        </div>
+    </div>
+
+    <!-- Awareness Calendar Section -->
+    <div class="awareness-calendar-section" id="awarenessCalendar">
+        <div class="awareness-header">
+            <label>📅 Awareness Calendar</label>
+            <span class="awareness-subtitle">Never miss an important awareness day</span>
+        </div>
+        <div class="upcoming-awareness-days" id="upcomingDays">
+            <div class="awareness-loading">
+                <span class="mini-spinner"></span> Loading awareness days...
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Challenge Section -->
+    <div class="business-challenge-section" id="businessChallenge">
+        <div class="challenge-header">
+            <label>🏪 Business Challenge</label>
+            <span class="challenge-subtitle">Create matching gift campaigns</span>
+        </div>
+        <button type="button" class="btn-create-challenge" onclick="openChallengeCreator()">
+            🏪 Create Business Challenge
+        </button>
     </div>
 
     <!-- AI Mode Content -->
@@ -1163,6 +1270,380 @@
         font-size: 1rem;
     }
 
+    /* Language Toggle Styles */
+    .language-toggle-container {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+    }
+    .language-toggle {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border: 1px solid #d1d5db;
+        border-radius: 20px;
+        padding: 6px 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .language-toggle:hover {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .lang-option {
+        color: #6b7280;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+    .lang-option.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .lang-divider {
+        color: #9ca3af;
+    }
+    #createCard {
+        position: relative;
+    }
+
+    /* Impact Calculator Styles */
+    .impact-calculator-section {
+        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #f9a8d4;
+        margin-bottom: 20px;
+    }
+    .impact-header {
+        margin-bottom: 15px;
+    }
+    .impact-header label {
+        display: block;
+        font-weight: 600;
+        color: #be185d;
+        margin-bottom: 4px;
+    }
+    .impact-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #ec4899;
+    }
+    .impact-amount-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .impact-amount-btn {
+        padding: 10px 18px;
+        background: white;
+        border: 2px solid #f9a8d4;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #be185d;
+        transition: all 0.2s;
+    }
+    .impact-amount-btn:hover {
+        background: #fdf2f8;
+        border-color: #ec4899;
+    }
+    .impact-amount-btn.active {
+        background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        color: white;
+        border-color: #be185d;
+    }
+    .impact-amount-btn.custom-btn {
+        border-style: dashed;
+    }
+    .impact-custom-input {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .impact-custom-input input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 2px solid #f9a8d4;
+        border-radius: 10px;
+        font-size: 1rem;
+    }
+    .impact-visualization {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #ec4899;
+    }
+    .impact-icon {
+        font-size: 2.5rem;
+    }
+    .impact-statement {
+        font-size: 1.1rem;
+        color: #831843;
+        line-height: 1.5;
+    }
+    .impact-statement strong {
+        color: #be185d;
+    }
+
+    /* Volunteer Panel Styles */
+    .volunteer-panel {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #fbbf24;
+        margin-bottom: 20px;
+    }
+    .volunteer-header {
+        margin-bottom: 15px;
+    }
+    .volunteer-header label {
+        display: block;
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 4px;
+    }
+    .volunteer-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #b45309;
+    }
+    .volunteer-type-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .volunteer-chip {
+        padding: 10px 15px;
+        background: white;
+        border: 2px solid #fbbf24;
+        border-radius: 25px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        color: #92400e;
+        transition: all 0.2s;
+    }
+    .volunteer-chip:hover {
+        background: #fef3c7;
+        border-color: #f59e0b;
+    }
+    .volunteer-chip.active {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        border-color: #b45309;
+    }
+    .chip-icon {
+        font-size: 1rem;
+    }
+    .urgency-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+        background: white;
+        padding: 12px 15px;
+        border-radius: 10px;
+    }
+    .urgency-label {
+        font-weight: 600;
+        color: #92400e;
+        font-size: 0.9rem;
+    }
+    .urgency-radio {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #78350f;
+    }
+    .urgency-radio input {
+        accent-color: #f59e0b;
+    }
+
+    /* Awareness Calendar Styles */
+    .awareness-calendar-section {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #93c5fd;
+        margin-bottom: 20px;
+    }
+    .awareness-header {
+        margin-bottom: 15px;
+    }
+    .awareness-header label {
+        display: block;
+        font-weight: 600;
+        color: #1e40af;
+        margin-bottom: 4px;
+    }
+    .awareness-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #3b82f6;
+    }
+    .upcoming-awareness-days {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .awareness-day-card {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border-left: 4px solid #3b82f6;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .awareness-day-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    }
+    .awareness-day-card.today {
+        border-left-color: #dc2626;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+    .awareness-day-card.this-week {
+        border-left-color: #f59e0b;
+    }
+    .awareness-date {
+        text-align: center;
+        min-width: 50px;
+    }
+    .awareness-month {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .awareness-day-num {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e40af;
+        line-height: 1;
+    }
+    .awareness-info {
+        flex: 1;
+    }
+    .awareness-name {
+        font-weight: 600;
+        color: #1e3a8a;
+        margin-bottom: 4px;
+    }
+    .awareness-type {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .awareness-badge {
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .badge-today {
+        background: #dc2626;
+        color: white;
+    }
+    .badge-this-week {
+        background: #fbbf24;
+        color: #78350f;
+    }
+    .badge-upcoming {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .awareness-loading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #3b82f6;
+        padding: 15px;
+    }
+
+    /* Business Challenge Styles */
+    .business-challenge-section {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #6ee7b7;
+        margin-bottom: 20px;
+    }
+    .challenge-header {
+        margin-bottom: 15px;
+    }
+    .challenge-header label {
+        display: block;
+        font-weight: 600;
+        color: #047857;
+        margin-bottom: 4px;
+    }
+    .challenge-subtitle {
+        display: block;
+        font-size: 0.75rem;
+        color: #10b981;
+    }
+    .btn-create-challenge {
+        width: 100%;
+        padding: 15px 20px;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-create-challenge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Giving Tuesday Button Styles */
+    .campaign-btn.giving-tuesday {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border-color: #f87171;
+    }
+    .campaign-btn.giving-tuesday:hover {
+        background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+        border-color: #ef4444;
+    }
+    .campaign-btn.giving-tuesday.active {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        border-color: #991b1b;
+        color: white;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+
+    /* Update campaign grid for 6 columns on larger screens */
+    @media (min-width: 900px) {
+        .campaign-toggle-grid {
+            grid-template-columns: repeat(6, 1fr);
+        }
+    }
+    @media (max-width: 899px) and (min-width: 700px) {
+        .campaign-toggle-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
     /* Cross-Platform Styles */
     .cross-platform-section {
         background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
@@ -2052,12 +2533,520 @@
             'awareness': 'Optimizes hashtags, keywords, and tone for awareness content',
             'fundraising': 'Focuses on donor engagement with impact-driven messaging',
             'events': 'Promotes events with local hashtags and RSVP calls-to-action',
-            'youth': 'Uses relatable, authentic tone for teen and young adult reach'
+            'youth': 'Uses relatable, authentic tone for teen and young adult reach',
+            'volunteer': 'Targets potential volunteers with recruitment messaging',
+            'giving_tuesday': 'Special Giving Tuesday campaign optimization'
         };
         document.getElementById('campaignInfoText').textContent = infoTexts[mode] || infoTexts['awareness'];
 
+        // Show/hide Impact Calculator for fundraising mode
+        const impactCalculator = document.getElementById('impactCalculator');
+        if (impactCalculator) {
+            impactCalculator.style.display = mode === 'fundraising' ? 'block' : 'none';
+        }
+
+        // Show/hide Volunteer Panel for volunteer mode
+        const volunteerPanel = document.getElementById('volunteerPanel');
+        if (volunteerPanel) {
+            volunteerPanel.style.display = mode === 'volunteer' ? 'block' : 'none';
+        }
+
         // Reload smart themes with campaign filter
         loadSmartThemes();
+    }
+
+    // ============== LANGUAGE TOGGLE FUNCTIONS ==============
+
+    let currentLanguage = 'en';
+
+    function toggleLanguage() {
+        currentLanguage = currentLanguage === 'en' ? 'es' : 'en';
+
+        // Update toggle button visual state
+        document.querySelectorAll('.lang-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.lang === currentLanguage);
+        });
+
+        // Update UI text based on language
+        updateUILanguage(currentLanguage);
+    }
+
+    function updateUILanguage(lang) {
+        const translations = {
+            'en': {
+                'createTitle': 'Create New Post',
+                'campaignMode': 'Campaign Mode',
+                'campaignSubtitle': 'Select your content focus',
+                'awareness': 'Awareness',
+                'fundraising': 'Fundraising',
+                'events': 'Events',
+                'youth': 'Youth',
+                'volunteer': 'Volunteer',
+                'impactTitle': 'Impact Calculator',
+                'impactSubtitle': 'Show donors what their gift provides',
+                'addToCaption': 'Add to Caption'
+            },
+            'es': {
+                'createTitle': 'Crear Nueva Publicacion',
+                'campaignMode': 'Modo de Campana',
+                'campaignSubtitle': 'Selecciona el enfoque de tu contenido',
+                'awareness': 'Concientizacion',
+                'fundraising': 'Recaudacion',
+                'events': 'Eventos',
+                'youth': 'Juventud',
+                'volunteer': 'Voluntarios',
+                'impactTitle': 'Calculadora de Impacto',
+                'impactSubtitle': 'Muestra a los donantes lo que ofrece su regalo',
+                'addToCaption': 'Agregar al Texto'
+            }
+        };
+
+        const t = translations[lang];
+
+        // Update main title
+        const h2 = document.querySelector('#createCard h2');
+        if (h2) h2.textContent = t.createTitle;
+
+        // Update campaign header
+        const campaignLabel = document.querySelector('.campaign-header label');
+        if (campaignLabel) campaignLabel.innerHTML = '🎯 ' + t.campaignMode;
+
+        const campaignSubtitle = document.querySelector('.campaign-subtitle');
+        if (campaignSubtitle) campaignSubtitle.textContent = t.campaignSubtitle;
+    }
+
+    // ============== IMPACT CALCULATOR FUNCTIONS ==============
+
+    let currentImpactAmount = 100;
+    let currentImpactStatement = '';
+
+    const impactData = {
+        25: { icon: '📱', statement: '$25 provides <strong>emergency phone calls</strong> for a survivor to reach safety' },
+        50: { icon: '🍎', statement: '$50 provides <strong>groceries and essentials</strong> for a week for a family in need' },
+        100: { icon: '🏠', statement: '$100 provides <strong>one night of safe shelter</strong> for a survivor and their children' },
+        250: { icon: '⚖️', statement: '$250 provides <strong>legal advocacy support</strong> for a survivor seeking protection' },
+        500: { icon: '💼', statement: '$500 provides <strong>job training and resources</strong> to help a survivor rebuild their life' },
+        1000: { icon: '🏡', statement: '$1,000 provides <strong>a full month of transitional housing</strong> for a family starting over' }
+    };
+
+    function calculateImpact(amount) {
+        currentImpactAmount = amount;
+
+        // Update button states
+        document.querySelectorAll('.impact-amount-btn').forEach(btn => {
+            const btnAmount = parseInt(btn.textContent.replace('$', '').replace('Custom', '0'));
+            btn.classList.toggle('active', btnAmount === amount);
+        });
+
+        // Hide custom input if visible
+        document.getElementById('customAmountInput').style.display = 'none';
+
+        // Get impact data
+        let impact = impactData[amount];
+        if (!impact) {
+            // Generate custom impact statement
+            impact = generateCustomImpact(amount);
+        }
+
+        // Update display
+        const resultDiv = document.getElementById('impactResult');
+        resultDiv.innerHTML = `
+            <div class="impact-icon">${impact.icon}</div>
+            <div class="impact-statement">${impact.statement}</div>
+        `;
+        currentImpactStatement = impact.statement.replace(/<[^>]*>/g, '');
+    }
+
+    function showCustomAmount() {
+        document.getElementById('customAmountInput').style.display = 'flex';
+        document.getElementById('customAmount').focus();
+
+        // Remove active from preset buttons
+        document.querySelectorAll('.impact-amount-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector('.impact-amount-btn.custom-btn').classList.add('active');
+    }
+
+    function calculateCustomImpact() {
+        const amount = parseInt(document.getElementById('customAmount').value);
+        if (amount && amount > 0) {
+            calculateImpact(amount);
+        }
+    }
+
+    function generateCustomImpact(amount) {
+        // Generate meaningful impact based on amount
+        if (amount < 25) {
+            return { icon: '💜', statement: `$${amount} provides <strong>essential supplies</strong> for survivors in our care` };
+        } else if (amount < 100) {
+            return { icon: '🎒', statement: `$${amount} provides <strong>school supplies and clothing</strong> for children in our programs` };
+        } else if (amount < 500) {
+            const nights = Math.floor(amount / 100);
+            return { icon: '🏠', statement: `$${amount} provides <strong>${nights} night${nights > 1 ? 's' : ''} of safe shelter</strong> for a family` };
+        } else if (amount < 1000) {
+            return { icon: '📚', statement: `$${amount} provides <strong>comprehensive support services</strong> for a survivor's healing journey` };
+        } else {
+            const months = Math.floor(amount / 1000);
+            return { icon: '🏡', statement: `$${amount} provides <strong>${months} month${months > 1 ? 's' : ''} of transitional housing</strong> for families rebuilding their lives` };
+        }
+    }
+
+    function addImpactToCaption() {
+        const caption = document.getElementById('caption');
+        const theme = document.getElementById('theme');
+
+        const impactText = `\n\n💝 ${currentImpactStatement}\n\nDonate today: [link in bio]`;
+
+        if (caption && caption.value) {
+            // Add to existing caption in preview
+            caption.value += impactText;
+            updatePreview();
+        } else if (theme) {
+            // Add to theme if caption not yet generated
+            theme.value += ` [Impact: ${currentImpactStatement}]`;
+        }
+
+        // Show confirmation
+        alert('Impact statement added to your content!');
+    }
+
+    // ============== VOLUNTEER PANEL FUNCTIONS ==============
+
+    let currentVolunteerType = 'general';
+
+    function setVolunteerType(type) {
+        currentVolunteerType = type;
+
+        // Update chip states
+        document.querySelectorAll('.volunteer-chip').forEach(chip => {
+            chip.classList.toggle('active', chip.dataset.type === type);
+        });
+    }
+
+    function getVolunteerUrgency() {
+        const selected = document.querySelector('input[name="volunteerUrgency"]:checked');
+        return selected ? selected.value : 'ongoing';
+    }
+
+    // ============== AWARENESS CALENDAR FUNCTIONS ==============
+
+    async function loadUpcomingAwareness() {
+        const container = document.getElementById('upcomingDays');
+
+        try {
+            const response = await fetch('/api/awareness-calendar');
+            const data = await response.json();
+
+            if (data.success && data.days && data.days.length > 0) {
+                renderAwarenessDays(data.days);
+            } else {
+                // Show static awareness days as fallback
+                renderAwarenessDays(getStaticAwarenessDays());
+            }
+        } catch (error) {
+            console.error('Failed to load awareness calendar:', error);
+            // Show static awareness days as fallback
+            renderAwarenessDays(getStaticAwarenessDays());
+        }
+    }
+
+    function getStaticAwarenessDays() {
+        const today = new Date();
+        const month = today.getMonth();
+
+        // Common awareness days
+        const awarenessCalendar = [
+            { date: new Date(today.getFullYear(), 0, 1), name: 'Human Trafficking Awareness Month Begins', type: 'Month' },
+            { date: new Date(today.getFullYear(), 1, 14), name: 'V-Day / One Billion Rising', type: 'Day' },
+            { date: new Date(today.getFullYear(), 3, 1), name: 'Sexual Assault Awareness Month Begins', type: 'Month' },
+            { date: new Date(today.getFullYear(), 9, 1), name: 'Domestic Violence Awareness Month Begins', type: 'Month' },
+            { date: new Date(today.getFullYear(), 9, 15), name: 'Purple Thursday', type: 'Day' },
+            { date: new Date(today.getFullYear(), 10, 25), name: 'International Day for the Elimination of Violence Against Women', type: 'Day' }
+        ];
+
+        // Filter to upcoming days
+        return awarenessCalendar
+            .filter(d => d.date >= today || d.date.getMonth() === month)
+            .slice(0, 3)
+            .map(d => ({
+                date: d.date.toISOString(),
+                name: d.name,
+                type: d.type
+            }));
+    }
+
+    function renderAwarenessDays(days) {
+        const container = document.getElementById('upcomingDays');
+        container.innerHTML = '';
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        days.forEach(day => {
+            const dayDate = new Date(day.date);
+            const isToday = dayDate.toDateString() === today.toDateString();
+            const isThisWeek = dayDate >= today && dayDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            const card = document.createElement('div');
+            card.className = `awareness-day-card ${isToday ? 'today' : isThisWeek ? 'this-week' : ''}`;
+            card.onclick = () => useAwarenessDay(day);
+
+            const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+            card.innerHTML = `
+                <div class="awareness-date">
+                    <div class="awareness-month">${monthNames[dayDate.getMonth()]}</div>
+                    <div class="awareness-day-num">${dayDate.getDate()}</div>
+                </div>
+                <div class="awareness-info">
+                    <div class="awareness-name">${day.name}</div>
+                    <div class="awareness-type">${day.type || 'Awareness Day'}</div>
+                </div>
+                <span class="awareness-badge ${isToday ? 'badge-today' : isThisWeek ? 'badge-this-week' : 'badge-upcoming'}">
+                    ${isToday ? 'Today' : isThisWeek ? 'This Week' : 'Upcoming'}
+                </span>
+            `;
+
+            container.appendChild(card);
+        });
+
+        if (days.length === 0) {
+            container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 15px;">No upcoming awareness days found</p>';
+        }
+    }
+
+    function useAwarenessDay(day) {
+        // Set the theme based on awareness day
+        const themeInput = document.getElementById('theme');
+        if (themeInput) {
+            themeInput.value = day.name;
+            themeInput.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // ============== GIVING TUESDAY FUNCTIONS ==============
+
+    function openGivingTuesday() {
+        // Set campaign mode to giving_tuesday
+        setCampaignMode('giving_tuesday');
+
+        // Calculate next Giving Tuesday (Tuesday after US Thanksgiving)
+        const today = new Date();
+        let year = today.getFullYear();
+
+        // Find Thanksgiving (4th Thursday of November)
+        let thanksgiving = new Date(year, 10, 1); // November 1
+        let dayOfWeek = thanksgiving.getDay();
+        let thursdayCount = 0;
+
+        while (thursdayCount < 4) {
+            if (thanksgiving.getDay() === 4) { // Thursday
+                thursdayCount++;
+                if (thursdayCount < 4) {
+                    thanksgiving.setDate(thanksgiving.getDate() + 7);
+                }
+            } else {
+                thanksgiving.setDate(thanksgiving.getDate() + 1);
+            }
+        }
+
+        // Giving Tuesday is the Tuesday after Thanksgiving
+        let givingTuesday = new Date(thanksgiving);
+        givingTuesday.setDate(givingTuesday.getDate() + 5);
+
+        // If already passed this year, calculate for next year
+        if (givingTuesday < today) {
+            year++;
+            thanksgiving = new Date(year, 10, 1);
+            thursdayCount = 0;
+            while (thursdayCount < 4) {
+                if (thanksgiving.getDay() === 4) {
+                    thursdayCount++;
+                    if (thursdayCount < 4) {
+                        thanksgiving.setDate(thanksgiving.getDate() + 7);
+                    }
+                } else {
+                    thanksgiving.setDate(thanksgiving.getDate() + 1);
+                }
+            }
+            givingTuesday = new Date(thanksgiving);
+            givingTuesday.setDate(givingTuesday.getDate() + 5);
+        }
+
+        // Set theme to Giving Tuesday
+        const themeInput = document.getElementById('theme');
+        if (themeInput) {
+            themeInput.value = 'Giving Tuesday Campaign';
+        }
+
+        // Show impact calculator for donations
+        const impactCalculator = document.getElementById('impactCalculator');
+        if (impactCalculator) {
+            impactCalculator.style.display = 'block';
+        }
+
+        // Alert with date info
+        const dateStr = givingTuesday.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        alert(`Giving Tuesday ${year} is on ${dateStr}!\n\nYour content will be optimized for maximum donor engagement.`);
+    }
+
+    // ============== BUSINESS CHALLENGE FUNCTIONS ==============
+
+    function openChallengeCreator() {
+        // Create modal for business challenge
+        const modal = document.createElement('div');
+        modal.id = 'challengeModal';
+        modal.className = 'challenge-modal';
+        modal.innerHTML = `
+            <div class="challenge-modal-content">
+                <div class="challenge-modal-header">
+                    <h3>🏪 Create Business Challenge</h3>
+                    <button onclick="closeChallengeModal()" class="modal-close">&times;</button>
+                </div>
+                <div class="challenge-modal-body">
+                    <div class="challenge-form-group">
+                        <label>Business Name</label>
+                        <input type="text" id="challengeBusinessName" placeholder="e.g., Local Coffee Shop">
+                    </div>
+                    <div class="challenge-form-group">
+                        <label>Challenge Amount</label>
+                        <input type="number" id="challengeAmount" placeholder="e.g., 5000" min="100">
+                    </div>
+                    <div class="challenge-form-group">
+                        <label>Challenge Type</label>
+                        <select id="challengeType">
+                            <option value="match">Matching Gift</option>
+                            <option value="goal">Goal Challenge</option>
+                            <option value="time">Time-Limited</option>
+                        </select>
+                    </div>
+                    <div class="challenge-form-group">
+                        <label>End Date</label>
+                        <input type="date" id="challengeEndDate">
+                    </div>
+                </div>
+                <div class="challenge-modal-footer">
+                    <button onclick="closeChallengeModal()" class="btn btn-secondary">Cancel</button>
+                    <button onclick="createChallenge()" class="btn btn-primary">Create Challenge Post</button>
+                </div>
+            </div>
+        `;
+
+        // Add modal styles if not already present
+        if (!document.getElementById('challengeModalStyles')) {
+            const styles = document.createElement('style');
+            styles.id = 'challengeModalStyles';
+            styles.textContent = `
+                .challenge-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                }
+                .challenge-modal-content {
+                    background: white;
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 500px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                }
+                .challenge-modal-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .challenge-modal-header h3 {
+                    margin: 0;
+                    color: #047857;
+                }
+                .modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: #9ca3af;
+                }
+                .challenge-modal-body {
+                    padding: 20px;
+                }
+                .challenge-form-group {
+                    margin-bottom: 15px;
+                }
+                .challenge-form-group label {
+                    display: block;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 6px;
+                }
+                .challenge-form-group input,
+                .challenge-form-group select {
+                    width: 100%;
+                    padding: 10px 15px;
+                    border: 2px solid #d1d5db;
+                    border-radius: 10px;
+                    font-size: 1rem;
+                }
+                .challenge-modal-footer {
+                    padding: 20px;
+                    border-top: 1px solid #e5e7eb;
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+
+        document.body.appendChild(modal);
+    }
+
+    function closeChallengeModal() {
+        const modal = document.getElementById('challengeModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    function createChallenge() {
+        const businessName = document.getElementById('challengeBusinessName').value;
+        const amount = document.getElementById('challengeAmount').value;
+        const type = document.getElementById('challengeType').value;
+        const endDate = document.getElementById('challengeEndDate').value;
+
+        if (!businessName || !amount) {
+            alert('Please fill in the business name and challenge amount');
+            return;
+        }
+
+        const typeText = {
+            'match': 'will match',
+            'goal': 'challenges us to reach',
+            'time': 'is sponsoring a limited-time'
+        };
+
+        // Generate theme
+        const theme = `${businessName} ${typeText[type]} $${amount} challenge! Help us reach this goal.`;
+
+        // Set theme
+        const themeInput = document.getElementById('theme');
+        if (themeInput) {
+            themeInput.value = theme;
+        }
+
+        // Close modal
+        closeChallengeModal();
+
+        // Set to fundraising mode
+        setCampaignMode('fundraising');
     }
 
     // ============== PLATFORM TIPS FUNCTIONS ==============
@@ -2657,6 +3646,9 @@
 
         // Load platform tips
         loadPlatformTips();
+
+        // Load upcoming awareness days
+        loadUpcomingAwareness();
 
         // Check Instagram API status
         try {
