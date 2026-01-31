@@ -566,28 +566,164 @@
                 </div>
             </div>
 
-            <!-- Cross-Platform Tips -->
-            <div class="reach-card full-width cross-platform-section">
+            <!-- Cross-Platform Content Section -->
+            <div class="reach-card full-width cross-platform-full-section" id="crossPlatformSection">
                 <div class="cross-platform-header">
-                    <h4>🌐 Cross-Platform Tips</h4>
-                    <span class="cross-platform-subtitle">Adapt your content for other platforms</span>
-                </div>
-
-                <div class="platform-tabs" id="platformTabs">
-                    <button type="button" class="platform-tab active" data-platform="facebook" onclick="showPlatformTips('facebook')">
-                        📘 Facebook
-                    </button>
-                    <button type="button" class="platform-tab" data-platform="linkedin" onclick="showPlatformTips('linkedin')">
-                        💼 LinkedIn
-                    </button>
-                    <button type="button" class="platform-tab" data-platform="tiktok" onclick="showPlatformTips('tiktok')">
-                        🎵 TikTok
+                    <div class="header-title-group">
+                        <h4>Cross-Platform Content</h4>
+                        <span class="cross-platform-subtitle">Adapt your content for other platforms</span>
+                    </div>
+                    <button type="button" class="btn-auto-adapt-all" onclick="autoAdaptAllPlatforms()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Adapt All
                     </button>
                 </div>
 
-                <div class="platform-content" id="platformContent">
-                    <div class="platform-tips-list" id="platformTipsList">
-                        <!-- Tips loaded dynamically -->
+                <div class="platform-cards-grid">
+                    <!-- Facebook Card -->
+                    <div class="platform-card" data-platform="facebook" id="facebookCard">
+                        <div class="platform-card-header">
+                            <div class="platform-identity">
+                                <span class="platform-indicator platform-facebook"></span>
+                                <span class="platform-name">Facebook</span>
+                            </div>
+                            <span class="platform-status-badge badge-pending" id="facebookStatus">Pending</span>
+                        </div>
+
+                        <div class="platform-char-counter">
+                            <div class="char-count-text">
+                                <span class="char-current" id="facebookCharCurrent">0</span>
+                                <span class="char-separator">/</span>
+                                <span class="char-limit">500</span>
+                            </div>
+                            <div class="char-progress-bar">
+                                <div class="char-progress-fill" id="facebookProgress" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="platform-content-preview">
+                            <textarea id="facebookCaption" class="platform-caption-textarea"
+                                placeholder="Click 'Adapt' to generate Facebook-optimized content..."
+                                oninput="updatePlatformCharCount('facebook')"></textarea>
+                        </div>
+
+                        <div class="platform-card-actions">
+                            <button type="button" class="btn-platform-action btn-adapt" onclick="adaptContent('facebook')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Adapt
+                            </button>
+                            <button type="button" class="btn-platform-action btn-copy" onclick="copyPlatformContent('facebook')" id="facebookCopyBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+
+                        <div class="platform-tips-compact" id="facebookTips">
+                            <div class="tip-item">Use 1-3 hashtags max</div>
+                            <div class="tip-item">Keep it conversational</div>
+                        </div>
+                    </div>
+
+                    <!-- LinkedIn Card -->
+                    <div class="platform-card" data-platform="linkedin" id="linkedinCard">
+                        <div class="platform-card-header">
+                            <div class="platform-identity">
+                                <span class="platform-indicator platform-linkedin"></span>
+                                <span class="platform-name">LinkedIn</span>
+                            </div>
+                            <span class="platform-status-badge badge-pending" id="linkedinStatus">Pending</span>
+                        </div>
+
+                        <div class="platform-char-counter">
+                            <div class="char-count-text">
+                                <span class="char-current" id="linkedinCharCurrent">0</span>
+                                <span class="char-separator">/</span>
+                                <span class="char-limit">1300</span>
+                            </div>
+                            <div class="char-progress-bar">
+                                <div class="char-progress-fill" id="linkedinProgress" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="platform-content-preview">
+                            <textarea id="linkedinCaption" class="platform-caption-textarea"
+                                placeholder="Click 'Adapt' to generate LinkedIn-optimized content..."
+                                oninput="updatePlatformCharCount('linkedin')"></textarea>
+                        </div>
+
+                        <div class="platform-card-actions">
+                            <button type="button" class="btn-platform-action btn-adapt" onclick="adaptContent('linkedin')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Adapt
+                            </button>
+                            <button type="button" class="btn-platform-action btn-copy" onclick="copyPlatformContent('linkedin')" id="linkedinCopyBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+
+                        <div class="platform-tips-compact" id="linkedinTips">
+                            <div class="tip-item">Professional tone</div>
+                            <div class="tip-item">Share impact metrics</div>
+                        </div>
+                    </div>
+
+                    <!-- TikTok Card -->
+                    <div class="platform-card" data-platform="tiktok" id="tiktokCard">
+                        <div class="platform-card-header">
+                            <div class="platform-identity">
+                                <span class="platform-indicator platform-tiktok"></span>
+                                <span class="platform-name">TikTok</span>
+                            </div>
+                            <span class="platform-status-badge badge-pending" id="tiktokStatus">Pending</span>
+                        </div>
+
+                        <div class="platform-char-counter">
+                            <div class="char-count-text">
+                                <span class="char-current" id="tiktokCharCurrent">0</span>
+                                <span class="char-separator">/</span>
+                                <span class="char-limit">150</span>
+                            </div>
+                            <div class="char-progress-bar">
+                                <div class="char-progress-fill" id="tiktokProgress" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="platform-content-preview">
+                            <textarea id="tiktokCaption" class="platform-caption-textarea"
+                                placeholder="Click 'Adapt' to generate TikTok-optimized content..."
+                                oninput="updatePlatformCharCount('tiktok')"></textarea>
+                        </div>
+
+                        <div class="platform-card-actions">
+                            <button type="button" class="btn-platform-action btn-adapt" onclick="adaptContent('tiktok')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                Adapt
+                            </button>
+                            <button type="button" class="btn-platform-action btn-copy" onclick="copyPlatformContent('tiktok')" id="tiktokCopyBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+
+                        <div class="platform-tips-compact" id="tiktokTips">
+                            <div class="tip-item">Keep it SHORT</div>
+                            <div class="tip-item">Be authentic</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1708,63 +1844,341 @@
         }
     }
 
-    /* Cross-Platform Styles */
-    .cross-platform-section {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border: 1px solid #7dd3fc;
+    /* Cross-Platform Full Section */
+    .cross-platform-full-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        padding: 25px;
     }
+
     .cross-platform-header {
-        text-align: center;
-        margin-bottom: 15px;
-    }
-    .cross-platform-header h4 {
-        color: #0369a1;
-        margin: 0;
-    }
-    .cross-platform-subtitle {
-        color: #0ea5e9;
-        font-size: 0.8rem;
-    }
-    .platform-tabs {
         display: flex;
-        gap: 8px;
-        margin-bottom: 15px;
-        justify-content: center;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
     }
-    .platform-tab {
-        padding: 8px 16px;
-        border: 1px solid #bae6fd;
-        background: white;
-        border-radius: 20px;
-        cursor: pointer;
+
+    .header-title-group h4 {
+        color: #1e293b;
+        margin: 0 0 5px 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .cross-platform-subtitle {
+        color: #64748b;
         font-size: 0.85rem;
+    }
+
+    .btn-auto-adapt-all {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
         transition: all 0.2s;
     }
-    .platform-tab:hover {
-        background: #e0f2fe;
+
+    .btn-auto-adapt-all:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
-    .platform-tab.active {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        color: white;
-        border-color: #0369a1;
+
+    /* Platform Cards Grid */
+    .platform-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
     }
-    .platform-content {
+
+    @media (max-width: 1024px) {
+        .platform-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .platform-cards-grid {
+            grid-template-columns: 1fr;
+        }
+        .cross-platform-header {
+            flex-direction: column;
+            gap: 15px;
+        }
+        .btn-auto-adapt-all {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Individual Platform Card */
+    .platform-card {
         background: white;
-        padding: 15px;
-        border-radius: 10px;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
     }
-    .platform-tips-list {
+
+    .platform-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        border-color: #d1d5db;
+    }
+
+    .platform-card.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    /* Platform Card Header */
+    .platform-card-header {
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .platform-identity {
+        display: flex;
+        align-items: center;
         gap: 10px;
     }
-    .platform-tip {
-        padding: 10px 15px;
-        background: #f0f9ff;
+
+    /* Platform Indicators (Colored Dots) */
+    .platform-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .platform-indicator.platform-facebook {
+        background-color: #1877F2;
+    }
+
+    .platform-indicator.platform-linkedin {
+        background-color: #0A66C2;
+    }
+
+    .platform-indicator.platform-tiktok {
+        background: linear-gradient(135deg, #000000 50%, #EE1D52 50%);
+    }
+
+    .platform-name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 1rem;
+    }
+
+    /* Status Badges */
+    .platform-status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-ready {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-pending {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .badge-too-long {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .badge-adapting {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    /* Character Counter */
+    .platform-char-counter {
+        margin-bottom: 15px;
+    }
+
+    .char-count-text {
+        display: flex;
+        align-items: baseline;
+        gap: 2px;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+    }
+
+    .char-current {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .char-separator {
+        color: #9ca3af;
+    }
+
+    .char-limit {
+        color: #6b7280;
+    }
+
+    .char-progress-bar {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .char-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #059669);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+        max-width: 100%;
+    }
+
+    .char-progress-fill.char-fill-warning {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .char-progress-fill.char-fill-error {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    /* Content Preview */
+    .platform-content-preview {
+        margin-bottom: 15px;
+    }
+
+    .platform-caption-textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
-        border-left: 3px solid #0ea5e9;
         font-size: 0.85rem;
-        color: #0c4a6e;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.5;
+    }
+
+    .platform-caption-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .platform-caption-textarea::placeholder {
+        color: #9ca3af;
+        font-style: italic;
+    }
+
+    /* Platform Card Actions */
+    .platform-card-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .btn-platform-action {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+        color: #374151;
+    }
+
+    .btn-platform-action:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+    }
+
+    .btn-platform-action.btn-adapt:hover {
+        background: #f0fdf4;
+        border-color: #86efac;
+        color: #166534;
+    }
+
+    .btn-platform-action.btn-copy:hover {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1e40af;
+    }
+
+    .btn-platform-action.btn-copy.copied {
+        background: #dcfce7;
+        border-color: #22c55e;
+        color: #16a34a;
+    }
+
+    .btn-platform-action svg {
+        flex-shrink: 0;
+    }
+
+    /* Platform Tips Compact */
+    .platform-tips-compact {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tip-item {
+        background: #f3f4f6;
+        color: #6b7280;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+    }
+
+    /* Copy Success Toast */
+    .copy-success-toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: toastSlideUp 0.3s ease-out;
+        z-index: 1001;
+    }
+
+    @keyframes toastSlideUp {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 </style>
 
@@ -3309,6 +3723,206 @@
         } else {
             container.innerHTML = '<div class="platform-tip">Tips loading...</div>';
         }
+    }
+
+    // ============== CROSS-PLATFORM CONTENT FUNCTIONS ==============
+
+    const platformLimits = {
+        facebook: 500,
+        linkedin: 1300,
+        tiktok: 150
+    };
+
+    let platformCaptions = {
+        facebook: '',
+        linkedin: '',
+        tiktok: ''
+    };
+
+    // Adapt content for a specific platform
+    async function adaptContent(platform) {
+        const instagramCaption = document.getElementById('caption')?.value;
+        if (!instagramCaption) {
+            showToast('Please generate Instagram content first');
+            return;
+        }
+
+        const card = document.getElementById(`${platform}Card`);
+        const captionField = document.getElementById(`${platform}Caption`);
+        const statusBadge = document.getElementById(`${platform}Status`);
+
+        // Show loading state
+        card.classList.add('loading');
+        statusBadge.textContent = 'Adapting...';
+        statusBadge.className = 'platform-status-badge badge-adapting';
+        captionField.value = 'Adapting content...';
+        captionField.disabled = true;
+
+        try {
+            const response = await fetch('/api/adapt-for-platform', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    caption: instagramCaption,
+                    platform: platform,
+                    topic: currentData.theme || '',
+                    campaign_mode: currentCampaignMode
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                platformCaptions[platform] = data.adapted_caption;
+                captionField.value = data.adapted_caption;
+
+                // Update character count
+                updatePlatformCharCount(platform);
+
+                // Update status
+                if (data.within_limit) {
+                    statusBadge.textContent = 'Ready';
+                    statusBadge.className = 'platform-status-badge badge-ready';
+                } else {
+                    statusBadge.textContent = 'Too Long';
+                    statusBadge.className = 'platform-status-badge badge-too-long';
+                }
+
+                // Update tips if available
+                if (data.tips && data.tips.length > 0) {
+                    const tipsContainer = document.getElementById(`${platform}Tips`);
+                    tipsContainer.innerHTML = data.tips.slice(0, 2).map(tip =>
+                        `<div class="tip-item">${tip.replace(/^[-•]\s*/, '')}</div>`
+                    ).join('');
+                }
+            } else {
+                captionField.value = 'Failed to adapt. Try again.';
+                statusBadge.textContent = 'Error';
+                statusBadge.className = 'platform-status-badge badge-too-long';
+            }
+        } catch (error) {
+            console.error(`Failed to adapt for ${platform}:`, error);
+            captionField.value = instagramCaption; // Fallback to original
+            statusBadge.textContent = 'Error';
+            statusBadge.className = 'platform-status-badge badge-too-long';
+        }
+
+        card.classList.remove('loading');
+        captionField.disabled = false;
+    }
+
+    // Update character count for a platform
+    function updatePlatformCharCount(platform) {
+        const captionField = document.getElementById(`${platform}Caption`);
+        const charCurrentSpan = document.getElementById(`${platform}CharCurrent`);
+        const progressFill = document.getElementById(`${platform}Progress`);
+        const statusBadge = document.getElementById(`${platform}Status`);
+
+        const limit = platformLimits[platform];
+        const count = captionField.value.length;
+        const percentage = Math.min((count / limit) * 100, 100);
+
+        charCurrentSpan.textContent = count;
+        progressFill.style.width = `${percentage}%`;
+
+        // Update progress bar color
+        progressFill.classList.remove('char-fill-warning', 'char-fill-error');
+        if (count > limit) {
+            progressFill.classList.add('char-fill-error');
+            progressFill.style.width = '100%';
+            statusBadge.textContent = 'Too Long';
+            statusBadge.className = 'platform-status-badge badge-too-long';
+        } else if (percentage > 80) {
+            progressFill.classList.add('char-fill-warning');
+            if (count > 0) {
+                statusBadge.textContent = 'Ready';
+                statusBadge.className = 'platform-status-badge badge-ready';
+            }
+        } else if (count > 0) {
+            statusBadge.textContent = 'Ready';
+            statusBadge.className = 'platform-status-badge badge-ready';
+        }
+
+        // Store the caption
+        platformCaptions[platform] = captionField.value;
+    }
+
+    // Copy platform content to clipboard
+    function copyPlatformContent(platform) {
+        const captionField = document.getElementById(`${platform}Caption`);
+        const content = captionField.value;
+
+        if (!content || content.includes('Click') || content.includes('Adapting')) {
+            showToast('No content to copy. Click "Adapt" first.');
+            return;
+        }
+
+        navigator.clipboard.writeText(content).then(() => {
+            const btn = document.getElementById(`${platform}CopyBtn`);
+            btn.classList.add('copied');
+            btn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 13l4 4L19 7"/>
+                </svg>
+                Copied!
+            `;
+
+            showToast(`${platform.charAt(0).toUpperCase() + platform.slice(1)} content copied!`);
+
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    Copy
+                `;
+            }, 2000);
+        });
+    }
+
+    // Auto-adapt all platforms
+    async function autoAdaptAllPlatforms() {
+        const instagramCaption = document.getElementById('caption')?.value;
+        if (!instagramCaption) {
+            showToast('Please generate Instagram content first');
+            return;
+        }
+
+        showToast('Adapting for all platforms...');
+
+        // Adapt all platforms in parallel
+        await Promise.all([
+            adaptContent('facebook'),
+            adaptContent('linkedin'),
+            adaptContent('tiktok')
+        ]);
+
+        showToast('All platforms adapted!');
+    }
+
+    // Show toast notification
+    function showToast(message) {
+        // Remove existing toast
+        const existingToast = document.querySelector('.copy-success-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.className = 'copy-success-toast';
+        toast.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                <path d="M5 13l4 4L19 7"/>
+            </svg>
+            ${message}
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
     }
 
     // ============== KEYWORD SEARCH FUNCTIONS ==============

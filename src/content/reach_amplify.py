@@ -1723,6 +1723,121 @@ Make themes varied, authentic, and actionable."""
         """Return all platform configurations."""
         return self.PLATFORM_CONFIG
 
+    def adapt_for_platform(self, caption: str, platform: str, topic: str = '', campaign_mode: str = 'awareness') -> Dict:
+        """
+        Adapt Instagram caption for a specific platform using AI.
+
+        Args:
+            caption: Original Instagram caption
+            platform: Target platform (facebook, linkedin, tiktok)
+            topic: Topic for context
+            campaign_mode: Campaign mode for tone adjustment
+
+        Returns:
+            Dict with adapted_caption, hashtags, char_count, tips
+        """
+        import re
+
+        self.logger.info(f"Adapting caption for {platform}")
+
+        config = self.PLATFORM_CONFIG.get(platform, {})
+        char_limit = config.get('caption_length', 500)
+        hashtag_count = config.get('hashtag_count', 3)
+
+        # Platform-specific tone guidance
+        tone_prompts = {
+            'facebook': 'conversational, warm, and community-focused. Use complete sentences and a friendly call-to-action. Be personal like talking to a neighbor.',
+            'linkedin': 'professional, impactful, and organization-focused. Include statistics or impact metrics if relevant. Use formal language suitable for corporate partners.',
+            'tiktok': 'short, punchy, and authentic. Use Gen-Z friendly language. Start with a hook. Be direct and real.'
+        }
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"""You are a social media expert adapting content for {platform}.
+
+Adapt the Instagram caption to be {tone_prompts.get(platform, 'engaging')}.
+
+IMPORTANT RULES FOR {platform.upper()}:
+- Maximum {char_limit} characters total (including hashtags)
+- Use exactly {hashtag_count} hashtags
+- Keep the core message but adapt the style
+- Include a platform-appropriate call-to-action
+
+The organization is DVCCC (Domestic Violence Center of Chester County), a nonprofit supporting survivors."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Adapt this Instagram caption for {platform}:
+
+ORIGINAL CAPTION:
+{caption}
+
+{f'TOPIC: {topic}' if topic else ''}
+{f'CAMPAIGN MODE: {campaign_mode}' if campaign_mode else ''}
+
+Return ONLY the adapted caption with hashtags. No explanations."""
+                    }
+                ],
+                max_tokens=500,
+                temperature=0.7
+            )
+
+            adapted = response.choices[0].message.content.strip()
+
+            # Extract hashtags from adapted caption
+            hashtags = re.findall(r'#\w+', adapted)
+
+            return {
+                'adapted_caption': adapted,
+                'hashtags': hashtags[:hashtag_count],
+                'char_count': len(adapted),
+                'char_limit': char_limit,
+                'within_limit': len(adapted) <= char_limit,
+                'platform': platform,
+                'tips': config.get('tips', [])
+            }
+
+        except Exception as e:
+            self.logger.error(f"Platform adaptation failed: {e}")
+            # Fallback to basic adaptation
+            return self._basic_platform_adapt(caption, platform, config)
+
+    def _basic_platform_adapt(self, caption: str, platform: str, config: Dict) -> Dict:
+        """Basic platform adaptation without AI."""
+        import re
+
+        char_limit = config.get('caption_length', 500)
+        hashtag_count = config.get('hashtag_count', 3)
+
+        # Extract hashtags
+        hashtags = re.findall(r'#\w+', caption)
+        clean_caption = re.sub(r'#\w+\s*', '', caption).strip()
+
+        # Truncate if needed
+        if len(clean_caption) > char_limit - 50:
+            clean_caption = clean_caption[:char_limit-53] + '...'
+
+        # Add limited hashtags
+        selected_hashtags = hashtags[:hashtag_count]
+        if selected_hashtags:
+            adapted = clean_caption + '\n\n' + ' '.join(selected_hashtags)
+        else:
+            adapted = clean_caption
+
+        return {
+            'adapted_caption': adapted,
+            'hashtags': selected_hashtags,
+            'char_count': len(adapted),
+            'char_limit': char_limit,
+            'within_limit': len(adapted) <= char_limit,
+            'platform': platform,
+            'tips': config.get('tips', [])
+        }
+
     def optimize_for_event(self, event_name: str, event_type: str, event_date: str = None, location: str = "Chester County") -> Dict:
         """Generate event-specific optimization."""
         event_hashtags = [

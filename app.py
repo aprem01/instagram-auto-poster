@@ -1328,6 +1328,83 @@ def api_platform_tips(platform):
     return jsonify({'success': True, 'platform': platform, **tips})
 
 
+@app.route('/api/adapt-for-platform', methods=['POST'])
+def api_adapt_for_platform():
+    """
+    Adapt Instagram caption for a specific platform.
+
+    Request body:
+        - caption: str (required) - Original Instagram caption
+        - platform: str (required) - Target platform (facebook, linkedin, tiktok)
+        - topic: str (optional) - Topic for context-aware adaptation
+        - campaign_mode: str (optional) - Campaign mode for tone adjustment
+
+    Returns:
+        Adapted caption with platform-specific optimizations
+    """
+    import re
+
+    data = request.json or {}
+    caption = data.get('caption', '').strip()
+    platform = data.get('platform', '').lower()
+    topic = data.get('topic', '')
+    campaign_mode = data.get('campaign_mode', 'awareness')
+
+    if not caption:
+        return jsonify({'success': False, 'error': 'Caption is required'}), 400
+
+    if platform not in ['facebook', 'linkedin', 'tiktok']:
+        return jsonify({'success': False, 'error': 'Invalid platform. Use: facebook, linkedin, tiktok'}), 400
+
+    # Platform character limits and hashtag counts
+    platform_config = {
+        'facebook': {'char_limit': 500, 'hashtag_count': 3, 'tone': 'conversational'},
+        'linkedin': {'char_limit': 1300, 'hashtag_count': 5, 'tone': 'professional'},
+        'tiktok': {'char_limit': 150, 'hashtag_count': 5, 'tone': 'casual'}
+    }
+
+    config = platform_config[platform]
+
+    if not reach_amplify:
+        # Fallback: basic adaptation without AI
+        hashtags = re.findall(r'#\w+', caption)
+        clean_caption = re.sub(r'#\w+\s*', '', caption).strip()
+
+        # Truncate if needed
+        char_limit = config['char_limit']
+        if len(clean_caption) > char_limit - 50:
+            clean_caption = clean_caption[:char_limit-53] + '...'
+
+        # Add limited hashtags
+        selected_hashtags = hashtags[:config['hashtag_count']]
+        if selected_hashtags:
+            adapted = clean_caption + '\n\n' + ' '.join(selected_hashtags)
+        else:
+            adapted = clean_caption
+
+        return jsonify({
+            'success': True,
+            'source': 'fallback',
+            'platform': platform,
+            'adapted_caption': adapted,
+            'hashtags': selected_hashtags,
+            'char_count': len(adapted),
+            'char_limit': config['char_limit'],
+            'within_limit': len(adapted) <= config['char_limit'],
+            'tips': []
+        })
+
+    try:
+        result = reach_amplify.adapt_for_platform(caption, platform, topic, campaign_mode)
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        logger.error(f"Platform adaptation failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/event-optimize', methods=['POST'])
 def api_event_optimize():
     """Optimize content for an event."""
