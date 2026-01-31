@@ -6,11 +6,12 @@
 <div class="card" id="createCard">
     <!-- Language Toggle - Top Right -->
     <div class="language-toggle-container">
-        <button class="language-toggle" onclick="toggleLanguage()">
+        <button class="language-toggle" onclick="toggleLanguage()" title="Switch to Spanish to reach Spanish-speaking survivors">
             <span class="lang-option active" data-lang="en">EN</span>
             <span class="lang-divider">/</span>
             <span class="lang-option" data-lang="es">ES</span>
         </button>
+        <span class="lang-help-text" id="langHelpText">Click ES to create Spanish content</span>
     </div>
 
     <h2>Create New Post</h2>
@@ -1444,6 +1445,18 @@
     }
     .lang-divider {
         color: #9ca3af;
+    }
+    .lang-help-text {
+        display: block;
+        font-size: 0.7rem;
+        color: #9ca3af;
+        text-align: center;
+        margin-top: 4px;
+        transition: all 0.3s;
+    }
+    .lang-help-text.spanish-active {
+        color: #7c3aed;
+        font-weight: 500;
     }
     #createCard {
         position: relative;
@@ -3045,6 +3058,18 @@
             opt.classList.toggle('active', opt.dataset.lang === currentLanguage);
         });
 
+        // Update help text
+        const helpText = document.getElementById('langHelpText');
+        if (helpText) {
+            if (currentLanguage === 'es') {
+                helpText.textContent = 'Creating content in Spanish';
+                helpText.classList.add('spanish-active');
+            } else {
+                helpText.textContent = 'Click ES to create Spanish content';
+                helpText.classList.remove('spanish-active');
+            }
+        }
+
         // Update UI text based on language
         updateUILanguage(currentLanguage);
 
@@ -3054,15 +3079,69 @@
             if (currentLanguage === 'es' && currentData.caption_es) {
                 captionField.value = currentData.caption_es;
                 showToast('Texto en Espanol');
+                updatePreview();
             } else if (currentLanguage === 'en') {
                 captionField.value = currentData.caption_en;
                 showToast('English caption');
+                updatePreview();
             } else if (currentLanguage === 'es' && !currentData.caption_es) {
-                // Spanish not available, prompt to regenerate
-                showToast('Click "Regenerate" for Spanish caption');
+                // Spanish not available - automatically translate
+                showToast('Traduciendo al espanol...');
+                translateToSpanish();
             }
-            updatePreview();
         }
+    }
+
+    async function translateToSpanish() {
+        const captionField = document.getElementById('caption');
+        const originalCaption = currentData.caption_en || captionField.value;
+
+        if (!originalCaption) {
+            showToast('No caption to translate');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    caption: originalCaption,
+                    target_lang: 'es'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.translated) {
+                currentData.caption_es = data.translated;
+                captionField.value = data.translated;
+                updatePreview();
+                showToast('Traducido al espanol!');
+            } else {
+                showToast('Translation failed: ' + (data.error || 'Unknown error'));
+                // Revert to English
+                revertToEnglish();
+            }
+        } catch (error) {
+            console.error('Translation error:', error);
+            showToast('Translation failed. Check server connection.');
+            // Revert to English
+            revertToEnglish();
+        }
+    }
+
+    function revertToEnglish() {
+        currentLanguage = 'en';
+        document.querySelectorAll('.lang-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.lang === 'en');
+        });
+        const helpText = document.getElementById('langHelpText');
+        if (helpText) {
+            helpText.textContent = 'Click ES to create Spanish content';
+            helpText.classList.remove('spanish-active');
+        }
+        updateUILanguage('en');
     }
 
     function updateUILanguage(lang) {
