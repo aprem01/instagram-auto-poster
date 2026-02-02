@@ -2628,6 +2628,7 @@ def api_generate_discovery_caption():
     platform = data.get('platform', 'instagram')
     campaign_type = data.get('campaign_type', 'awareness')
     optimization_focus = data.get('optimization_focus', 'balanced')
+    enhance = data.get('enhance', False)  # Flag for improved regeneration
 
     if not topic:
         return jsonify({'success': False, 'error': 'Please provide a topic'}), 400
@@ -2637,10 +2638,24 @@ def api_generate_discovery_caption():
 
     try:
         # Generate optimized caption using AI
-        generated = generate_optimized_caption(topic, target_audience, platform, campaign_type, optimization_focus)
+        generated = generate_optimized_caption(topic, target_audience, platform, campaign_type, optimization_focus, enhance)
 
         # Get multi-optimization scores
         multi_opt = get_multi_optimization_scores(generated['caption'], topic, platform)
+
+        # Get posting times for target audience
+        posting_times = get_audience_posting_times(target_audience, platform)
+
+        # Check if score is low and provide improvement suggestions
+        overall_score = multi_opt.get('overall_score', 0)
+        improvement_suggestions = []
+        if overall_score < 70:
+            improvement_suggestions = [
+                'Consider adding more searchable keywords',
+                'Include a direct call-to-action',
+                'Mention Chester County for local relevance',
+                'Add a question to boost engagement'
+            ]
 
         return jsonify({
             'success': True,
@@ -2652,7 +2667,11 @@ def api_generate_discovery_caption():
             'geo_optimized': generated.get('geo_elements', []),
             'aeo_optimized': generated.get('aeo_elements', []),
             'multi_optimization': multi_opt,
-            'hashtags': generated.get('hashtags', [])
+            'hashtags': generated.get('hashtags', []),
+            'posting_times': posting_times,
+            'overall_score': overall_score,
+            'needs_improvement': overall_score < 70,
+            'improvement_suggestions': improvement_suggestions
         })
 
     except Exception as e:
@@ -2775,7 +2794,7 @@ def api_multi_optimize():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def generate_optimized_caption(topic: str, audience: str, platform: str, campaign: str, focus: str) -> dict:
+def generate_optimized_caption(topic: str, audience: str, platform: str, campaign: str, focus: str, enhance: bool = False) -> dict:
     """Generate an AI-optimized caption with SEO/AIO/GEO/AEO elements."""
 
     # Build optimization prompt based on focus
@@ -2802,6 +2821,19 @@ def generate_optimized_caption(topic: str, audience: str, platform: str, campaig
         'volunteer': 'Appreciative and welcoming tone celebrating volunteer contributions.'
     }
 
+    # Enhanced optimization instructions for improved regeneration
+    enhance_instructions = ""
+    if enhance:
+        enhance_instructions = """
+ENHANCED OPTIMIZATION MODE - Generate a significantly improved version:
+- Use MORE searchable keywords (domestic violence, Chester County PA, free help, confidential support)
+- Include a COMPELLING question to drive engagement
+- Add a STRONGER call-to-action with urgency
+- Include a STATISTIC or fact that makes the message memorable
+- Make the hook STRONGER and more attention-grabbing
+- Ensure the caption is HIGHLY shareable
+"""
+
     if reach_amplify and hasattr(reach_amplify, 'client'):
         try:
             response = reach_amplify.client.chat.completions.create(
@@ -2820,6 +2852,7 @@ Organization context:
 {focus_instructions.get(focus, focus_instructions['balanced'])}
 {audience_context.get(audience, audience_context['general'])}
 {campaign_tone.get(campaign, campaign_tone['awareness'])}
+{enhance_instructions}
 
 Platform: {platform}
 
@@ -2838,7 +2871,7 @@ Do NOT include hashtags in the caption - those will be added separately."""
                     }
                 ],
                 max_tokens=500,
-                temperature=0.7
+                temperature=0.8 if enhance else 0.7  # Slightly higher creativity for enhanced mode
             )
             caption = response.choices[0].message.content.strip()
         except Exception as e:
