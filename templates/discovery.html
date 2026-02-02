@@ -4,39 +4,33 @@
 
 {% block content %}
 <style>
-    .discovery-container {
+    .discovery-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .top-section {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
     }
 
-    @media (max-width: 1024px) {
-        .discovery-container {
+    @media (max-width: 1200px) {
+        .top-section {
             grid-template-columns: 1fr;
         }
     }
 
-    .input-panel {
+    .panel {
         background: white;
         border-radius: 16px;
         padding: 28px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-
-    .results-panel {
-        background: white;
-        border-radius: 16px;
-        padding: 28px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        display: none;
-    }
-
-    .results-panel.visible {
-        display: block;
     }
 
     .section-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 700;
         color: #1f2937;
         margin-bottom: 8px;
@@ -47,13 +41,55 @@
 
     .section-subtitle {
         color: #6b7280;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+        display: flex;
+        gap: 4px;
+        background: #f3f4f6;
+        padding: 4px;
+        border-radius: 12px;
         margin-bottom: 24px;
     }
 
+    .tab-btn {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+        color: #374151;
+    }
+
+    .tab-btn.active {
+        background: white;
+        color: #667eea;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* Caption Input */
     .caption-input {
         width: 100%;
-        min-height: 180px;
+        min-height: 160px;
         padding: 16px;
         border: 2px solid #e5e7eb;
         border-radius: 12px;
@@ -72,6 +108,21 @@
         color: #9ca3af;
     }
 
+    /* Topic Input */
+    .topic-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+
+    .topic-input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
     .char-count {
         text-align: right;
         font-size: 0.85rem;
@@ -79,11 +130,15 @@
         margin-top: 8px;
     }
 
-    .selector-group {
-        margin-top: 24px;
+    /* Trending Topics */
+    .trending-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
     }
 
-    .selector-label {
+    .trending-label {
+        font-size: 0.9rem;
         font-weight: 600;
         color: #374151;
         margin-bottom: 12px;
@@ -92,19 +147,67 @@
         gap: 8px;
     }
 
+    .trending-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .trending-chip {
+        padding: 8px 14px;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: none;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #92400e;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .trending-chip:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+    }
+
+    .trending-score {
+        background: rgba(146, 64, 14, 0.15);
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+    }
+
+    /* Selector Groups */
+    .selector-group {
+        margin-top: 20px;
+    }
+
+    .selector-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
     .selector-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
     }
 
     .chip {
-        padding: 10px 18px;
+        padding: 8px 14px;
         background: #f3f4f6;
         border: 2px solid transparent;
-        border-radius: 25px;
+        border-radius: 20px;
         cursor: pointer;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 500;
         color: #4b5563;
         transition: all 0.2s;
@@ -120,24 +223,20 @@
     .chip.active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border-color: transparent;
     }
 
-    .chip-icon {
-        font-size: 1.1rem;
-    }
-
-    .analyze-btn {
+    /* Action Buttons */
+    .action-btn {
         width: 100%;
-        padding: 16px 32px;
+        padding: 14px 28px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
         border-radius: 12px;
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
         cursor: pointer;
-        margin-top: 28px;
+        margin-top: 24px;
         transition: all 0.3s;
         display: flex;
         align-items: center;
@@ -145,18 +244,22 @@
         gap: 10px;
     }
 
-    .analyze-btn:hover {
+    .action-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
 
-    .analyze-btn:disabled {
+    .action-btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
         transform: none;
     }
 
-    .analyze-btn .spinner {
+    .action-btn.secondary {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .action-btn .spinner {
         width: 20px;
         height: 20px;
         border: 2px solid rgba(255,255,255,0.3);
@@ -166,11 +269,11 @@
         display: none;
     }
 
-    .analyze-btn.loading .spinner {
+    .action-btn.loading .spinner {
         display: block;
     }
 
-    .analyze-btn.loading .btn-text {
+    .action-btn.loading .btn-text {
         display: none;
     }
 
@@ -178,104 +281,229 @@
         to { transform: rotate(360deg); }
     }
 
-    /* Results Panel Styles */
-    .score-card {
+    /* Optimization Cards Grid */
+    .opt-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    @media (max-width: 1200px) {
+        .opt-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .opt-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .opt-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .opt-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .opt-card.seo {
+        border-color: #3b82f6;
+    }
+
+    .opt-card.aio {
+        border-color: #8b5cf6;
+    }
+
+    .opt-card.geo {
+        border-color: #10b981;
+    }
+
+    .opt-card.aeo {
+        border-color: #f59e0b;
+    }
+
+    .opt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .opt-icon {
+        font-size: 2rem;
+    }
+
+    .opt-grade {
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .opt-card.seo .opt-grade { color: #3b82f6; }
+    .opt-card.aio .opt-grade { color: #8b5cf6; }
+    .opt-card.geo .opt-grade { color: #10b981; }
+    .opt-card.aeo .opt-grade { color: #f59e0b; }
+
+    .opt-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 4px;
+    }
+
+    .opt-focus {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .opt-platform {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #f3f4f6;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        color: #4b5563;
+        margin-bottom: 12px;
+    }
+
+    .opt-metric {
+        font-size: 0.8rem;
+        color: #059669;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .opt-tips {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .opt-tip {
+        font-size: 0.8rem;
+        color: #6b7280;
+        padding: 6px 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .opt-tip::before {
+        content: '→';
+        color: #9ca3af;
+        flex-shrink: 0;
+    }
+
+    /* Results Panel */
+    .results-panel {
+        display: none;
+    }
+
+    .results-panel.visible {
+        display: block;
+    }
+
+    /* Generated Caption Display */
+    .generated-caption-box {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px solid #86efac;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .generated-caption-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #166534;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .generated-caption-text {
+        font-size: 1rem;
+        color: #1f2937;
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+
+    .copy-caption-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: white;
+        border: 1px solid #86efac;
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #166534;
+        transition: all 0.2s;
+    }
+
+    .copy-caption-btn:hover {
+        background: #166534;
+        color: white;
+    }
+
+    .copy-caption-btn.copied {
+        background: #166534;
+        color: white;
+    }
+
+    /* Score Card */
+    .overall-score-card {
         text-align: center;
-        padding: 32px;
+        padding: 24px;
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border-radius: 16px;
         margin-bottom: 24px;
     }
 
-    .score-grade {
-        font-size: 5rem;
+    .overall-grade {
+        font-size: 4rem;
         font-weight: 800;
         line-height: 1;
         margin-bottom: 8px;
     }
 
-    .score-label {
-        font-size: 1.1rem;
+    .overall-label {
+        font-size: 1rem;
         color: #6b7280;
         font-weight: 500;
     }
 
-    .score-percentage {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-top: 8px;
-    }
-
-    .score-breakdown {
-        margin-top: 20px;
-        text-align: left;
-    }
-
-    .breakdown-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .breakdown-item:last-child {
-        border-bottom: none;
-    }
-
-    .breakdown-name {
-        font-weight: 500;
-        color: #374151;
-    }
-
-    .breakdown-score {
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .breakdown-bar {
-        width: 60px;
-        height: 6px;
-        background: #e5e7eb;
-        border-radius: 3px;
-        overflow: hidden;
-    }
-
-    .breakdown-fill {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
-    }
-
-    .result-section {
-        margin-top: 24px;
-        padding-top: 24px;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .result-section-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
+    /* Hashtag Container */
     .hashtag-container {
         background: #f8fafc;
         border-radius: 12px;
         padding: 16px;
         position: relative;
+        margin-top: 20px;
     }
 
     .hashtag-list {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        padding-right: 80px;
     }
 
     .hashtag-tag {
@@ -283,7 +511,7 @@
         color: #667eea;
         padding: 6px 12px;
         border-radius: 20px;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 500;
     }
 
@@ -300,14 +528,10 @@
         font-weight: 500;
         color: #6b7280;
         transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 6px;
     }
 
     .copy-btn:hover {
         background: #f3f4f6;
-        color: #374151;
     }
 
     .copy-btn.copied {
@@ -316,118 +540,7 @@
         border-color: #22c55e;
     }
 
-    .keyword-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .keyword-chip {
-        background: #fef3c7;
-        color: #92400e;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-
-    .time-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-
-    .time-card {
-        background: #f0fdf4;
-        border-radius: 10px;
-        padding: 14px;
-    }
-
-    .time-card.best {
-        background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
-        border: 1px solid #86efac;
-    }
-
-    .time-label {
-        font-size: 0.8rem;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-
-    .time-value {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #166534;
-    }
-
-    .tip-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .tip-item {
-        display: flex;
-        gap: 12px;
-        padding: 12px;
-        background: #f8fafc;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }
-
-    .tip-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .tip-icon {
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-
-    .tip-content {
-        flex: 1;
-    }
-
-    .tip-category {
-        font-weight: 600;
-        color: #374151;
-        font-size: 0.9rem;
-    }
-
-    .tip-text {
-        color: #6b7280;
-        font-size: 0.9rem;
-        margin-top: 2px;
-    }
-
-    .tip-item.high {
-        background: #fef2f2;
-        border-left: 3px solid #ef4444;
-    }
-
-    .tip-item.medium {
-        background: #fffbeb;
-        border-left: 3px solid #f59e0b;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #9ca3af;
-    }
-
-    .empty-state-icon {
-        font-size: 4rem;
-        margin-bottom: 16px;
-    }
-
-    .empty-state-text {
-        font-size: 1.1rem;
-    }
-
-    /* Info callout */
+    /* Info Callout */
     .info-callout {
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         border: 1px solid #93c5fd;
@@ -446,15 +559,47 @@
 
     .info-callout-text {
         color: #1e40af;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         line-height: 1.5;
     }
 
-    /* Days chips */
+    /* Posting Times */
+    .time-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .time-card {
+        background: #f0fdf4;
+        border-radius: 10px;
+        padding: 14px;
+    }
+
+    .time-card.best {
+        background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+        border: 1px solid #86efac;
+    }
+
+    .time-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .time-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #166534;
+    }
+
     .days-chips {
         display: flex;
         gap: 6px;
-        margin-top: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
     }
 
     .day-chip {
@@ -465,184 +610,269 @@
         font-size: 0.8rem;
         font-weight: 500;
     }
+
+    /* Hidden by default */
+    .hidden {
+        display: none !important;
+    }
 </style>
 
 <div class="info-callout">
-    <span class="info-callout-icon">💡</span>
+    <span class="info-callout-icon">🚀</span>
     <div class="info-callout-text">
-        <strong>Discovery Optimizer</strong> helps you optimize your existing captions for better social media visibility.
-        Paste your caption, select your target audience, and get personalized recommendations for hashtags, keywords, and posting times.
+        <strong>Discovery Optimizer</strong> - Maximize your content's reach with comprehensive optimization across
+        <strong>SEO</strong> (Google/Bing), <strong>AIO</strong> (AI Overviews), <strong>GEO</strong> (ChatGPT/Perplexity), and <strong>AEO</strong> (Voice Search).
+        Generate optimized captions or analyze your existing content.
     </div>
 </div>
 
-<div class="discovery-container">
-    <!-- Input Panel -->
-    <div class="input-panel">
-        <h2 class="section-title">
-            <span>🔍</span> Analyze Your Caption
-        </h2>
-        <p class="section-subtitle">Paste your caption to get discovery optimization recommendations</p>
-
-        <textarea
-            class="caption-input"
-            id="captionInput"
-            placeholder="Paste your existing caption here...
-
-Example:
-We see you. We believe you. And we are here for you.
-
-At DVCCC, our doors are always open with FREE, CONFIDENTIAL services available to anyone in Chester County experiencing domestic violence."
-            oninput="updateCharCount()"
-        ></textarea>
-        <div class="char-count"><span id="charCount">0</span> characters</div>
-
-        <!-- Target Audience Selector -->
-        <div class="selector-group">
-            <div class="selector-label">
-                <span>🎯</span> Target Audience
+<div class="discovery-layout">
+    <!-- Top Section: Input Panel and Trending -->
+    <div class="top-section">
+        <!-- Input Panel -->
+        <div class="panel">
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('generate')">✨ Generate Caption</button>
+                <button class="tab-btn" onclick="switchTab('analyze')">🔍 Analyze Existing</button>
             </div>
-            <div class="selector-chips" id="audienceSelector">
-                <button type="button" class="chip active" data-value="general" onclick="selectChip(this, 'audience')">
-                    <span class="chip-icon">👥</span> General
-                </button>
-                <button type="button" class="chip" data-value="youth" onclick="selectChip(this, 'audience')">
-                    <span class="chip-icon">🎓</span> Youth (Under 24)
-                </button>
-                <button type="button" class="chip" data-value="donors" onclick="selectChip(this, 'audience')">
-                    <span class="chip-icon">💝</span> Donors
-                </button>
-                <button type="button" class="chip" data-value="event" onclick="selectChip(this, 'audience')">
-                    <span class="chip-icon">📅</span> Event Attendees
-                </button>
-            </div>
-        </div>
 
-        <!-- Platform Selector -->
-        <div class="selector-group">
-            <div class="selector-label">
-                <span>📱</span> Platform
-            </div>
-            <div class="selector-chips" id="platformSelector">
-                <button type="button" class="chip active" data-value="instagram" onclick="selectChip(this, 'platform')">
-                    <span class="chip-icon">📸</span> Instagram
-                </button>
-                <button type="button" class="chip" data-value="facebook" onclick="selectChip(this, 'platform')">
-                    <span class="chip-icon">📘</span> Facebook
-                </button>
-                <button type="button" class="chip" data-value="tiktok" onclick="selectChip(this, 'platform')">
-                    <span class="chip-icon">🎵</span> TikTok
-                </button>
-                <button type="button" class="chip" data-value="linkedin" onclick="selectChip(this, 'platform')">
-                    <span class="chip-icon">💼</span> LinkedIn
-                </button>
-            </div>
-        </div>
+            <!-- Generate Tab -->
+            <div class="tab-content active" id="generateTab">
+                <h3 class="section-title">
+                    <span>✨</span> AI Caption Generator
+                </h3>
+                <p class="section-subtitle">Enter a topic and get an optimized caption with SEO/AIO/GEO/AEO best practices</p>
 
-        <!-- Campaign Type Selector -->
-        <div class="selector-group">
-            <div class="selector-label">
-                <span>📢</span> Campaign Type
-            </div>
-            <div class="selector-chips" id="campaignSelector">
-                <button type="button" class="chip active" data-value="awareness" onclick="selectChip(this, 'campaign')">
-                    Awareness
-                </button>
-                <button type="button" class="chip" data-value="fundraising" onclick="selectChip(this, 'campaign')">
-                    Fundraising
-                </button>
-                <button type="button" class="chip" data-value="events" onclick="selectChip(this, 'campaign')">
-                    Events
-                </button>
-                <button type="button" class="chip" data-value="youth" onclick="selectChip(this, 'campaign')">
-                    Youth Outreach
-                </button>
-                <button type="button" class="chip" data-value="volunteer" onclick="selectChip(this, 'campaign')">
-                    Volunteer
+                <input
+                    type="text"
+                    class="topic-input"
+                    id="topicInput"
+                    placeholder="Enter your topic (e.g., Teen dating violence warning signs)"
+                />
+
+                <!-- Trending Topics -->
+                <div class="trending-section">
+                    <div class="trending-label">
+                        <span>🔥</span> Trending Topics
+                    </div>
+                    <div class="trending-chips" id="trendingChips">
+                        <button class="trending-chip" onclick="selectTrending('Teen Dating Violence Awareness')">
+                            #TDVAM <span class="trending-score">95</span>
+                        </button>
+                        <button class="trending-chip" onclick="selectTrending('Healthy Relationship Education')">
+                            Healthy Relationships <span class="trending-score">92</span>
+                        </button>
+                        <button class="trending-chip" onclick="selectTrending('Digital Safety & Technology Abuse')">
+                            Digital Safety <span class="trending-score">90</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Optimization Focus -->
+                <div class="selector-group">
+                    <div class="selector-label">
+                        <span>🎯</span> Optimization Focus
+                    </div>
+                    <div class="selector-chips" id="focusSelector">
+                        <button type="button" class="chip active" data-value="balanced" onclick="selectChip(this, 'focus')">
+                            ⚖️ Balanced
+                        </button>
+                        <button type="button" class="chip" data-value="seo" onclick="selectChip(this, 'focus')">
+                            🔍 SEO
+                        </button>
+                        <button type="button" class="chip" data-value="aio" onclick="selectChip(this, 'focus')">
+                            🤖 AIO
+                        </button>
+                        <button type="button" class="chip" data-value="geo" onclick="selectChip(this, 'focus')">
+                            💬 GEO
+                        </button>
+                        <button type="button" class="chip" data-value="aeo" onclick="selectChip(this, 'focus')">
+                            🔊 AEO
+                        </button>
+                    </div>
+                </div>
+
+                <button class="action-btn secondary" id="generateBtn" onclick="generateCaption()">
+                    <span class="spinner"></span>
+                    <span class="btn-text">✨ Generate Optimized Caption</span>
                 </button>
             </div>
-        </div>
 
-        <button class="analyze-btn" id="analyzeBtn" onclick="analyzeCaption()">
-            <span class="spinner"></span>
-            <span class="btn-text">🚀 Analyze for Discovery</span>
-        </button>
-    </div>
+            <!-- Analyze Tab -->
+            <div class="tab-content" id="analyzeTab">
+                <h3 class="section-title">
+                    <span>🔍</span> Analyze Your Caption
+                </h3>
+                <p class="section-subtitle">Paste your existing caption to get optimization recommendations</p>
 
-    <!-- Results Panel -->
-    <div class="results-panel" id="resultsPanel">
-        <h2 class="section-title">
-            <span>📊</span> Discovery Analysis
-        </h2>
-        <p class="section-subtitle">Recommendations to improve your content's reach</p>
+                <textarea
+                    class="caption-input"
+                    id="captionInput"
+                    placeholder="Paste your existing caption here..."
+                    oninput="updateCharCount()"
+                ></textarea>
+                <div class="char-count"><span id="charCount">0</span> characters</div>
 
-        <!-- Score Card -->
-        <div class="score-card" id="scoreCard">
-            <div class="score-grade" id="scoreGrade">-</div>
-            <div class="score-label">Discovery Score</div>
-            <div class="score-percentage" id="scorePercentage">0/100</div>
-
-            <div class="score-breakdown" id="scoreBreakdown">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-
-        <!-- Hashtags Section -->
-        <div class="result-section">
-            <div class="result-section-title">
-                <span>#️⃣</span> Recommended Hashtags
-            </div>
-            <div class="hashtag-container">
-                <button class="copy-btn" onclick="copyHashtags()">
-                    <span id="copyIcon">📋</span> <span id="copyText">Copy All</span>
+                <button class="action-btn" id="analyzeBtn" onclick="analyzeCaption()">
+                    <span class="spinner"></span>
+                    <span class="btn-text">🚀 Analyze for Discovery</span>
                 </button>
-                <div class="hashtag-list" id="hashtagList">
-                    <!-- Populated by JS -->
+            </div>
+
+            <!-- Shared Selectors -->
+            <div class="selector-group">
+                <div class="selector-label">
+                    <span>🎯</span> Target Audience
+                </div>
+                <div class="selector-chips" id="audienceSelector">
+                    <button type="button" class="chip active" data-value="general" onclick="selectChip(this, 'audience')">
+                        👥 General
+                    </button>
+                    <button type="button" class="chip" data-value="youth" onclick="selectChip(this, 'audience')">
+                        🎓 Youth (Under 24)
+                    </button>
+                    <button type="button" class="chip" data-value="donors" onclick="selectChip(this, 'audience')">
+                        💝 Donors
+                    </button>
+                    <button type="button" class="chip" data-value="event" onclick="selectChip(this, 'audience')">
+                        📅 Event
+                    </button>
+                </div>
+            </div>
+
+            <div class="selector-group">
+                <div class="selector-label">
+                    <span>📱</span> Platform
+                </div>
+                <div class="selector-chips" id="platformSelector">
+                    <button type="button" class="chip active" data-value="instagram" onclick="selectChip(this, 'platform')">
+                        📸 Instagram
+                    </button>
+                    <button type="button" class="chip" data-value="facebook" onclick="selectChip(this, 'platform')">
+                        📘 Facebook
+                    </button>
+                    <button type="button" class="chip" data-value="tiktok" onclick="selectChip(this, 'platform')">
+                        🎵 TikTok
+                    </button>
+                    <button type="button" class="chip" data-value="linkedin" onclick="selectChip(this, 'platform')">
+                        💼 LinkedIn
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Keywords Section -->
-        <div class="result-section">
-            <div class="result-section-title">
-                <span>🔑</span> SEO Keywords
-            </div>
-            <div class="keyword-chips" id="keywordList">
-                <!-- Populated by JS -->
-            </div>
-        </div>
+        <!-- Quick Reference Panel -->
+        <div class="panel">
+            <h3 class="section-title">
+                <span>📊</span> Optimization Guide
+            </h3>
+            <p class="section-subtitle">Understanding SEO, AIO, GEO, and AEO optimization</p>
 
-        <!-- Posting Times Section -->
-        <div class="result-section">
-            <div class="result-section-title">
-                <span>⏰</span> Best Posting Times
+            <div style="display: grid; gap: 16px;">
+                <div style="background: #eff6ff; border-radius: 12px; padding: 16px; border-left: 4px solid #3b82f6;">
+                    <div style="font-weight: 700; color: #1e40af; margin-bottom: 4px;">🔍 SEO - Search Engine Optimization</div>
+                    <div style="font-size: 0.85rem; color: #3b82f6;">Keywords & Links → Google/Bing → Website Traffic</div>
+                </div>
+                <div style="background: #f5f3ff; border-radius: 12px; padding: 16px; border-left: 4px solid #8b5cf6;">
+                    <div style="font-weight: 700; color: #5b21b6; margin-bottom: 4px;">🤖 AIO - AI Overview Optimization</div>
+                    <div style="font-size: 0.85rem; color: #7c3aed;">Clarity & Structure → AI Overviews → Summary Presence</div>
+                </div>
+                <div style="background: #ecfdf5; border-radius: 12px; padding: 16px; border-left: 4px solid #10b981;">
+                    <div style="font-weight: 700; color: #065f46; margin-bottom: 4px;">💬 GEO - Generative Engine Optimization</div>
+                    <div style="font-size: 0.85rem; color: #059669;">Authority & Reputation → ChatGPT/Perplexity → Brand Citations</div>
+                </div>
+                <div style="background: #fffbeb; border-radius: 12px; padding: 16px; border-left: 4px solid #f59e0b;">
+                    <div style="font-weight: 700; color: #92400e; margin-bottom: 4px;">🔊 AEO - Answer Engine Optimization</div>
+                    <div style="font-size: 0.85rem; color: #d97706;">Direct Answers → Siri/Alexa → Voice Answer</div>
+                </div>
             </div>
-            <div class="time-grid" id="postingTimes">
-                <!-- Populated by JS -->
-            </div>
-            <div class="days-chips" id="bestDays">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-
-        <!-- Improvement Tips Section -->
-        <div class="result-section">
-            <div class="result-section-title">
-                <span>💡</span> Improvement Suggestions
-            </div>
-            <ul class="tip-list" id="improvementTips">
-                <!-- Populated by JS -->
-            </ul>
         </div>
     </div>
 
-    <!-- Empty State (shown when no results) -->
-    <div class="results-panel visible" id="emptyState">
-        <div class="empty-state">
-            <div class="empty-state-icon">🔍</div>
-            <div class="empty-state-text">
-                Paste your caption and click "Analyze" to get<br>discovery optimization recommendations
+    <!-- Optimization Cards (shown after analysis) -->
+    <div class="opt-grid hidden" id="optCards">
+        <div class="opt-card seo">
+            <div class="opt-header">
+                <span class="opt-icon">🔍</span>
+                <span class="opt-grade" id="seoGrade">-</span>
             </div>
+            <div class="opt-title">SEO</div>
+            <div class="opt-focus">Keywords & Links</div>
+            <div class="opt-platform">🌐 Google / Bing</div>
+            <div class="opt-metric">📈 <span id="seoMetric">Website Traffic</span></div>
+            <div class="opt-tips" id="seoTips"></div>
         </div>
+
+        <div class="opt-card aio">
+            <div class="opt-header">
+                <span class="opt-icon">🤖</span>
+                <span class="opt-grade" id="aioGrade">-</span>
+            </div>
+            <div class="opt-title">AIO</div>
+            <div class="opt-focus">Clarity & Structure</div>
+            <div class="opt-platform">✨ Google AI Overviews</div>
+            <div class="opt-metric">📋 <span id="aioMetric">Summary Presence</span></div>
+            <div class="opt-tips" id="aioTips"></div>
+        </div>
+
+        <div class="opt-card geo">
+            <div class="opt-header">
+                <span class="opt-icon">💬</span>
+                <span class="opt-grade" id="geoGrade">-</span>
+            </div>
+            <div class="opt-title">GEO</div>
+            <div class="opt-focus">Authority & Reputation</div>
+            <div class="opt-platform">🧠 ChatGPT / Perplexity</div>
+            <div class="opt-metric">🏷️ <span id="geoMetric">Brand Citations</span></div>
+            <div class="opt-tips" id="geoTips"></div>
+        </div>
+
+        <div class="opt-card aeo">
+            <div class="opt-header">
+                <span class="opt-icon">🔊</span>
+                <span class="opt-grade" id="aeoGrade">-</span>
+            </div>
+            <div class="opt-title">AEO</div>
+            <div class="opt-focus">Direct Answers</div>
+            <div class="opt-platform">🎙️ Siri / Alexa / Snippets</div>
+            <div class="opt-metric">🗣️ <span id="aeoMetric">Voice Answer</span></div>
+            <div class="opt-tips" id="aeoTips"></div>
+        </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="panel results-panel" id="resultsPanel">
+        <!-- Generated Caption Display -->
+        <div class="generated-caption-box hidden" id="generatedCaptionBox">
+            <div class="generated-caption-label">✨ Generated Caption</div>
+            <button class="copy-caption-btn" onclick="copyGeneratedCaption()">📋 Copy</button>
+            <div class="generated-caption-text" id="generatedCaptionText"></div>
+        </div>
+
+        <!-- Overall Score -->
+        <div class="overall-score-card">
+            <div class="overall-grade" id="overallGrade">-</div>
+            <div class="overall-label">Overall Discovery Score</div>
+        </div>
+
+        <!-- Hashtags -->
+        <h4 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <span>#️⃣</span> Recommended Hashtags
+        </h4>
+        <div class="hashtag-container">
+            <button class="copy-btn" onclick="copyHashtags()">
+                <span id="copyIcon">📋</span> <span id="copyText">Copy All</span>
+            </button>
+            <div class="hashtag-list" id="hashtagList"></div>
+        </div>
+
+        <!-- Posting Times -->
+        <h4 style="margin-top: 24px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <span>⏰</span> Best Posting Times
+        </h4>
+        <div class="time-grid" id="postingTimes"></div>
+        <div class="days-chips" id="bestDays"></div>
     </div>
 </div>
 
@@ -650,33 +880,120 @@ At DVCCC, our doors are always open with FREE, CONFIDENTIAL services available t
     let selectedAudience = 'general';
     let selectedPlatform = 'instagram';
     let selectedCampaign = 'awareness';
+    let selectedFocus = 'balanced';
     let currentHashtags = '';
+    let currentCaption = '';
+
+    // Load trending topics on page load
+    document.addEventListener('DOMContentLoaded', loadTrendingTopics);
+
+    function switchTab(tab) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn:nth-child(${tab === 'generate' ? 1 : 2})`).classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(tab === 'generate' ? 'generateTab' : 'analyzeTab').classList.add('active');
+    }
+
+    function selectChip(chip, type) {
+        const selector = chip.parentElement;
+        selector.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const value = chip.dataset.value;
+        if (type === 'audience') selectedAudience = value;
+        if (type === 'platform') selectedPlatform = value;
+        if (type === 'campaign') selectedCampaign = value;
+        if (type === 'focus') selectedFocus = value;
+    }
+
+    function selectTrending(topic) {
+        document.getElementById('topicInput').value = topic;
+    }
+
+    async function loadTrendingTopics() {
+        try {
+            const response = await fetch('/api/discovery/trending');
+            const data = await response.json();
+
+            if (data.success && data.trending) {
+                const chips = data.trending.slice(0, 5).map(t => `
+                    <button class="trending-chip" onclick="selectTrending('${t.topic}')">
+                        ${t.hashtag} <span class="trending-score">${t.trending_score}</span>
+                    </button>
+                `).join('');
+                document.getElementById('trendingChips').innerHTML = chips;
+            }
+        } catch (e) {
+            console.error('Failed to load trending topics:', e);
+        }
+    }
 
     function updateCharCount() {
         const caption = document.getElementById('captionInput').value;
         document.getElementById('charCount').textContent = caption.length;
     }
 
-    function selectChip(chip, type) {
-        // Get the parent selector
-        const selector = chip.parentElement;
+    async function generateCaption() {
+        const topic = document.getElementById('topicInput').value.trim();
+        if (!topic) {
+            alert('Please enter a topic');
+            return;
+        }
 
-        // Remove active from all chips in this group
-        selector.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        const btn = document.getElementById('generateBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
 
-        // Add active to clicked chip
-        chip.classList.add('active');
+        try {
+            const response = await fetch('/api/discovery/generate-caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topic: topic,
+                    target_audience: selectedAudience,
+                    platform: selectedPlatform,
+                    campaign_type: selectedCampaign,
+                    optimization_focus: selectedFocus
+                })
+            });
 
-        // Update selected value
-        const value = chip.dataset.value;
-        if (type === 'audience') selectedAudience = value;
-        if (type === 'platform') selectedPlatform = value;
-        if (type === 'campaign') selectedCampaign = value;
+            const data = await response.json();
+
+            if (data.success) {
+                currentCaption = data.caption;
+                displayGeneratedResults(data);
+
+                // Also run multi-optimization analysis
+                const optResponse = await fetch('/api/discovery/multi-optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        caption: data.caption,
+                        topic: topic,
+                        platform: selectedPlatform
+                    })
+                });
+                const optData = await optResponse.json();
+                if (optData.success) {
+                    displayOptimizationCards(optData.optimization);
+                }
+            } else {
+                alert('Error: ' + (data.error || 'Generation failed'));
+            }
+        } catch (error) {
+            console.error('Generation error:', error);
+            alert('Failed to generate caption. Please try again.');
+        } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
     }
 
     async function analyzeCaption() {
         const caption = document.getElementById('captionInput').value.trim();
-
         if (!caption) {
             alert('Please paste a caption to analyze');
             return;
@@ -687,24 +1004,42 @@ At DVCCC, our doors are always open with FREE, CONFIDENTIAL services available t
         btn.disabled = true;
 
         try {
-            const response = await fetch('/api/discovery/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    caption: caption,
-                    platform: selectedPlatform,
-                    target_audience: selectedAudience,
-                    campaign_type: selectedCampaign
+            // Run both analyses in parallel
+            const [analyzeResponse, optResponse] = await Promise.all([
+                fetch('/api/discovery/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        caption: caption,
+                        platform: selectedPlatform,
+                        target_audience: selectedAudience,
+                        campaign_type: selectedCampaign
+                    })
+                }),
+                fetch('/api/discovery/multi-optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        caption: caption,
+                        topic: 'domestic violence awareness',
+                        platform: selectedPlatform
+                    })
                 })
-            });
+            ]);
 
-            const data = await response.json();
+            const [analyzeData, optData] = await Promise.all([
+                analyzeResponse.json(),
+                optResponse.json()
+            ]);
 
-            if (data.success) {
-                displayResults(data.analysis);
-            } else {
-                alert('Error: ' + (data.error || 'Analysis failed'));
+            if (analyzeData.success) {
+                displayAnalysisResults(analyzeData.analysis);
             }
+
+            if (optData.success) {
+                displayOptimizationCards(optData.optimization);
+            }
+
         } catch (error) {
             console.error('Analysis error:', error);
             alert('Failed to analyze caption. Please try again.');
@@ -714,89 +1049,89 @@ At DVCCC, our doors are always open with FREE, CONFIDENTIAL services available t
         }
     }
 
-    function displayResults(analysis) {
-        // Hide empty state, show results
-        document.getElementById('emptyState').style.display = 'none';
+    function displayGeneratedResults(data) {
+        // Show results panel
         document.getElementById('resultsPanel').classList.add('visible');
+
+        // Show generated caption
+        const captionBox = document.getElementById('generatedCaptionBox');
+        captionBox.classList.remove('hidden');
+        document.getElementById('generatedCaptionText').textContent = data.caption;
+
+        // Display hashtags
+        if (data.hashtags) {
+            currentHashtags = data.hashtags.map(h => '#' + h.replace('#', '')).join(' ');
+            document.getElementById('hashtagList').innerHTML = data.hashtags.map(tag =>
+                `<span class="hashtag-tag">#${tag.replace('#', '')}</span>`
+            ).join('');
+        }
+    }
+
+    function displayAnalysisResults(analysis) {
+        // Show results panel
+        document.getElementById('resultsPanel').classList.add('visible');
+
+        // Hide generated caption box for analyze mode
+        document.getElementById('generatedCaptionBox').classList.add('hidden');
 
         // Display score
         const score = analysis.discovery_score;
-        document.getElementById('scoreGrade').textContent = score.grade;
-        document.getElementById('scoreGrade').style.color = score.color;
-        document.getElementById('scorePercentage').textContent = `${score.percentage}/100`;
-        document.getElementById('scorePercentage').style.color = score.color;
-
-        // Display breakdown
-        const breakdownHtml = score.breakdown.map(item => {
-            const percentage = (item.points / item.max) * 100;
-            const fillColor = percentage >= 80 ? '#22c55e' : percentage >= 50 ? '#eab308' : '#ef4444';
-            return `
-                <div class="breakdown-item">
-                    <span class="breakdown-name">${item.item}</span>
-                    <div class="breakdown-score">
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: ${percentage}%; background: ${fillColor};"></div>
-                        </div>
-                        <span>${item.points}/${item.max}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        document.getElementById('scoreBreakdown').innerHTML = breakdownHtml;
+        document.getElementById('overallGrade').textContent = score.grade;
+        document.getElementById('overallGrade').style.color = score.color;
 
         // Display hashtags
-        currentHashtags = analysis.hashtag_string;
-        const hashtagsHtml = analysis.hashtags.map(tag =>
-            `<span class="hashtag-tag">#${tag.replace('#', '')}</span>`
-        ).join('');
-        document.getElementById('hashtagList').innerHTML = hashtagsHtml;
-
-        // Display keywords
-        const keywordsHtml = analysis.keywords.map(kw =>
-            `<span class="keyword-chip">${kw}</span>`
-        ).join('');
-        document.getElementById('keywordList').innerHTML = keywordsHtml;
+        if (analysis.hashtags) {
+            currentHashtags = analysis.hashtag_string;
+            document.getElementById('hashtagList').innerHTML = analysis.hashtags.map(tag =>
+                `<span class="hashtag-tag">#${tag.replace('#', '')}</span>`
+            ).join('');
+        }
 
         // Display posting times
-        const times = analysis.posting_times;
-        const timesHtml = `
-            <div class="time-card best">
-                <div class="time-label">Best Times</div>
-                <div class="time-value">${times.best.join(' & ')}</div>
-            </div>
-            <div class="time-card">
-                <div class="time-label">Also Good</div>
-                <div class="time-value">${times.good.slice(0, 2).join(', ')}</div>
-            </div>
-        `;
-        document.getElementById('postingTimes').innerHTML = timesHtml;
-
-        // Display best days
-        const daysHtml = times.days.map(day =>
-            `<span class="day-chip">${day}</span>`
-        ).join('');
-        document.getElementById('bestDays').innerHTML = `<strong style="margin-right: 8px;">Best days:</strong> ${daysHtml}`;
-
-        // Display improvement tips
-        const improvements = analysis.improvements || [];
-        const engagementTips = analysis.engagement_tips || [];
-
-        const allTips = [
-            ...improvements.map(imp => ({ ...imp, icon: imp.priority === 'high' ? '🔴' : '🟡' })),
-            ...engagementTips.slice(0, 3).map(tip => ({ category: 'Engagement Tip', suggestion: tip, priority: 'info', icon: '💡' }))
-        ];
-
-        const tipsHtml = allTips.length > 0 ? allTips.map(tip => `
-            <li class="tip-item ${tip.priority || ''}">
-                <span class="tip-icon">${tip.icon || '💡'}</span>
-                <div class="tip-content">
-                    <div class="tip-category">${tip.category}</div>
-                    <div class="tip-text">${tip.suggestion}</div>
+        if (analysis.posting_times) {
+            const times = analysis.posting_times;
+            document.getElementById('postingTimes').innerHTML = `
+                <div class="time-card best">
+                    <div class="time-label">Best Times</div>
+                    <div class="time-value">${times.best.join(' & ')}</div>
                 </div>
-            </li>
-        `).join('') : '<li class="tip-item"><span class="tip-icon">✅</span><div class="tip-content"><div class="tip-category">Great job!</div><div class="tip-text">Your caption is well-optimized for discovery.</div></div></li>';
+                <div class="time-card">
+                    <div class="time-label">Also Good</div>
+                    <div class="time-value">${times.good.slice(0, 2).join(', ')}</div>
+                </div>
+            `;
+            document.getElementById('bestDays').innerHTML = `
+                <strong style="margin-right: 8px;">Best days:</strong>
+                ${times.days.map(day => `<span class="day-chip">${day}</span>`).join('')}
+            `;
+        }
+    }
 
-        document.getElementById('improvementTips').innerHTML = tipsHtml;
+    function displayOptimizationCards(opt) {
+        // Show optimization cards
+        document.getElementById('optCards').classList.remove('hidden');
+
+        // Update each card
+        updateOptCard('seo', opt.seo);
+        updateOptCard('aio', opt.aio);
+        updateOptCard('geo', opt.geo);
+        updateOptCard('aeo', opt.aeo);
+
+        // Update overall score if available
+        if (opt.overall_grade) {
+            document.getElementById('overallGrade').textContent = opt.overall_grade;
+            const color = opt.overall_score >= 80 ? '#22c55e' : opt.overall_score >= 60 ? '#eab308' : '#ef4444';
+            document.getElementById('overallGrade').style.color = color;
+        }
+    }
+
+    function updateOptCard(type, data) {
+        document.getElementById(`${type}Grade`).textContent = data.grade;
+
+        const tipsHtml = data.tips.slice(0, 3).map(tip =>
+            `<div class="opt-tip">${tip}</div>`
+        ).join('');
+        document.getElementById(`${type}Tips`).innerHTML = tipsHtml || '<div class="opt-tip" style="color: #22c55e;">✓ Well optimized!</div>';
     }
 
     function copyHashtags() {
@@ -804,22 +1139,35 @@ At DVCCC, our doors are always open with FREE, CONFIDENTIAL services available t
 
         navigator.clipboard.writeText(currentHashtags).then(() => {
             const btn = document.querySelector('.copy-btn');
-            const icon = document.getElementById('copyIcon');
-            const text = document.getElementById('copyText');
-
             btn.classList.add('copied');
-            icon.textContent = '✓';
-            text.textContent = 'Copied!';
+            document.getElementById('copyIcon').textContent = '✓';
+            document.getElementById('copyText').textContent = 'Copied!';
 
             setTimeout(() => {
                 btn.classList.remove('copied');
-                icon.textContent = '📋';
-                text.textContent = 'Copy All';
+                document.getElementById('copyIcon').textContent = '📋';
+                document.getElementById('copyText').textContent = 'Copy All';
             }, 2000);
         });
     }
 
-    // Initialize character count
+    function copyGeneratedCaption() {
+        if (!currentCaption) return;
+
+        const fullText = currentCaption + '\n\n' + currentHashtags;
+        navigator.clipboard.writeText(fullText).then(() => {
+            const btn = document.querySelector('.copy-caption-btn');
+            btn.textContent = '✓ Copied!';
+            btn.classList.add('copied');
+
+            setTimeout(() => {
+                btn.textContent = '📋 Copy';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
+    // Initialize
     updateCharCount();
 </script>
 {% endblock %}

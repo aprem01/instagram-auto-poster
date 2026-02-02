@@ -2605,6 +2605,643 @@ def generate_improvement_suggestions(caption: str, score: dict, audience: str, p
     return suggestions
 
 
+# ============== DISCOVERY OPTIMIZER - CAPTION GENERATION & MULTI-OPTIMIZATION ==============
+
+@app.route('/api/discovery/generate-caption', methods=['POST'])
+def api_generate_discovery_caption():
+    """
+    Generate an optimized caption based on topic/theme with SEO/AIO/GEO/AEO optimization.
+
+    Request body:
+        - topic: str (required) - Topic or theme for the caption
+        - target_audience: str (optional) - Target audience
+        - platform: str (optional) - Target platform
+        - campaign_type: str (optional) - Campaign type
+        - optimization_focus: str (optional) - Focus area (seo, aio, geo, aeo, balanced)
+
+    Returns:
+        Generated caption with optimization data
+    """
+    data = request.json or {}
+    topic = data.get('topic', '').strip()
+    target_audience = data.get('target_audience', 'general')
+    platform = data.get('platform', 'instagram')
+    campaign_type = data.get('campaign_type', 'awareness')
+    optimization_focus = data.get('optimization_focus', 'balanced')
+
+    if not topic:
+        return jsonify({'success': False, 'error': 'Please provide a topic'}), 400
+
+    if not reach_amplify:
+        return jsonify({'success': False, 'error': 'Caption generation requires OPENAI_API_KEY'}), 503
+
+    try:
+        # Generate optimized caption using AI
+        generated = generate_optimized_caption(topic, target_audience, platform, campaign_type, optimization_focus)
+
+        # Get multi-optimization scores
+        multi_opt = get_multi_optimization_scores(generated['caption'], topic, platform)
+
+        return jsonify({
+            'success': True,
+            'caption': generated['caption'],
+            'topic': topic,
+            'optimization_focus': optimization_focus,
+            'seo_optimized': generated.get('seo_elements', []),
+            'aio_optimized': generated.get('aio_elements', []),
+            'geo_optimized': generated.get('geo_elements', []),
+            'aeo_optimized': generated.get('aeo_elements', []),
+            'multi_optimization': multi_opt,
+            'hashtags': generated.get('hashtags', [])
+        })
+
+    except Exception as e:
+        logger.error(f"Caption generation failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/discovery/trending')
+def api_discovery_trending():
+    """
+    Get trending topics for DV awareness content.
+
+    Returns:
+        List of trending topics with optimization potential
+    """
+    try:
+        # Current trending topics in DV awareness space
+        trending_topics = [
+            {
+                'topic': 'Teen Dating Violence Awareness',
+                'hashtag': '#TDVAM',
+                'audience': 'youth',
+                'trending_score': 95,
+                'reason': 'February awareness month approaching'
+            },
+            {
+                'topic': 'Financial Abuse Warning Signs',
+                'hashtag': '#FinancialAbuse',
+                'audience': 'general',
+                'trending_score': 88,
+                'reason': 'Tax season - financial control peaks'
+            },
+            {
+                'topic': 'Healthy Relationship Education',
+                'hashtag': '#HealthyRelationships',
+                'audience': 'youth',
+                'trending_score': 92,
+                'reason': 'Back to school prevention programs'
+            },
+            {
+                'topic': 'Survivor Stories of Strength',
+                'hashtag': '#SurvivorStrong',
+                'audience': 'general',
+                'trending_score': 85,
+                'reason': 'High engagement on personal narratives'
+            },
+            {
+                'topic': 'Workplace Domestic Violence Impact',
+                'hashtag': '#WorkplaceSafety',
+                'audience': 'donors',
+                'trending_score': 78,
+                'reason': 'Corporate awareness initiatives growing'
+            },
+            {
+                'topic': 'Digital Safety & Technology Abuse',
+                'hashtag': '#DigitalSafety',
+                'audience': 'youth',
+                'trending_score': 90,
+                'reason': 'Rising concern about online stalking'
+            },
+            {
+                'topic': 'Purple Thursday Community Support',
+                'hashtag': '#PurpleThursday',
+                'audience': 'general',
+                'trending_score': 82,
+                'reason': 'Weekly awareness momentum'
+            },
+            {
+                'topic': 'Volunteer Impact Stories',
+                'hashtag': '#DVCCCVolunteers',
+                'audience': 'donors',
+                'trending_score': 75,
+                'reason': 'Volunteer appreciation drives engagement'
+            }
+        ]
+
+        # Sort by trending score
+        trending_topics.sort(key=lambda x: x['trending_score'], reverse=True)
+
+        return jsonify({
+            'success': True,
+            'trending': trending_topics,
+            'updated_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Trending topics failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/discovery/multi-optimize', methods=['POST'])
+def api_multi_optimize():
+    """
+    Analyze caption with comprehensive SEO/AIO/GEO/AEO optimization.
+
+    Request body:
+        - caption: str (required) - Caption to analyze
+        - topic: str (optional) - Topic for context
+        - platform: str (optional) - Target platform
+
+    Returns:
+        Detailed optimization scores and recommendations for each channel
+    """
+    data = request.json or {}
+    caption = data.get('caption', '').strip()
+    topic = data.get('topic', 'domestic violence awareness')
+    platform = data.get('platform', 'instagram')
+
+    if not caption:
+        return jsonify({'success': False, 'error': 'Caption is required'}), 400
+
+    try:
+        multi_opt = get_multi_optimization_scores(caption, topic, platform)
+        return jsonify({
+            'success': True,
+            'optimization': multi_opt
+        })
+    except Exception as e:
+        logger.error(f"Multi-optimization failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def generate_optimized_caption(topic: str, audience: str, platform: str, campaign: str, focus: str) -> dict:
+    """Generate an AI-optimized caption with SEO/AIO/GEO/AEO elements."""
+
+    # Build optimization prompt based on focus
+    focus_instructions = {
+        'seo': 'Include searchable keywords, clear topic mentions, and link-worthy phrases.',
+        'aio': 'Structure with clear headings, bullet-point friendly format, and comprehensive coverage.',
+        'geo': 'Include authoritative statements, citable facts, and brand-building language.',
+        'aeo': 'Include direct answers to common questions, voice-friendly phrasing, and concise facts.',
+        'balanced': 'Balance all optimization types: searchable keywords, clear structure, authoritative tone, and direct answers.'
+    }
+
+    audience_context = {
+        'youth': 'Target audience is young people under 24. Use relatable language, mention dating relationships, peer support.',
+        'donors': 'Target audience is potential donors. Emphasize impact, community investment, and measurable outcomes.',
+        'event': 'Target audience is event attendees. Include event details, registration info, and community gathering.',
+        'general': 'Target audience is general community. Balance awareness, support resources, and hope.'
+    }
+
+    campaign_tone = {
+        'awareness': 'Educational and empowering tone focused on awareness and prevention.',
+        'fundraising': 'Inspiring tone emphasizing impact and the difference donations make.',
+        'events': 'Inviting and energetic tone promoting community participation.',
+        'youth': 'Relatable and direct tone speaking to young people about healthy relationships.',
+        'volunteer': 'Appreciative and welcoming tone celebrating volunteer contributions.'
+    }
+
+    if reach_amplify and hasattr(reach_amplify, 'client'):
+        try:
+            response = reach_amplify.client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"""You are a social media expert for the Domestic Violence Center of Chester County (DVCCC).
+Create an Instagram caption that is optimized for maximum discoverability.
+
+Organization context:
+- DVCCC provides FREE, CONFIDENTIAL services to survivors in Chester County, PA
+- Always mention Chester County and that services are free and confidential
+- End with hope and a call to action
+
+{focus_instructions.get(focus, focus_instructions['balanced'])}
+{audience_context.get(audience, audience_context['general'])}
+{campaign_tone.get(campaign, campaign_tone['awareness'])}
+
+Platform: {platform}
+
+Structure the caption with:
+1. Hook (first line that grabs attention)
+2. Value (key message with keywords)
+3. Social proof or statistic if relevant
+4. Call to action
+5. Relevant emojis (2-4)
+
+Do NOT include hashtags in the caption - those will be added separately."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Create an optimized caption about: {topic}"
+                    }
+                ],
+                max_tokens=500,
+                temperature=0.7
+            )
+            caption = response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"AI caption generation failed: {e}")
+            caption = generate_fallback_caption(topic, audience)
+    else:
+        caption = generate_fallback_caption(topic, audience)
+
+    # Extract optimization elements
+    seo_elements = extract_seo_elements(caption)
+    aio_elements = extract_aio_elements(caption)
+    geo_elements = extract_geo_elements(caption)
+    aeo_elements = extract_aeo_elements(caption)
+
+    # Generate hashtags
+    hashtags = get_audience_hashtags(audience, campaign)[:15]
+
+    return {
+        'caption': caption,
+        'seo_elements': seo_elements,
+        'aio_elements': aio_elements,
+        'geo_elements': geo_elements,
+        'aeo_elements': aeo_elements,
+        'hashtags': hashtags
+    }
+
+
+def generate_fallback_caption(topic: str, audience: str) -> str:
+    """Generate a fallback caption without AI."""
+    templates = {
+        'youth': f"""Your relationships should make you feel safe and respected. 💜
+
+{topic}
+
+At DVCCC, we're here for young people in Chester County with FREE, CONFIDENTIAL support. You deserve healthy relationships.
+
+Learn more at dvcccpa.org or reach out anytime. You're not alone. 💪""",
+
+        'donors': f"""Your support changes lives in Chester County. 💜
+
+{topic}
+
+Every gift to DVCCC provides FREE, CONFIDENTIAL services to survivors of domestic violence. Together, we're building a safer community.
+
+Make an impact today at dvcccpa.org/give 🌟""",
+
+        'general': f"""You are not alone. 💜
+
+{topic}
+
+DVCCC provides FREE, CONFIDENTIAL services to anyone in Chester County experiencing domestic violence. Our doors are always open.
+
+Reach out today at dvcccpa.org or call our 24-hour hotline. Hope lives here. 💪🌟"""
+    }
+    return templates.get(audience, templates['general'])
+
+
+def extract_seo_elements(caption: str) -> list:
+    """Extract SEO-friendly elements from caption."""
+    elements = []
+    caption_lower = caption.lower()
+
+    # Check for key SEO elements
+    seo_keywords = ['domestic violence', 'chester county', 'free', 'confidential', 'support', 'help', 'services', 'survivor']
+    for kw in seo_keywords:
+        if kw in caption_lower:
+            elements.append({'type': 'keyword', 'value': kw, 'found': True})
+
+    # Check for URL/link mention
+    if 'dvcccpa.org' in caption_lower or 'link in bio' in caption_lower:
+        elements.append({'type': 'link', 'value': 'Website reference', 'found': True})
+
+    # Check for location
+    if 'chester county' in caption_lower or 'pennsylvania' in caption_lower:
+        elements.append({'type': 'location', 'value': 'Local targeting', 'found': True})
+
+    return elements
+
+
+def extract_aio_elements(caption: str) -> list:
+    """Extract AI Overview optimization elements."""
+    elements = []
+
+    # Check for clear structure
+    if '\n\n' in caption:
+        elements.append({'type': 'structure', 'value': 'Paragraph breaks', 'found': True})
+
+    # Check for clarity indicators
+    sentences = caption.split('.')
+    avg_sentence_length = sum(len(s.split()) for s in sentences) / max(len(sentences), 1)
+    if avg_sentence_length < 20:
+        elements.append({'type': 'clarity', 'value': 'Readable sentence length', 'found': True})
+
+    # Check for comprehensive coverage
+    if len(caption) > 200:
+        elements.append({'type': 'depth', 'value': 'Comprehensive content', 'found': True})
+
+    return elements
+
+
+def extract_geo_elements(caption: str) -> list:
+    """Extract Generative Engine Optimization elements."""
+    elements = []
+    caption_lower = caption.lower()
+
+    # Check for authoritative language
+    authority_phrases = ['we provide', 'our services', 'dvccc', 'at dvccc', 'we offer', 'our team']
+    for phrase in authority_phrases:
+        if phrase in caption_lower:
+            elements.append({'type': 'authority', 'value': f'Brand voice: "{phrase}"', 'found': True})
+            break
+
+    # Check for citable facts
+    if any(char.isdigit() for char in caption):
+        elements.append({'type': 'citation', 'value': 'Contains statistics/numbers', 'found': True})
+
+    # Check for reputation indicators
+    reputation_words = ['free', 'confidential', '24-hour', 'professional', 'trained']
+    found_rep = [w for w in reputation_words if w in caption_lower]
+    if found_rep:
+        elements.append({'type': 'reputation', 'value': f'Trust signals: {", ".join(found_rep[:3])}', 'found': True})
+
+    return elements
+
+
+def extract_aeo_elements(caption: str) -> list:
+    """Extract Answer Engine Optimization elements (voice search)."""
+    elements = []
+    caption_lower = caption.lower()
+
+    # Check for question-answer format
+    if '?' in caption:
+        elements.append({'type': 'question', 'value': 'Contains question format', 'found': True})
+
+    # Check for direct answer phrases
+    direct_phrases = ['you can', 'we offer', 'call', 'visit', 'reach out', 'contact']
+    for phrase in direct_phrases:
+        if phrase in caption_lower:
+            elements.append({'type': 'direct_answer', 'value': f'Action phrase: "{phrase}"', 'found': True})
+            break
+
+    # Check for voice-friendly snippets (short, clear statements)
+    sentences = [s.strip() for s in caption.split('.') if s.strip()]
+    short_clear = [s for s in sentences if 5 <= len(s.split()) <= 15]
+    if short_clear:
+        elements.append({'type': 'voice_snippet', 'value': 'Voice-ready sentences', 'found': True})
+
+    # Check for local intent (important for voice search)
+    if 'chester county' in caption_lower:
+        elements.append({'type': 'local', 'value': 'Local search optimized', 'found': True})
+
+    return elements
+
+
+def get_multi_optimization_scores(caption: str, topic: str, platform: str) -> dict:
+    """Calculate comprehensive optimization scores for SEO, AIO, GEO, AEO."""
+
+    seo_score = calculate_seo_score(caption, topic)
+    aio_score = calculate_aio_score(caption)
+    geo_score = calculate_geo_score(caption)
+    aeo_score = calculate_aeo_score(caption)
+
+    # Calculate overall score
+    overall = int((seo_score['score'] + aio_score['score'] + geo_score['score'] + aeo_score['score']) / 4)
+
+    return {
+        'overall_score': overall,
+        'overall_grade': score_to_grade(overall),
+        'seo': seo_score,
+        'aio': aio_score,
+        'geo': geo_score,
+        'aeo': aeo_score
+    }
+
+
+def calculate_seo_score(caption: str, topic: str) -> dict:
+    """Calculate SEO optimization score."""
+    score = 0
+    max_score = 100
+    tips = []
+    caption_lower = caption.lower()
+
+    # Keyword presence (30 points)
+    keywords = ['domestic violence', 'chester county', 'support', 'help', 'free', 'confidential']
+    keywords_found = sum(1 for kw in keywords if kw in caption_lower)
+    keyword_score = min(30, keywords_found * 5)
+    score += keyword_score
+    if keyword_score < 20:
+        tips.append('Add more searchable keywords (domestic violence, Chester County, support)')
+
+    # Link/URL reference (20 points)
+    if 'dvcccpa.org' in caption_lower:
+        score += 20
+    else:
+        tips.append('Include website URL (dvcccpa.org) for traffic generation')
+
+    # Topic relevance (25 points)
+    topic_words = topic.lower().split()
+    topic_matches = sum(1 for word in topic_words if word in caption_lower and len(word) > 3)
+    topic_score = min(25, topic_matches * 8)
+    score += topic_score
+    if topic_score < 15:
+        tips.append(f'Include more topic keywords: {topic}')
+
+    # Length optimization (15 points)
+    if 150 <= len(caption) <= 2000:
+        score += 15
+    elif len(caption) < 150:
+        tips.append('Expand caption for better SEO (aim for 150+ characters)')
+        score += 8
+
+    # Call to action (10 points)
+    cta_words = ['visit', 'call', 'learn', 'contact', 'reach out']
+    if any(cta in caption_lower for cta in cta_words):
+        score += 10
+    else:
+        tips.append('Add a call to action (visit, call, learn more)')
+
+    return {
+        'score': score,
+        'max_score': max_score,
+        'grade': score_to_grade(score),
+        'focus': 'Keywords & Links',
+        'platform': 'Google / Bing',
+        'metric': 'Website Traffic',
+        'tips': tips
+    }
+
+
+def calculate_aio_score(caption: str) -> dict:
+    """Calculate AI Overview optimization score."""
+    score = 0
+    max_score = 100
+    tips = []
+
+    # Clear structure (30 points)
+    if '\n\n' in caption or '\n' in caption:
+        score += 30
+    else:
+        tips.append('Add paragraph breaks for better AI parsing')
+        score += 10
+
+    # Sentence clarity (25 points)
+    sentences = [s.strip() for s in caption.split('.') if s.strip()]
+    if sentences:
+        avg_length = sum(len(s.split()) for s in sentences) / len(sentences)
+        if avg_length < 25:
+            score += 25
+        elif avg_length < 35:
+            score += 15
+            tips.append('Shorten some sentences for clarity')
+        else:
+            tips.append('Break up long sentences for AI readability')
+            score += 5
+
+    # Comprehensive coverage (25 points)
+    if len(caption) >= 200:
+        score += 25
+    elif len(caption) >= 100:
+        score += 15
+    else:
+        tips.append('Expand content for comprehensive AI summaries')
+        score += 5
+
+    # Factual content (20 points)
+    factual_indicators = ['free', 'confidential', '24-hour', 'chester county', 'dvccc', 'services']
+    factual_count = sum(1 for fi in factual_indicators if fi in caption.lower())
+    factual_score = min(20, factual_count * 4)
+    score += factual_score
+    if factual_score < 12:
+        tips.append('Include more factual, verifiable information')
+
+    return {
+        'score': score,
+        'max_score': max_score,
+        'grade': score_to_grade(score),
+        'focus': 'Clarity & Structure',
+        'platform': 'Google AI Overviews',
+        'metric': 'Summary Presence',
+        'tips': tips
+    }
+
+
+def calculate_geo_score(caption: str) -> dict:
+    """Calculate Generative Engine Optimization score (ChatGPT/Perplexity)."""
+    score = 0
+    max_score = 100
+    tips = []
+    caption_lower = caption.lower()
+
+    # Brand authority (30 points)
+    brand_signals = ['dvccc', 'domestic violence center', 'chester county']
+    brand_found = sum(1 for bs in brand_signals if bs in caption_lower)
+    brand_score = min(30, brand_found * 10)
+    score += brand_score
+    if brand_score < 20:
+        tips.append('Strengthen brand presence (mention DVCCC, Domestic Violence Center)')
+
+    # Reputation indicators (25 points)
+    trust_words = ['free', 'confidential', 'professional', 'trained', 'certified', 'experienced', '24-hour']
+    trust_found = sum(1 for tw in trust_words if tw in caption_lower)
+    trust_score = min(25, trust_found * 6)
+    score += trust_score
+    if trust_score < 15:
+        tips.append('Add trust signals (free, confidential, professional, 24-hour)')
+
+    # Citable information (25 points)
+    # Check for statistics, specific claims, or quotable phrases
+    has_numbers = any(char.isdigit() for char in caption)
+    has_quotes = '"' in caption or '"' in caption
+    citable_score = 0
+    if has_numbers:
+        citable_score += 12
+    if has_quotes:
+        citable_score += 13
+    if len(caption) > 150:
+        citable_score += min(12, (len(caption) - 150) // 20)
+    score += min(25, citable_score)
+    if citable_score < 15:
+        tips.append('Add citable facts, statistics, or specific services offered')
+
+    # Expert voice (20 points)
+    expert_phrases = ['we provide', 'our services', 'we offer', 'our team', 'we support']
+    if any(ep in caption_lower for ep in expert_phrases):
+        score += 20
+    else:
+        tips.append('Use authoritative first-person voice (we provide, our services)')
+
+    return {
+        'score': score,
+        'max_score': max_score,
+        'grade': score_to_grade(score),
+        'focus': 'Authority & Reputation',
+        'platform': 'ChatGPT / Perplexity',
+        'metric': 'Brand Citations',
+        'tips': tips
+    }
+
+
+def calculate_aeo_score(caption: str) -> dict:
+    """Calculate Answer Engine Optimization score (Voice assistants)."""
+    score = 0
+    max_score = 100
+    tips = []
+    caption_lower = caption.lower()
+
+    # Direct answers (30 points)
+    direct_patterns = ['you can', 'call', 'visit', 'contact', 'we offer', 'services include', 'help is available']
+    direct_found = sum(1 for dp in direct_patterns if dp in caption_lower)
+    direct_score = min(30, direct_found * 8)
+    score += direct_score
+    if direct_score < 20:
+        tips.append('Include direct action phrases (You can call, Visit us at, Help is available)')
+
+    # Voice-friendly length (25 points)
+    sentences = [s.strip() for s in caption.split('.') if s.strip()]
+    voice_ready = [s for s in sentences if 5 <= len(s.split()) <= 20]
+    voice_score = min(25, len(voice_ready) * 8)
+    score += voice_score
+    if voice_score < 15:
+        tips.append('Create short, speakable sentences (5-20 words)')
+
+    # Question handling (20 points)
+    question_words = ['what', 'how', 'where', 'when', 'who', 'can i', 'is there']
+    handles_questions = any(qw in caption_lower for qw in question_words) or '?' in caption
+    if handles_questions:
+        score += 20
+    else:
+        tips.append('Address common questions (What is...? How can I...? Where can I...?)')
+
+    # Local intent (25 points)
+    local_signals = ['chester county', 'local', 'near', 'pennsylvania', 'pa']
+    local_found = sum(1 for ls in local_signals if ls in caption_lower)
+    local_score = min(25, local_found * 10)
+    score += local_score
+    if local_score < 15:
+        tips.append('Emphasize local availability (Chester County, local services)')
+
+    return {
+        'score': score,
+        'max_score': max_score,
+        'grade': score_to_grade(score),
+        'focus': 'Direct Answers',
+        'platform': 'Siri / Alexa / Snippets',
+        'metric': 'Voice Answer',
+        'tips': tips
+    }
+
+
+def score_to_grade(score: int) -> str:
+    """Convert numeric score to letter grade."""
+    if score >= 90:
+        return 'A'
+    elif score >= 80:
+        return 'B'
+    elif score >= 70:
+        return 'C'
+    elif score >= 60:
+        return 'D'
+    else:
+        return 'F'
+
+
 @app.route('/settings')
 def settings_page():
     """Settings page for API configuration."""
