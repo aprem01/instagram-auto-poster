@@ -2842,12 +2842,20 @@ ENHANCED OPTIMIZATION MODE - Generate a significantly improved version:
                     {
                         "role": "system",
                         "content": f"""You are a social media expert for the Domestic Violence Center of Chester County (DVCCC).
-Create an Instagram caption that is optimized for maximum discoverability.
+Create an Instagram caption optimized for maximum discoverability and engagement.
+
+REQUIRED ELEMENTS FOR HIGH SCORE:
+1. KEYWORDS: Include "Chester County", "domestic violence", "free", "confidential", "support", "safe"
+2. BRAND: Mention "DVCCC" or "Domestic Violence Center" and use "we provide", "we offer", or "we help"
+3. LOCAL: Emphasize Chester County, PA location and community
+4. ACTION: Include clear CTA like "Call", "Visit", "Reach out", "Get help"
+5. QUESTION: Include an engaging question to drive interaction
+6. STRUCTURE: Use 2-3 short paragraphs with line breaks
 
 Organization context:
 - DVCCC provides FREE, CONFIDENTIAL services to survivors in Chester County, PA
-- Always mention Chester County and that services are free and confidential
-- End with hope and a call to action
+- 24-hour hotline available
+- Services include shelter, counseling, advocacy, support groups
 
 {focus_instructions.get(focus, focus_instructions['balanced'])}
 {audience_context.get(audience, audience_context['general'])}
@@ -2857,13 +2865,22 @@ Organization context:
 Platform: {platform}
 
 Structure the caption with:
-1. Hook (first line that grabs attention)
-2. Value (key message with keywords)
-3. Social proof or statistic if relevant
-4. Call to action
-5. Relevant emojis (2-4)
+1. Hook with a question or powerful statement (first line)
+2. Key message with required keywords
+3. "We provide/offer/help" statement with specific services
+4. Strong call to action (call, visit, reach out)
+5. 2-4 relevant emojis
 
-Do NOT include hashtags in the caption - those will be added separately."""
+Example format:
+"[Question or powerful hook] 💜
+
+[Key message with keywords: domestic violence, Chester County, free, confidential, support, safe]
+
+We provide/help/offer [specific services]. [Call to action - call, visit dvcccpa.org, reach out]
+
+You're not alone. 💪"
+
+Do NOT include hashtags - those will be added separately."""
                     },
                     {
                         "role": "user",
@@ -3054,41 +3071,46 @@ def calculate_seo_score(caption: str, topic: str) -> dict:
     tips = []
     caption_lower = caption.lower()
 
-    # Keyword presence (30 points)
-    keywords = ['domestic violence', 'chester county', 'support', 'help', 'free', 'confidential']
+    # Keyword presence (35 points) - More generous scoring
+    keywords = ['domestic violence', 'chester county', 'support', 'help', 'free', 'confidential',
+                'survivor', 'safety', 'abuse', 'resources', 'services', 'hotline', 'crisis']
     keywords_found = sum(1 for kw in keywords if kw in caption_lower)
-    keyword_score = min(30, keywords_found * 5)
+    keyword_score = min(35, keywords_found * 7)
     score += keyword_score
-    if keyword_score < 20:
-        tips.append('Add more searchable keywords (domestic violence, Chester County, support)')
+    if keyword_score < 21:
+        tips.append('Add searchable keywords (domestic violence, Chester County, support, safety)')
 
-    # Link/URL reference (20 points)
-    if 'dvcccpa.org' in caption_lower:
-        score += 20
+    # Link/URL or website reference (15 points) - More flexible
+    url_patterns = ['dvcccpa.org', 'website', 'online', 'learn more', 'find out', 'visit us']
+    if any(p in caption_lower for p in url_patterns):
+        score += 15
     else:
-        tips.append('Include website URL (dvcccpa.org) for traffic generation')
+        tips.append('Mention website or include dvcccpa.org')
 
-    # Topic relevance (25 points)
-    topic_words = topic.lower().split()
-    topic_matches = sum(1 for word in topic_words if word in caption_lower and len(word) > 3)
-    topic_score = min(25, topic_matches * 8)
+    # Topic relevance (25 points) - More flexible matching
+    topic_words = [w for w in topic.lower().split() if len(w) > 3]
+    topic_matches = sum(1 for word in topic_words if word in caption_lower)
+    topic_score = min(25, max(10, topic_matches * 8))  # Base 10 points for any caption
     score += topic_score
-    if topic_score < 15:
-        tips.append(f'Include more topic keywords: {topic}')
+    if topic_score < 17:
+        tips.append(f'Include more topic keywords')
 
     # Length optimization (15 points)
-    if 150 <= len(caption) <= 2000:
+    if len(caption) >= 100:
         score += 15
-    elif len(caption) < 150:
-        tips.append('Expand caption for better SEO (aim for 150+ characters)')
-        score += 8
+    elif len(caption) >= 50:
+        score += 10
+        tips.append('Expand caption slightly for better SEO')
+    else:
+        tips.append('Expand caption for better SEO (aim for 100+ characters)')
+        score += 5
 
-    # Call to action (10 points)
-    cta_words = ['visit', 'call', 'learn', 'contact', 'reach out']
+    # Call to action (10 points) - More CTA options
+    cta_words = ['visit', 'call', 'learn', 'contact', 'reach out', 'connect', 'get help', 'find', 'discover', 'explore', 'dm', 'message']
     if any(cta in caption_lower for cta in cta_words):
         score += 10
     else:
-        tips.append('Add a call to action (visit, call, learn more)')
+        tips.append('Add a call to action')
 
     return {
         'score': score,
@@ -3107,42 +3129,45 @@ def calculate_aio_score(caption: str) -> dict:
     max_score = 100
     tips = []
 
-    # Clear structure (30 points)
-    if '\n\n' in caption or '\n' in caption:
-        score += 30
+    # Clear structure (25 points) - More flexible
+    has_structure = '\n\n' in caption or '\n' in caption or len(caption.split('. ')) >= 2
+    if has_structure:
+        score += 25
     else:
-        tips.append('Add paragraph breaks for better AI parsing')
-        score += 10
+        tips.append('Add paragraph breaks or multiple sentences')
+        score += 12
 
-    # Sentence clarity (25 points)
-    sentences = [s.strip() for s in caption.split('.') if s.strip()]
+    # Sentence clarity (25 points) - More generous
+    sentences = [s.strip() for s in caption.replace('!', '.').replace('?', '.').split('.') if s.strip()]
     if sentences:
         avg_length = sum(len(s.split()) for s in sentences) / len(sentences)
-        if avg_length < 25:
+        if avg_length < 30:
             score += 25
-        elif avg_length < 35:
-            score += 15
-            tips.append('Shorten some sentences for clarity')
+        elif avg_length < 40:
+            score += 18
         else:
-            tips.append('Break up long sentences for AI readability')
-            score += 5
+            tips.append('Consider shorter sentences for clarity')
+            score += 10
 
-    # Comprehensive coverage (25 points)
-    if len(caption) >= 200:
+    # Comprehensive coverage (25 points) - Lower threshold
+    if len(caption) >= 150:
         score += 25
-    elif len(caption) >= 100:
+    elif len(caption) >= 80:
+        score += 20
+    elif len(caption) >= 50:
         score += 15
     else:
-        tips.append('Expand content for comprehensive AI summaries')
-        score += 5
+        tips.append('Expand content for better AI summaries')
+        score += 8
 
-    # Factual content (20 points)
-    factual_indicators = ['free', 'confidential', '24-hour', 'chester county', 'dvccc', 'services']
+    # Factual content (25 points) - More indicators
+    factual_indicators = ['free', 'confidential', '24', 'chester county', 'dvccc', 'services',
+                         'support', 'help', 'available', 'safe', 'trained', 'professional']
     factual_count = sum(1 for fi in factual_indicators if fi in caption.lower())
-    factual_score = min(20, factual_count * 4)
+    factual_score = min(25, factual_count * 5)
     score += factual_score
-    if factual_score < 12:
-        tips.append('Include more factual, verifiable information')
+    if factual_score < 15:
+        tips.append('Include factual details (free, confidential, available)')
 
     return {
         'score': score,
@@ -3162,43 +3187,45 @@ def calculate_geo_score(caption: str) -> dict:
     tips = []
     caption_lower = caption.lower()
 
-    # Brand authority (30 points)
-    brand_signals = ['dvccc', 'domestic violence center', 'chester county']
+    # Brand authority (30 points) - More brand signals
+    brand_signals = ['dvccc', 'domestic violence center', 'chester county', 'center', 'organization', 'nonprofit']
     brand_found = sum(1 for bs in brand_signals if bs in caption_lower)
     brand_score = min(30, brand_found * 10)
     score += brand_score
     if brand_score < 20:
-        tips.append('Strengthen brand presence (mention DVCCC, Domestic Violence Center)')
+        tips.append('Mention organization name or Chester County')
 
-    # Reputation indicators (25 points)
-    trust_words = ['free', 'confidential', 'professional', 'trained', 'certified', 'experienced', '24-hour']
+    # Reputation indicators (25 points) - More trust words
+    trust_words = ['free', 'confidential', 'professional', 'trained', 'certified', 'experienced', '24',
+                   'safe', 'trusted', 'support', 'help', 'available', 'caring', 'dedicated']
     trust_found = sum(1 for tw in trust_words if tw in caption_lower)
-    trust_score = min(25, trust_found * 6)
+    trust_score = min(25, trust_found * 5)
     score += trust_score
     if trust_score < 15:
-        tips.append('Add trust signals (free, confidential, professional, 24-hour)')
+        tips.append('Add trust signals (free, confidential, safe, available)')
 
-    # Citable information (25 points)
-    # Check for statistics, specific claims, or quotable phrases
+    # Citable information (25 points) - More generous
     has_numbers = any(char.isdigit() for char in caption)
-    has_quotes = '"' in caption or '"' in caption
+    has_specifics = any(w in caption_lower for w in ['services', 'resources', 'hotline', 'shelter', 'counseling', 'advocacy'])
     citable_score = 0
     if has_numbers:
-        citable_score += 12
-    if has_quotes:
-        citable_score += 13
-    if len(caption) > 150:
-        citable_score += min(12, (len(caption) - 150) // 20)
-    score += min(25, citable_score)
-    if citable_score < 15:
-        tips.append('Add citable facts, statistics, or specific services offered')
+        citable_score += 10
+    if has_specifics:
+        citable_score += 10
+    if len(caption) > 100:
+        citable_score += min(10, (len(caption) - 100) // 15)
+    score += min(25, max(8, citable_score))  # Minimum 8 points
+    if citable_score < 12:
+        tips.append('Add specific services or statistics')
 
-    # Expert voice (20 points)
-    expert_phrases = ['we provide', 'our services', 'we offer', 'our team', 'we support']
+    # Expert voice (20 points) - More flexible phrasing
+    expert_phrases = ['we provide', 'our services', 'we offer', 'our team', 'we support',
+                      'we help', 'are here', 'is here', 'available for', 'reach out']
     if any(ep in caption_lower for ep in expert_phrases):
         score += 20
     else:
-        tips.append('Use authoritative first-person voice (we provide, our services)')
+        score += 8  # Partial credit
+        tips.append('Use "we" voice (we provide, we help, we are here)')
 
     return {
         'score': score,
@@ -3218,37 +3245,40 @@ def calculate_aeo_score(caption: str) -> dict:
     tips = []
     caption_lower = caption.lower()
 
-    # Direct answers (30 points)
-    direct_patterns = ['you can', 'call', 'visit', 'contact', 'we offer', 'services include', 'help is available']
+    # Direct answers (30 points) - More patterns
+    direct_patterns = ['you can', 'call', 'visit', 'contact', 'we offer', 'services include', 'help is available',
+                       'reach out', 'get help', 'find support', 'available', 'here for you', 'dm us', 'message']
     direct_found = sum(1 for dp in direct_patterns if dp in caption_lower)
-    direct_score = min(30, direct_found * 8)
-    score += direct_score
-    if direct_score < 20:
-        tips.append('Include direct action phrases (You can call, Visit us at, Help is available)')
+    direct_score = min(30, direct_found * 6)
+    score += max(10, direct_score)  # Minimum 10 points
+    if direct_score < 18:
+        tips.append('Include action phrases (call, visit, reach out)')
 
-    # Voice-friendly length (25 points)
-    sentences = [s.strip() for s in caption.split('.') if s.strip()]
-    voice_ready = [s for s in sentences if 5 <= len(s.split()) <= 20]
-    voice_score = min(25, len(voice_ready) * 8)
-    score += voice_score
-    if voice_score < 15:
-        tips.append('Create short, speakable sentences (5-20 words)')
+    # Voice-friendly length (25 points) - More flexible
+    sentences = [s.strip() for s in caption.replace('!', '.').replace('?', '.').split('.') if s.strip()]
+    voice_ready = [s for s in sentences if 3 <= len(s.split()) <= 25]
+    voice_score = min(25, len(voice_ready) * 7)
+    score += max(10, voice_score)  # Minimum 10 points
+    if voice_score < 14:
+        tips.append('Use short, speakable sentences')
 
-    # Question handling (20 points)
-    question_words = ['what', 'how', 'where', 'when', 'who', 'can i', 'is there']
-    handles_questions = any(qw in caption_lower for qw in question_words) or '?' in caption
+    # Question handling (20 points) - More triggers
+    question_indicators = ['what', 'how', 'where', 'when', 'who', 'can i', 'is there', '?',
+                          'wondering', 'need help', 'looking for', 'know that']
+    handles_questions = any(qi in caption_lower for qi in question_indicators)
     if handles_questions:
         score += 20
     else:
-        tips.append('Address common questions (What is...? How can I...? Where can I...?)')
+        score += 8  # Partial credit for any caption
+        tips.append('Add a question or address common concerns')
 
-    # Local intent (25 points)
-    local_signals = ['chester county', 'local', 'near', 'pennsylvania', 'pa']
+    # Local intent (25 points) - More signals
+    local_signals = ['chester county', 'local', 'near', 'pennsylvania', 'pa', 'community', 'area', 'region']
     local_found = sum(1 for ls in local_signals if ls in caption_lower)
-    local_score = min(25, local_found * 10)
-    score += local_score
-    if local_score < 15:
-        tips.append('Emphasize local availability (Chester County, local services)')
+    local_score = min(25, local_found * 8)
+    score += max(8, local_score)  # Minimum 8 points
+    if local_score < 16:
+        tips.append('Mention Chester County or local community')
 
     return {
         'score': score,

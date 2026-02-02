@@ -678,6 +678,71 @@
     .hidden {
         display: none !important;
     }
+
+    /* Analyzed Caption Box */
+    .analyzed-caption-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 2px solid #93c5fd;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .analyzed-caption-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e40af;
+    }
+
+    .analyzed-caption-text {
+        font-size: 0.95rem;
+        color: #1f2937;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .optimize-ai-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .optimize-ai-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Score Description */
+    .score-description {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-top: 8px;
+    }
+
+    /* Score Card Colors */
+    .overall-score-card.grade-a {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+    .overall-score-card.grade-b {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+    .overall-score-card.grade-c {
+        background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    }
+    .overall-score-card.grade-d {
+        background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    }
+    .overall-score-card.grade-f {
+        background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+    }
 </style>
 
 <div class="info-callout">
@@ -825,29 +890,49 @@
             </div>
         </div>
 
-        <!-- Quick Reference Panel -->
+        <!-- A-Grade Tips Panel -->
         <div class="panel">
             <h3 class="section-title">
-                <span>📊</span> Optimization Guide
+                <span>🏆</span> Get an A-Grade Caption
             </h3>
-            <p class="section-subtitle">Understanding SEO, AIO, GEO, and AEO optimization</p>
+            <p class="section-subtitle">Include these elements for maximum discoverability</p>
 
-            <div style="display: grid; gap: 16px;">
-                <div style="background: #eff6ff; border-radius: 12px; padding: 16px; border-left: 4px solid #3b82f6;">
-                    <div style="font-weight: 700; color: #1e40af; margin-bottom: 4px;">🔍 SEO - Search Engine Optimization</div>
-                    <div style="font-size: 0.85rem; color: #3b82f6;">Keywords & Links → Google/Bing → Website Traffic</div>
+            <div style="display: grid; gap: 12px;">
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 14px; border-left: 4px solid #22c55e;">
+                    <div style="font-weight: 700; color: #166534; margin-bottom: 6px;">✅ Must-Have Keywords</div>
+                    <div style="font-size: 0.85rem; color: #15803d; line-height: 1.5;">
+                        <span style="background:#bbf7d0;padding:2px 6px;border-radius:4px;margin:2px;">Chester County</span>
+                        <span style="background:#bbf7d0;padding:2px 6px;border-radius:4px;margin:2px;">free</span>
+                        <span style="background:#bbf7d0;padding:2px 6px;border-radius:4px;margin:2px;">confidential</span>
+                        <span style="background:#bbf7d0;padding:2px 6px;border-radius:4px;margin:2px;">support</span>
+                        <span style="background:#bbf7d0;padding:2px 6px;border-radius:4px;margin:2px;">safe</span>
+                    </div>
                 </div>
-                <div style="background: #f5f3ff; border-radius: 12px; padding: 16px; border-left: 4px solid #8b5cf6;">
-                    <div style="font-weight: 700; color: #5b21b6; margin-bottom: 4px;">🤖 AIO - AI Overview Optimization</div>
-                    <div style="font-size: 0.85rem; color: #7c3aed;">Clarity & Structure → AI Overviews → Summary Presence</div>
+                <div style="background: #eff6ff; border-radius: 12px; padding: 14px; border-left: 4px solid #3b82f6;">
+                    <div style="font-weight: 700; color: #1e40af; margin-bottom: 4px;">📣 Strong Call-to-Action</div>
+                    <div style="font-size: 0.85rem; color: #3b82f6;">Use: "Call", "Visit dvcccpa.org", "Reach out", "Get help"</div>
                 </div>
-                <div style="background: #ecfdf5; border-radius: 12px; padding: 16px; border-left: 4px solid #10b981;">
-                    <div style="font-weight: 700; color: #065f46; margin-bottom: 4px;">💬 GEO - Generative Engine Optimization</div>
-                    <div style="font-size: 0.85rem; color: #059669;">Authority & Reputation → ChatGPT/Perplexity → Brand Citations</div>
+                <div style="background: #f5f3ff; border-radius: 12px; padding: 14px; border-left: 4px solid #8b5cf6;">
+                    <div style="font-weight: 700; color: #5b21b6; margin-bottom: 4px;">❓ Include a Question</div>
+                    <div style="font-size: 0.85rem; color: #7c3aed;">Questions boost engagement: "Are you okay?" "Need support?"</div>
                 </div>
-                <div style="background: #fffbeb; border-radius: 12px; padding: 16px; border-left: 4px solid #f59e0b;">
-                    <div style="font-weight: 700; color: #92400e; margin-bottom: 4px;">🔊 AEO - Answer Engine Optimization</div>
-                    <div style="font-size: 0.85rem; color: #d97706;">Direct Answers → Siri/Alexa → Voice Answer</div>
+                <div style="background: #ecfdf5; border-radius: 12px; padding: 14px; border-left: 4px solid #10b981;">
+                    <div style="font-weight: 700; color: #065f46; margin-bottom: 4px;">🏛️ Authority Language</div>
+                    <div style="font-size: 0.85rem; color: #059669;">Use: "We provide", "We help", "DVCCC offers"</div>
+                </div>
+                <div style="background: #fffbeb; border-radius: 12px; padding: 14px; border-left: 4px solid #f59e0b;">
+                    <div style="font-weight: 700; color: #92400e; margin-bottom: 4px;">📏 Good Structure</div>
+                    <div style="font-size: 0.85rem; color: #d97706;">2-3 short paragraphs, 100+ characters total</div>
+                </div>
+            </div>
+
+            <!-- Quick Example -->
+            <div style="margin-top: 16px; padding: 14px; background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-radius: 12px; border: 1px dashed #c026d3;">
+                <div style="font-weight: 700; color: #86198f; margin-bottom: 8px; font-size: 0.9rem;">💜 A-Grade Example:</div>
+                <div style="font-size: 0.8rem; color: #701a75; font-style: italic; line-height: 1.5;">
+                    "Are you or someone you love in an unhealthy relationship? 💜<br><br>
+                    DVCCC provides free, confidential support to survivors in Chester County, PA. You deserve to feel safe.<br><br>
+                    We help with shelter, counseling, and advocacy. Reach out today at dvcccpa.org 💪"
                 </div>
             </div>
         </div>
@@ -913,23 +998,35 @@
             <div class="generated-caption-text" id="generatedCaptionText"></div>
         </div>
 
-        <!-- Improvement Suggestions (shown when score is low) -->
-        <div class="improvement-box hidden" id="improvementBox">
-            <div class="improvement-header">
-                <span class="improvement-icon">💡</span>
-                <span class="improvement-title">Improve Your Caption</span>
+        <!-- Analyzed Caption Display (for analyze tab) -->
+        <div class="analyzed-caption-box hidden" id="analyzedCaptionBox">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="analyzed-caption-label">📝 Your Caption</div>
+                <button class="optimize-ai-btn" onclick="optimizeWithAI()">
+                    ✨ Optimize with AI
+                </button>
             </div>
-            <p class="improvement-subtitle">Your score could be higher. Try these suggestions:</p>
-            <ul class="improvement-list" id="improvementList"></ul>
-            <button class="improve-btn" onclick="regenerateImproved()">
-                ✨ Generate Improved Version
-            </button>
+            <div class="analyzed-caption-text" id="analyzedCaptionText"></div>
         </div>
 
         <!-- Overall Score -->
         <div class="overall-score-card">
             <div class="overall-grade" id="overallGrade">-</div>
             <div class="overall-label">Overall Discovery Score</div>
+            <div class="score-description" id="scoreDescription"></div>
+        </div>
+
+        <!-- Improvement Suggestions (shown when score needs work) -->
+        <div class="improvement-box hidden" id="improvementBox">
+            <div class="improvement-header">
+                <span class="improvement-icon">💡</span>
+                <span class="improvement-title">Boost Your Score</span>
+            </div>
+            <p class="improvement-subtitle">Add these elements for a better score:</p>
+            <ul class="improvement-list" id="improvementList"></ul>
+            <button class="improve-btn" onclick="regenerateImproved()" id="improveBtn">
+                ✨ Generate Optimized Version
+            </button>
         </div>
 
         <!-- Hashtags -->
@@ -959,6 +1056,8 @@
     let selectedFocus = 'balanced';
     let currentHashtags = '';
     let currentCaption = '';
+    let currentAnalyzedCaption = '';
+    let isAnalyzeMode = false;
 
     // Load trending topics on page load
     document.addEventListener('DOMContentLoaded', loadTrendingTopics);
@@ -1019,9 +1118,13 @@
             return;
         }
 
+        isAnalyzeMode = false;
         const btn = document.getElementById('generateBtn');
         btn.classList.add('loading');
         btn.disabled = true;
+
+        // Hide analyzed caption box if visible
+        document.getElementById('analyzedCaptionBox').classList.add('hidden');
 
         try {
             const response = await fetch('/api/discovery/generate-caption', {
@@ -1075,6 +1178,7 @@
             return;
         }
 
+        isAnalyzeMode = true;
         const btn = document.getElementById('analyzeBtn');
         btn.classList.add('loading');
         btn.disabled = true;
@@ -1177,13 +1281,32 @@
         // Show results panel
         document.getElementById('resultsPanel').classList.add('visible');
 
-        // Hide generated caption box for analyze mode
+        // Hide generated caption box, show analyzed caption box
         document.getElementById('generatedCaptionBox').classList.add('hidden');
+        const analyzedBox = document.getElementById('analyzedCaptionBox');
+        analyzedBox.classList.remove('hidden');
 
-        // Display score
+        // Store and display the analyzed caption
+        const analyzedCaption = document.getElementById('captionInput').value;
+        currentAnalyzedCaption = analyzedCaption;
+        document.getElementById('analyzedCaptionText').textContent = analyzedCaption.substring(0, 200) + (analyzedCaption.length > 200 ? '...' : '');
+
+        // Display score with description
         const score = analysis.discovery_score;
+        const scoreCard = document.querySelector('.overall-score-card');
+        scoreCard.className = 'overall-score-card grade-' + score.grade.toLowerCase();
         document.getElementById('overallGrade').textContent = score.grade;
         document.getElementById('overallGrade').style.color = score.color;
+
+        // Score descriptions
+        const descriptions = {
+            'A': '🎉 Excellent! Your caption is highly optimized.',
+            'B': '👍 Good! Minor tweaks could boost discoverability.',
+            'C': '📈 Decent. Consider adding key elements for better reach.',
+            'D': '⚠️ Needs work. Use AI optimization to improve.',
+            'F': '🔧 Low score. Click "Optimize with AI" for a better version.'
+        };
+        document.getElementById('scoreDescription').textContent = descriptions[score.grade] || '';
 
         // Display hashtags
         if (analysis.hashtags) {
@@ -1225,9 +1348,42 @@
 
         // Update overall score if available
         if (opt.overall_grade) {
+            const scoreCard = document.querySelector('.overall-score-card');
+            scoreCard.className = 'overall-score-card grade-' + opt.overall_grade.toLowerCase();
             document.getElementById('overallGrade').textContent = opt.overall_grade;
             const color = opt.overall_score >= 80 ? '#22c55e' : opt.overall_score >= 60 ? '#eab308' : '#ef4444';
             document.getElementById('overallGrade').style.color = color;
+
+            // Score descriptions
+            const descriptions = {
+                'A': '🎉 Excellent! Highly optimized for discoverability.',
+                'B': '👍 Good! Minor tweaks could boost reach further.',
+                'C': '📈 Decent. Adding key elements will improve score.',
+                'D': '⚠️ Needs work. Use suggestions below to improve.',
+                'F': '🔧 Low score. Click improve button for a better version.'
+            };
+            document.getElementById('scoreDescription').textContent = descriptions[opt.overall_grade] || '';
+        }
+
+        // Collect all tips for improvement suggestions
+        const allTips = [
+            ...opt.seo.tips.slice(0, 2),
+            ...opt.aio.tips.slice(0, 1),
+            ...opt.geo.tips.slice(0, 1),
+            ...opt.aeo.tips.slice(0, 1)
+        ].filter(tip => tip).slice(0, 5);
+
+        // Show improvement box if score is below A
+        const improvementBox = document.getElementById('improvementBox');
+        if (opt.overall_score < 90 && allTips.length > 0) {
+            improvementBox.classList.remove('hidden');
+            document.getElementById('improvementList').innerHTML = allTips.map(tip =>
+                `<li>${tip}</li>`
+            ).join('');
+            // Update button text based on mode
+            document.getElementById('improveBtn').textContent = isAnalyzeMode ? '✨ Optimize with AI' : '✨ Generate Improved Version';
+        } else {
+            improvementBox.classList.add('hidden');
         }
     }
 
@@ -1274,6 +1430,11 @@
     }
 
     async function regenerateImproved() {
+        // Use optimizeWithAI for both modes
+        if (isAnalyzeMode) {
+            return optimizeWithAI();
+        }
+
         const topic = document.getElementById('topicInput').value.trim();
         if (!topic) {
             alert('Please enter a topic first');
@@ -1303,6 +1464,8 @@
 
             if (data.success) {
                 currentCaption = data.caption;
+                isAnalyzeMode = false;
+                document.getElementById('analyzedCaptionBox').classList.add('hidden');
                 displayGeneratedResults(data);
 
                 // Also run multi-optimization analysis
@@ -1332,6 +1495,105 @@
             improveBtn.innerHTML = originalText;
             improveBtn.disabled = false;
         }
+    }
+
+    async function optimizeWithAI() {
+        // Extract topic from analyzed caption or use a default
+        const originalCaption = currentAnalyzedCaption || document.getElementById('captionInput').value.trim();
+        if (!originalCaption) {
+            alert('No caption to optimize');
+            return;
+        }
+
+        // Extract key theme from the original caption for topic
+        const topic = extractTopicFromCaption(originalCaption);
+
+        const optimizeBtn = document.querySelector('.optimize-ai-btn');
+        const improveBtn = document.querySelector('.improve-btn');
+        const originalBtnText = optimizeBtn ? optimizeBtn.innerHTML : '';
+        const originalImproveBtnText = improveBtn ? improveBtn.innerHTML : '';
+
+        if (optimizeBtn) {
+            optimizeBtn.innerHTML = '⏳ Optimizing...';
+            optimizeBtn.disabled = true;
+        }
+        if (improveBtn) {
+            improveBtn.innerHTML = '⏳ Optimizing...';
+            improveBtn.disabled = true;
+        }
+
+        try {
+            const response = await fetch('/api/discovery/generate-caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topic: topic,
+                    target_audience: selectedAudience,
+                    platform: selectedPlatform,
+                    campaign_type: selectedCampaign,
+                    optimization_focus: 'balanced',
+                    enhance: true,
+                    original_caption: originalCaption  // Pass original for context
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentCaption = data.caption;
+                isAnalyzeMode = false;
+
+                // Hide analyzed caption box, show generated
+                document.getElementById('analyzedCaptionBox').classList.add('hidden');
+                displayGeneratedResults(data);
+
+                // Run multi-optimization analysis
+                const optResponse = await fetch('/api/discovery/multi-optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        caption: data.caption,
+                        topic: topic,
+                        platform: selectedPlatform
+                    })
+                });
+                const optData = await optResponse.json();
+                if (optData.success) {
+                    displayOptimizationCards(optData.optimization);
+                }
+
+                // Hide improvement box
+                document.getElementById('improvementBox').classList.add('hidden');
+            } else {
+                alert('Error: ' + (data.error || 'Optimization failed'));
+            }
+        } catch (error) {
+            console.error('Optimization error:', error);
+            alert('Failed to optimize caption. Please try again.');
+        } finally {
+            if (optimizeBtn) {
+                optimizeBtn.innerHTML = originalBtnText || '✨ Optimize with AI';
+                optimizeBtn.disabled = false;
+            }
+            if (improveBtn) {
+                improveBtn.innerHTML = originalImproveBtnText || '✨ Generate Improved Version';
+                improveBtn.disabled = false;
+            }
+        }
+    }
+
+    function extractTopicFromCaption(caption) {
+        // Extract key topic from caption text
+        const keywords = ['domestic violence', 'teen dating', 'healthy relationship', 'safety', 'support',
+                         'survivor', 'awareness', 'help', 'abuse', 'prevention'];
+        const lowerCaption = caption.toLowerCase();
+
+        for (const keyword of keywords) {
+            if (lowerCaption.includes(keyword)) {
+                return keyword.charAt(0).toUpperCase() + keyword.slice(1) + ' awareness';
+            }
+        }
+        return 'Domestic violence awareness and support';
     }
 
     // Initialize
