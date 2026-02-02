@@ -2166,6 +2166,445 @@ def api_generate_business_challenge():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ============== DISCOVERY OPTIMIZER ==============
+
+@app.route('/discovery')
+def discovery_optimizer():
+    """Discovery Optimizer page - optimize existing captions for discoverability."""
+    return render_template('discovery.html')
+
+
+@app.route('/api/discovery/analyze', methods=['POST'])
+def api_discovery_analyze():
+    """
+    Analyze a caption for social media discoverability.
+
+    Request body:
+        - caption: str (required) - The caption to analyze
+        - platform: str (optional) - Target platform (instagram, facebook, tiktok, linkedin)
+        - target_audience: str (optional) - Target audience (general, youth, donors, event)
+        - campaign_type: str (optional) - Campaign type (awareness, fundraising, events, youth, volunteer)
+
+    Returns:
+        Comprehensive discoverability analysis with recommendations
+    """
+    data = request.json or {}
+    caption = data.get('caption', '').strip()
+    platform = data.get('platform', 'instagram').lower()
+    target_audience = data.get('target_audience', 'general').lower()
+    campaign_type = data.get('campaign_type', 'awareness').lower()
+
+    if not caption:
+        return jsonify({
+            'success': False,
+            'error': 'Please provide a caption to analyze'
+        }), 400
+
+    if not reach_amplify:
+        return jsonify({
+            'success': False,
+            'error': 'Discovery Optimizer requires OPENAI_API_KEY to be configured'
+        }), 503
+
+    try:
+        # Get base hashtags
+        base_hashtags = reach_amplify.generate_hashtags(
+            topic=campaign_type,
+            caption=caption,
+            count=15
+        )
+
+        # Get audience-specific hashtags
+        audience_hashtags = get_audience_hashtags(target_audience, campaign_type)
+
+        # Combine and deduplicate hashtags
+        all_hashtags = list(dict.fromkeys(audience_hashtags + base_hashtags))[:20]
+
+        # Get SEO keywords
+        keywords = extract_seo_keywords(caption, target_audience)
+
+        # Get SEO analysis
+        seo_analysis = reach_amplify.get_seo_analysis(caption, keywords)
+
+        # Calculate discovery score
+        discovery_score = calculate_discovery_score(caption, all_hashtags, keywords, platform)
+
+        # Get posting time recommendations
+        posting_times = get_audience_posting_times(target_audience, platform)
+
+        # Get platform-specific tips
+        platform_tips = reach_amplify.get_platform_tips(platform) if hasattr(reach_amplify, 'get_platform_tips') else {}
+
+        # Get improvement suggestions
+        improvements = generate_improvement_suggestions(caption, discovery_score, target_audience, platform)
+
+        # Get engagement tips
+        engagement_tips = reach_amplify.get_engagement_tips(campaign_type)
+
+        return jsonify({
+            'success': True,
+            'analysis': {
+                'discovery_score': discovery_score,
+                'hashtags': all_hashtags,
+                'hashtag_string': ' '.join(['#' + h.lstrip('#') for h in all_hashtags]),
+                'keywords': keywords,
+                'seo_analysis': seo_analysis,
+                'posting_times': posting_times,
+                'platform_tips': platform_tips,
+                'improvements': improvements,
+                'engagement_tips': engagement_tips,
+                'caption_length': len(caption),
+                'platform': platform,
+                'target_audience': target_audience
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Discovery analysis failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def get_audience_hashtags(audience: str, campaign_type: str) -> list:
+    """Get hashtags optimized for specific target audiences."""
+
+    # Youth-focused hashtags (Under 24)
+    youth_hashtags = [
+        'GenZ', 'TeenDatingViolence', 'TDVAM', 'HealthyRelationships',
+        'KnowTheSigns', 'LoveIsRespect', 'TeenSafety', 'YouthAdvocacy',
+        'BreakTheCycle', 'SpeakUp', 'TeenVoices', 'YouMatter',
+        'MentalHealthMatters', 'SafeRelationships', 'RedFlags'
+    ]
+
+    # Donor/Fundraising hashtags
+    donor_hashtags = [
+        'GiveHope', 'SupportSurvivors', 'NonprofitLove', 'ChesterCountyGives',
+        'DonateForChange', 'GivingTuesday', 'PhilanthropyMatters',
+        'MakeADifference', 'CharityTuesday', 'GiveBack', 'ImpactGiving'
+    ]
+
+    # Event attendee hashtags
+    event_hashtags = [
+        'DVCCCEvents', 'ChesterCountyEvents', 'CommunityEvent',
+        'JoinUs', 'LocalEvents', 'NonprofitEvent', 'AwarenessEvent',
+        'WalkForSurvivors', 'PurpleThursday', 'CandlelightVigil'
+    ]
+
+    # General awareness hashtags
+    general_hashtags = [
+        'DomesticViolenceAwareness', 'DVCCC', 'ChesterCounty',
+        'EndDomesticViolence', 'SurvivorSupport', 'YouAreNotAlone',
+        'HopeAndHealing', 'BreakTheSilence', 'DVAwareness', 'SafeSpace'
+    ]
+
+    # Campaign-specific additions
+    campaign_additions = {
+        'awareness': ['DVAwareness', 'EndDV', 'BreakTheSilence'],
+        'fundraising': ['GiveHope', 'SupportSurvivors', 'DonateForChange'],
+        'events': ['DVCCCEvents', 'JoinUs', 'CommunityMatters'],
+        'youth': ['TeenDatingViolence', 'HealthyRelationships', 'YouthVoices'],
+        'volunteer': ['VolunteerWithUs', 'MakeADifference', 'BeTheChange']
+    }
+
+    # Select base hashtags by audience
+    if audience == 'youth':
+        hashtags = youth_hashtags.copy()
+    elif audience == 'donors':
+        hashtags = donor_hashtags.copy()
+    elif audience == 'event':
+        hashtags = event_hashtags.copy()
+    else:
+        hashtags = general_hashtags.copy()
+
+    # Add campaign-specific hashtags
+    hashtags.extend(campaign_additions.get(campaign_type, []))
+
+    return hashtags
+
+
+def extract_seo_keywords(caption: str, audience: str) -> list:
+    """Extract SEO-friendly keywords from caption."""
+    import re
+
+    # Base keywords that should always be present
+    base_keywords = ['domestic violence', 'Chester County', 'support', 'help', 'free', 'confidential']
+
+    # Audience-specific keywords
+    audience_keywords = {
+        'youth': ['teen', 'dating violence', 'healthy relationships', 'warning signs', 'young people'],
+        'donors': ['donate', 'give', 'support', 'impact', 'change lives', 'gift'],
+        'event': ['event', 'join', 'attend', 'register', 'community'],
+        'general': ['survivor', 'awareness', 'hope', 'healing', 'safety']
+    }
+
+    # Extract potential keywords from caption
+    words = re.findall(r'\b[a-zA-Z]{4,}\b', caption.lower())
+    word_freq = {}
+    for word in words:
+        if word not in ['that', 'this', 'with', 'from', 'have', 'been', 'were', 'they', 'their', 'your', 'will']:
+            word_freq[word] = word_freq.get(word, 0) + 1
+
+    # Get top words from caption
+    caption_keywords = sorted(word_freq.keys(), key=lambda x: word_freq[x], reverse=True)[:5]
+
+    # Combine all keywords
+    all_keywords = base_keywords + audience_keywords.get(audience, []) + caption_keywords
+
+    # Deduplicate while preserving order
+    seen = set()
+    unique_keywords = []
+    for kw in all_keywords:
+        if kw.lower() not in seen:
+            seen.add(kw.lower())
+            unique_keywords.append(kw)
+
+    return unique_keywords[:12]
+
+
+def calculate_discovery_score(caption: str, hashtags: list, keywords: list, platform: str) -> dict:
+    """Calculate a discovery score for the content."""
+    score = 0
+    max_score = 100
+    breakdown = []
+
+    # Caption length scoring (15 points)
+    caption_len = len(caption)
+    if platform == 'instagram':
+        if 150 <= caption_len <= 2200:
+            score += 15
+            breakdown.append({'item': 'Caption length', 'points': 15, 'max': 15, 'status': 'good'})
+        elif caption_len < 150:
+            score += 8
+            breakdown.append({'item': 'Caption length', 'points': 8, 'max': 15, 'status': 'short', 'tip': 'Add more context to improve engagement'})
+        else:
+            score += 10
+            breakdown.append({'item': 'Caption length', 'points': 10, 'max': 15, 'status': 'ok'})
+    elif platform == 'tiktok':
+        if caption_len <= 150:
+            score += 15
+            breakdown.append({'item': 'Caption length', 'points': 15, 'max': 15, 'status': 'good'})
+        else:
+            score += 5
+            breakdown.append({'item': 'Caption length', 'points': 5, 'max': 15, 'status': 'long', 'tip': 'Shorten for TikTok (max 150 chars)'})
+    else:
+        score += 12
+        breakdown.append({'item': 'Caption length', 'points': 12, 'max': 15, 'status': 'ok'})
+
+    # Hashtag scoring (20 points)
+    hashtag_count = len(hashtags)
+    if platform == 'instagram':
+        if 8 <= hashtag_count <= 15:
+            score += 20
+            breakdown.append({'item': 'Hashtag count', 'points': 20, 'max': 20, 'status': 'good'})
+        elif hashtag_count < 8:
+            score += 10
+            breakdown.append({'item': 'Hashtag count', 'points': 10, 'max': 20, 'status': 'low', 'tip': 'Add more hashtags for better reach'})
+        else:
+            score += 15
+            breakdown.append({'item': 'Hashtag count', 'points': 15, 'max': 20, 'status': 'ok'})
+    elif platform in ['facebook', 'linkedin']:
+        if 2 <= hashtag_count <= 5:
+            score += 20
+            breakdown.append({'item': 'Hashtag count', 'points': 20, 'max': 20, 'status': 'good'})
+        else:
+            score += 10
+            breakdown.append({'item': 'Hashtag count', 'points': 10, 'max': 20, 'status': 'adjust', 'tip': f'Use 2-5 hashtags for {platform}'})
+    else:
+        score += 15
+        breakdown.append({'item': 'Hashtag count', 'points': 15, 'max': 20, 'status': 'ok'})
+
+    # Keyword presence (20 points)
+    caption_lower = caption.lower()
+    keywords_found = sum(1 for kw in keywords if kw.lower() in caption_lower)
+    keyword_score = min(20, int((keywords_found / max(len(keywords), 1)) * 20))
+    score += keyword_score
+    if keyword_score >= 15:
+        breakdown.append({'item': 'Keywords', 'points': keyword_score, 'max': 20, 'status': 'good'})
+    else:
+        breakdown.append({'item': 'Keywords', 'points': keyword_score, 'max': 20, 'status': 'improve', 'tip': 'Include more searchable keywords'})
+
+    # Call to action (15 points)
+    cta_phrases = ['visit', 'call', 'click', 'learn more', 'link in bio', 'dm', 'contact', 'reach out', 'sign up', 'register', 'donate', 'join']
+    has_cta = any(cta in caption_lower for cta in cta_phrases)
+    if has_cta:
+        score += 15
+        breakdown.append({'item': 'Call to action', 'points': 15, 'max': 15, 'status': 'good'})
+    else:
+        score += 0
+        breakdown.append({'item': 'Call to action', 'points': 0, 'max': 15, 'status': 'missing', 'tip': 'Add a call to action (visit, call, learn more)'})
+
+    # Emoji usage (10 points)
+    import re
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"
+        u"\U0001F300-\U0001F5FF"
+        u"\U0001F680-\U0001F6FF"
+        u"\U0001F1E0-\U0001F1FF"
+        u"\U00002702-\U000027B0"
+        u"\U0001F900-\U0001F9FF"
+        "]+", flags=re.UNICODE)
+    emoji_count = len(emoji_pattern.findall(caption))
+    if 1 <= emoji_count <= 5:
+        score += 10
+        breakdown.append({'item': 'Emoji usage', 'points': 10, 'max': 10, 'status': 'good'})
+    elif emoji_count == 0:
+        score += 3
+        breakdown.append({'item': 'Emoji usage', 'points': 3, 'max': 10, 'status': 'none', 'tip': 'Add 1-3 emojis for visual appeal'})
+    else:
+        score += 7
+        breakdown.append({'item': 'Emoji usage', 'points': 7, 'max': 10, 'status': 'many'})
+
+    # Location/Community mention (10 points)
+    location_terms = ['chester county', 'pennsylvania', 'pa', 'local', 'community', 'dvccc']
+    has_location = any(term in caption_lower for term in location_terms)
+    if has_location:
+        score += 10
+        breakdown.append({'item': 'Local relevance', 'points': 10, 'max': 10, 'status': 'good'})
+    else:
+        score += 0
+        breakdown.append({'item': 'Local relevance', 'points': 0, 'max': 10, 'status': 'missing', 'tip': 'Mention Chester County or DVCCC for local reach'})
+
+    # Question/Engagement prompt (10 points)
+    has_question = '?' in caption
+    engagement_prompts = ['share', 'comment', 'tag', 'tell us', 'what do you think', 'have you']
+    has_engagement = any(prompt in caption_lower for prompt in engagement_prompts)
+    if has_question or has_engagement:
+        score += 10
+        breakdown.append({'item': 'Engagement prompt', 'points': 10, 'max': 10, 'status': 'good'})
+    else:
+        score += 0
+        breakdown.append({'item': 'Engagement prompt', 'points': 0, 'max': 10, 'status': 'missing', 'tip': 'Add a question or engagement prompt'})
+
+    # Calculate grade
+    percentage = (score / max_score) * 100
+    if percentage >= 90:
+        grade = 'A'
+        color = '#22c55e'
+    elif percentage >= 80:
+        grade = 'B'
+        color = '#84cc16'
+    elif percentage >= 70:
+        grade = 'C'
+        color = '#eab308'
+    elif percentage >= 60:
+        grade = 'D'
+        color = '#f97316'
+    else:
+        grade = 'F'
+        color = '#ef4444'
+
+    return {
+        'score': score,
+        'max_score': max_score,
+        'percentage': round(percentage),
+        'grade': grade,
+        'color': color,
+        'breakdown': breakdown
+    }
+
+
+def get_audience_posting_times(audience: str, platform: str) -> dict:
+    """Get optimal posting times for target audience."""
+
+    # Youth (Under 24) - typically more active in evening/night
+    youth_times = {
+        'instagram': {'best': ['7:00 PM', '9:00 PM'], 'good': ['3:00 PM', '8:00 PM', '10:00 PM'], 'days': ['Tuesday', 'Thursday', 'Saturday']},
+        'tiktok': {'best': ['7:00 PM', '10:00 PM'], 'good': ['4:00 PM', '8:00 PM', '11:00 PM'], 'days': ['Tuesday', 'Thursday', 'Friday']},
+        'facebook': {'best': ['8:00 PM', '9:00 PM'], 'good': ['12:00 PM', '7:00 PM'], 'days': ['Wednesday', 'Friday']},
+        'linkedin': {'best': ['5:00 PM', '6:00 PM'], 'good': ['12:00 PM', '4:00 PM'], 'days': ['Tuesday', 'Wednesday']}
+    }
+
+    # Donors - typically professionals, active during work hours and early evening
+    donor_times = {
+        'instagram': {'best': ['12:00 PM', '6:00 PM'], 'good': ['8:00 AM', '5:00 PM', '7:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'facebook': {'best': ['9:00 AM', '1:00 PM'], 'good': ['11:00 AM', '3:00 PM', '7:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'linkedin': {'best': ['10:00 AM', '12:00 PM'], 'good': ['8:00 AM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'tiktok': {'best': ['6:00 PM', '8:00 PM'], 'good': ['12:00 PM', '7:00 PM'], 'days': ['Tuesday', 'Thursday']}
+    }
+
+    # Event - depends on event timing, generally afternoon/evening
+    event_times = {
+        'instagram': {'best': ['5:00 PM', '7:00 PM'], 'good': ['12:00 PM', '3:00 PM', '8:00 PM'], 'days': ['Monday', 'Wednesday', 'Friday']},
+        'facebook': {'best': ['1:00 PM', '4:00 PM'], 'good': ['10:00 AM', '6:00 PM'], 'days': ['Wednesday', 'Thursday', 'Friday']},
+        'linkedin': {'best': ['10:00 AM', '2:00 PM'], 'good': ['9:00 AM', '4:00 PM'], 'days': ['Tuesday', 'Wednesday']},
+        'tiktok': {'best': ['6:00 PM', '8:00 PM'], 'good': ['3:00 PM', '9:00 PM'], 'days': ['Thursday', 'Friday', 'Saturday']}
+    }
+
+    # General audience
+    general_times = {
+        'instagram': {'best': ['11:00 AM', '7:00 PM'], 'good': ['9:00 AM', '12:00 PM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Friday']},
+        'facebook': {'best': ['9:00 AM', '1:00 PM'], 'good': ['11:00 AM', '4:00 PM', '7:00 PM'], 'days': ['Wednesday', 'Thursday', 'Friday']},
+        'linkedin': {'best': ['10:00 AM', '12:00 PM'], 'good': ['8:00 AM', '2:00 PM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'tiktok': {'best': ['7:00 PM', '9:00 PM'], 'good': ['12:00 PM', '3:00 PM', '8:00 PM'], 'days': ['Tuesday', 'Thursday', 'Friday']}
+    }
+
+    audience_map = {
+        'youth': youth_times,
+        'donors': donor_times,
+        'event': event_times,
+        'general': general_times
+    }
+
+    times = audience_map.get(audience, general_times).get(platform, general_times['instagram'])
+    times['audience'] = audience
+    times['platform'] = platform
+
+    return times
+
+
+def generate_improvement_suggestions(caption: str, score: dict, audience: str, platform: str) -> list:
+    """Generate specific improvement suggestions based on analysis."""
+    suggestions = []
+
+    # Check score breakdown for issues
+    for item in score.get('breakdown', []):
+        if item.get('tip'):
+            suggestions.append({
+                'category': item['item'],
+                'suggestion': item['tip'],
+                'priority': 'high' if item['points'] < item['max'] / 2 else 'medium'
+            })
+
+    # Audience-specific suggestions
+    if audience == 'youth':
+        if 'tiktok' not in caption.lower() and platform != 'tiktok':
+            suggestions.append({
+                'category': 'Youth Reach',
+                'suggestion': 'Consider creating a TikTok version - 60% of users are under 24',
+                'priority': 'medium'
+            })
+        if not any(word in caption.lower() for word in ['dating', 'relationship', 'teen', 'young']):
+            suggestions.append({
+                'category': 'Youth Keywords',
+                'suggestion': 'Add youth-relevant terms like "dating", "relationship", or "teen" for better youth discovery',
+                'priority': 'high'
+            })
+
+    elif audience == 'donors':
+        if not any(word in caption.lower() for word in ['impact', 'difference', 'change', 'support', 'help']):
+            suggestions.append({
+                'category': 'Donor Appeal',
+                'suggestion': 'Add impact language like "make a difference" or "your support helps"',
+                'priority': 'high'
+            })
+
+    # Platform-specific suggestions
+    if platform == 'instagram' and len(caption) < 100:
+        suggestions.append({
+            'category': 'Instagram Optimization',
+            'suggestion': 'Instagram captions can be up to 2,200 characters - add more storytelling for engagement',
+            'priority': 'medium'
+        })
+
+    if platform == 'tiktok' and len(caption) > 150:
+        suggestions.append({
+            'category': 'TikTok Optimization',
+            'suggestion': 'TikTok captions should be under 150 characters - focus on the hook',
+            'priority': 'high'
+        })
+
+    return suggestions
+
+
 @app.route('/settings')
 def settings_page():
     """Settings page for API configuration."""

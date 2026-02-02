@@ -279,6 +279,7 @@
             <nav>
                 <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
                 <a href="{{ url_for('create_post') }}" class="{% if request.endpoint == 'create_post' %}active{% endif %}">Create Post</a>
+                <a href="{{ url_for('discovery_optimizer') }}" class="{% if request.endpoint == 'discovery_optimizer' %}active{% endif %}" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; font-weight: 600;">🔍 Discovery</a>
                 <a href="{{ url_for('video_page') }}" class="{% if request.endpoint == 'video_page' %}active{% endif %}">Video</a>
                 <a href="{{ url_for('calendar') }}" class="{% if request.endpoint == 'calendar' %}active{% endif %}">Calendar</a>
                 <a href="{{ url_for('schedules') }}" class="{% if request.endpoint in ['schedules', 'new_schedule', 'view_schedule'] %}active{% endif %}">Schedules</a>

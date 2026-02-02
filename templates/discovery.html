@@ -1,0 +1,825 @@
+{% extends "base.html" %}
+
+{% block title %}Discovery Optimizer - DVCCC Content Manager{% endblock %}
+
+{% block content %}
+<style>
+    .discovery-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+        .discovery-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .input-panel {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .results-panel {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        display: none;
+    }
+
+    .results-panel.visible {
+        display: block;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-subtitle {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 24px;
+    }
+
+    .caption-input {
+        width: 100%;
+        min-height: 180px;
+        padding: 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-family: inherit;
+        resize: vertical;
+        transition: border-color 0.2s;
+    }
+
+    .caption-input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .caption-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .char-count {
+        text-align: right;
+        font-size: 0.85rem;
+        color: #9ca3af;
+        margin-top: 8px;
+    }
+
+    .selector-group {
+        margin-top: 24px;
+    }
+
+    .selector-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .selector-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .chip {
+        padding: 10px 18px;
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #4b5563;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .chip:hover {
+        background: #e5e7eb;
+    }
+
+    .chip.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .chip-icon {
+        font-size: 1.1rem;
+    }
+
+    .analyze-btn {
+        width: 100%;
+        padding: 16px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 28px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .analyze-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .analyze-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .analyze-btn .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+    }
+
+    .analyze-btn.loading .spinner {
+        display: block;
+    }
+
+    .analyze-btn.loading .btn-text {
+        display: none;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Results Panel Styles */
+    .score-card {
+        text-align: center;
+        padding: 32px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        margin-bottom: 24px;
+    }
+
+    .score-grade {
+        font-size: 5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .score-label {
+        font-size: 1.1rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .score-percentage {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 8px;
+    }
+
+    .score-breakdown {
+        margin-top: 20px;
+        text-align: left;
+    }
+
+    .breakdown-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .breakdown-name {
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .breakdown-score {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .breakdown-bar {
+        width: 60px;
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .breakdown-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }
+
+    .result-section {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .result-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hashtag-container {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        position: relative;
+    }
+
+    .hashtag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .hashtag-tag {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        color: #667eea;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #6b7280;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .copy-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .copy-btn.copied {
+        background: #22c55e;
+        color: white;
+        border-color: #22c55e;
+    }
+
+    .keyword-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .keyword-chip {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .time-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .time-card {
+        background: #f0fdf4;
+        border-radius: 10px;
+        padding: 14px;
+    }
+
+    .time-card.best {
+        background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+        border: 1px solid #86efac;
+    }
+
+    .time-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+
+    .time-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #166534;
+    }
+
+    .tip-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .tip-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+
+    .tip-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .tip-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .tip-content {
+        flex: 1;
+    }
+
+    .tip-category {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+
+    .tip-text {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-top: 2px;
+    }
+
+    .tip-item.high {
+        background: #fef2f2;
+        border-left: 3px solid #ef4444;
+    }
+
+    .tip-item.medium {
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 16px;
+    }
+
+    .empty-state-text {
+        font-size: 1.1rem;
+    }
+
+    /* Info callout */
+    .info-callout {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #93c5fd;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .info-callout-icon {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .info-callout-text {
+        color: #1e40af;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    /* Days chips */
+    .days-chips {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .day-chip {
+        background: #e0e7ff;
+        color: #4338ca;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="info-callout">
+    <span class="info-callout-icon">💡</span>
+    <div class="info-callout-text">
+        <strong>Discovery Optimizer</strong> helps you optimize your existing captions for better social media visibility.
+        Paste your caption, select your target audience, and get personalized recommendations for hashtags, keywords, and posting times.
+    </div>
+</div>
+
+<div class="discovery-container">
+    <!-- Input Panel -->
+    <div class="input-panel">
+        <h2 class="section-title">
+            <span>🔍</span> Analyze Your Caption
+        </h2>
+        <p class="section-subtitle">Paste your caption to get discovery optimization recommendations</p>
+
+        <textarea
+            class="caption-input"
+            id="captionInput"
+            placeholder="Paste your existing caption here...
+
+Example:
+We see you. We believe you. And we are here for you.
+
+At DVCCC, our doors are always open with FREE, CONFIDENTIAL services available to anyone in Chester County experiencing domestic violence."
+            oninput="updateCharCount()"
+        ></textarea>
+        <div class="char-count"><span id="charCount">0</span> characters</div>
+
+        <!-- Target Audience Selector -->
+        <div class="selector-group">
+            <div class="selector-label">
+                <span>🎯</span> Target Audience
+            </div>
+            <div class="selector-chips" id="audienceSelector">
+                <button type="button" class="chip active" data-value="general" onclick="selectChip(this, 'audience')">
+                    <span class="chip-icon">👥</span> General
+                </button>
+                <button type="button" class="chip" data-value="youth" onclick="selectChip(this, 'audience')">
+                    <span class="chip-icon">🎓</span> Youth (Under 24)
+                </button>
+                <button type="button" class="chip" data-value="donors" onclick="selectChip(this, 'audience')">
+                    <span class="chip-icon">💝</span> Donors
+                </button>
+                <button type="button" class="chip" data-value="event" onclick="selectChip(this, 'audience')">
+                    <span class="chip-icon">📅</span> Event Attendees
+                </button>
+            </div>
+        </div>
+
+        <!-- Platform Selector -->
+        <div class="selector-group">
+            <div class="selector-label">
+                <span>📱</span> Platform
+            </div>
+            <div class="selector-chips" id="platformSelector">
+                <button type="button" class="chip active" data-value="instagram" onclick="selectChip(this, 'platform')">
+                    <span class="chip-icon">📸</span> Instagram
+                </button>
+                <button type="button" class="chip" data-value="facebook" onclick="selectChip(this, 'platform')">
+                    <span class="chip-icon">📘</span> Facebook
+                </button>
+                <button type="button" class="chip" data-value="tiktok" onclick="selectChip(this, 'platform')">
+                    <span class="chip-icon">🎵</span> TikTok
+                </button>
+                <button type="button" class="chip" data-value="linkedin" onclick="selectChip(this, 'platform')">
+                    <span class="chip-icon">💼</span> LinkedIn
+                </button>
+            </div>
+        </div>
+
+        <!-- Campaign Type Selector -->
+        <div class="selector-group">
+            <div class="selector-label">
+                <span>📢</span> Campaign Type
+            </div>
+            <div class="selector-chips" id="campaignSelector">
+                <button type="button" class="chip active" data-value="awareness" onclick="selectChip(this, 'campaign')">
+                    Awareness
+                </button>
+                <button type="button" class="chip" data-value="fundraising" onclick="selectChip(this, 'campaign')">
+                    Fundraising
+                </button>
+                <button type="button" class="chip" data-value="events" onclick="selectChip(this, 'campaign')">
+                    Events
+                </button>
+                <button type="button" class="chip" data-value="youth" onclick="selectChip(this, 'campaign')">
+                    Youth Outreach
+                </button>
+                <button type="button" class="chip" data-value="volunteer" onclick="selectChip(this, 'campaign')">
+                    Volunteer
+                </button>
+            </div>
+        </div>
+
+        <button class="analyze-btn" id="analyzeBtn" onclick="analyzeCaption()">
+            <span class="spinner"></span>
+            <span class="btn-text">🚀 Analyze for Discovery</span>
+        </button>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel" id="resultsPanel">
+        <h2 class="section-title">
+            <span>📊</span> Discovery Analysis
+        </h2>
+        <p class="section-subtitle">Recommendations to improve your content's reach</p>
+
+        <!-- Score Card -->
+        <div class="score-card" id="scoreCard">
+            <div class="score-grade" id="scoreGrade">-</div>
+            <div class="score-label">Discovery Score</div>
+            <div class="score-percentage" id="scorePercentage">0/100</div>
+
+            <div class="score-breakdown" id="scoreBreakdown">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Hashtags Section -->
+        <div class="result-section">
+            <div class="result-section-title">
+                <span>#️⃣</span> Recommended Hashtags
+            </div>
+            <div class="hashtag-container">
+                <button class="copy-btn" onclick="copyHashtags()">
+                    <span id="copyIcon">📋</span> <span id="copyText">Copy All</span>
+                </button>
+                <div class="hashtag-list" id="hashtagList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Keywords Section -->
+        <div class="result-section">
+            <div class="result-section-title">
+                <span>🔑</span> SEO Keywords
+            </div>
+            <div class="keyword-chips" id="keywordList">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Posting Times Section -->
+        <div class="result-section">
+            <div class="result-section-title">
+                <span>⏰</span> Best Posting Times
+            </div>
+            <div class="time-grid" id="postingTimes">
+                <!-- Populated by JS -->
+            </div>
+            <div class="days-chips" id="bestDays">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Improvement Tips Section -->
+        <div class="result-section">
+            <div class="result-section-title">
+                <span>💡</span> Improvement Suggestions
+            </div>
+            <ul class="tip-list" id="improvementTips">
+                <!-- Populated by JS -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Empty State (shown when no results) -->
+    <div class="results-panel visible" id="emptyState">
+        <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-text">
+                Paste your caption and click "Analyze" to get<br>discovery optimization recommendations
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedAudience = 'general';
+    let selectedPlatform = 'instagram';
+    let selectedCampaign = 'awareness';
+    let currentHashtags = '';
+
+    function updateCharCount() {
+        const caption = document.getElementById('captionInput').value;
+        document.getElementById('charCount').textContent = caption.length;
+    }
+
+    function selectChip(chip, type) {
+        // Get the parent selector
+        const selector = chip.parentElement;
+
+        // Remove active from all chips in this group
+        selector.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+
+        // Add active to clicked chip
+        chip.classList.add('active');
+
+        // Update selected value
+        const value = chip.dataset.value;
+        if (type === 'audience') selectedAudience = value;
+        if (type === 'platform') selectedPlatform = value;
+        if (type === 'campaign') selectedCampaign = value;
+    }
+
+    async function analyzeCaption() {
+        const caption = document.getElementById('captionInput').value.trim();
+
+        if (!caption) {
+            alert('Please paste a caption to analyze');
+            return;
+        }
+
+        const btn = document.getElementById('analyzeBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/discovery/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    caption: caption,
+                    platform: selectedPlatform,
+                    target_audience: selectedAudience,
+                    campaign_type: selectedCampaign
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                displayResults(data.analysis);
+            } else {
+                alert('Error: ' + (data.error || 'Analysis failed'));
+            }
+        } catch (error) {
+            console.error('Analysis error:', error);
+            alert('Failed to analyze caption. Please try again.');
+        } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    }
+
+    function displayResults(analysis) {
+        // Hide empty state, show results
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultsPanel').classList.add('visible');
+
+        // Display score
+        const score = analysis.discovery_score;
+        document.getElementById('scoreGrade').textContent = score.grade;
+        document.getElementById('scoreGrade').style.color = score.color;
+        document.getElementById('scorePercentage').textContent = `${score.percentage}/100`;
+        document.getElementById('scorePercentage').style.color = score.color;
+
+        // Display breakdown
+        const breakdownHtml = score.breakdown.map(item => {
+            const percentage = (item.points / item.max) * 100;
+            const fillColor = percentage >= 80 ? '#22c55e' : percentage >= 50 ? '#eab308' : '#ef4444';
+            return `
+                <div class="breakdown-item">
+                    <span class="breakdown-name">${item.item}</span>
+                    <div class="breakdown-score">
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: ${percentage}%; background: ${fillColor};"></div>
+                        </div>
+                        <span>${item.points}/${item.max}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        document.getElementById('scoreBreakdown').innerHTML = breakdownHtml;
+
+        // Display hashtags
+        currentHashtags = analysis.hashtag_string;
+        const hashtagsHtml = analysis.hashtags.map(tag =>
+            `<span class="hashtag-tag">#${tag.replace('#', '')}</span>`
+        ).join('');
+        document.getElementById('hashtagList').innerHTML = hashtagsHtml;
+
+        // Display keywords
+        const keywordsHtml = analysis.keywords.map(kw =>
+            `<span class="keyword-chip">${kw}</span>`
+        ).join('');
+        document.getElementById('keywordList').innerHTML = keywordsHtml;
+
+        // Display posting times
+        const times = analysis.posting_times;
+        const timesHtml = `
+            <div class="time-card best">
+                <div class="time-label">Best Times</div>
+                <div class="time-value">${times.best.join(' & ')}</div>
+            </div>
+            <div class="time-card">
+                <div class="time-label">Also Good</div>
+                <div class="time-value">${times.good.slice(0, 2).join(', ')}</div>
+            </div>
+        `;
+        document.getElementById('postingTimes').innerHTML = timesHtml;
+
+        // Display best days
+        const daysHtml = times.days.map(day =>
+            `<span class="day-chip">${day}</span>`
+        ).join('');
+        document.getElementById('bestDays').innerHTML = `<strong style="margin-right: 8px;">Best days:</strong> ${daysHtml}`;
+
+        // Display improvement tips
+        const improvements = analysis.improvements || [];
+        const engagementTips = analysis.engagement_tips || [];
+
+        const allTips = [
+            ...improvements.map(imp => ({ ...imp, icon: imp.priority === 'high' ? '🔴' : '🟡' })),
+            ...engagementTips.slice(0, 3).map(tip => ({ category: 'Engagement Tip', suggestion: tip, priority: 'info', icon: '💡' }))
+        ];
+
+        const tipsHtml = allTips.length > 0 ? allTips.map(tip => `
+            <li class="tip-item ${tip.priority || ''}">
+                <span class="tip-icon">${tip.icon || '💡'}</span>
+                <div class="tip-content">
+                    <div class="tip-category">${tip.category}</div>
+                    <div class="tip-text">${tip.suggestion}</div>
+                </div>
+            </li>
+        `).join('') : '<li class="tip-item"><span class="tip-icon">✅</span><div class="tip-content"><div class="tip-category">Great job!</div><div class="tip-text">Your caption is well-optimized for discovery.</div></div></li>';
+
+        document.getElementById('improvementTips').innerHTML = tipsHtml;
+    }
+
+    function copyHashtags() {
+        if (!currentHashtags) return;
+
+        navigator.clipboard.writeText(currentHashtags).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            const icon = document.getElementById('copyIcon');
+            const text = document.getElementById('copyText');
+
+            btn.classList.add('copied');
+            icon.textContent = '✓';
+            text.textContent = 'Copied!';
+
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                icon.textContent = '📋';
+                text.textContent = 'Copy All';
+            }, 2000);
+        });
+    }
+
+    // Initialize character count
+    updateCharCount();
+</script>
+{% endblock %}
