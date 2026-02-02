@@ -2296,6 +2296,34 @@ def get_audience_hashtags(audience: str, campaign_type: str) -> list:
         'HopeAndHealing', 'BreakTheSilence', 'DVAwareness', 'SafeSpace'
     ]
 
+    # Survivor-focused hashtags
+    survivor_hashtags = [
+        'SurvivorStrong', 'YouAreNotAlone', 'HopeAndHealing', 'SafeSpace',
+        'BreakTheSilence', 'SurvivorSupport', 'HelpIsAvailable', 'DVCCC',
+        'ChesterCounty', 'FreeSupport', 'ConfidentialHelp', 'NewBeginnings'
+    ]
+
+    # Professional hashtags
+    professional_hashtags = [
+        'DVAwareness', 'SocialWork', 'TraumaInformed', 'HealthcareProvider',
+        'DVAdvocacy', 'ProfessionalDevelopment', 'DVTraining', 'CommunityPartners',
+        'ReferralResources', 'DVPrevention', 'ChesterCounty', 'DVCCC'
+    ]
+
+    # Spanish/Bilingual hashtags
+    spanish_hashtags = [
+        'ViolenciaDomestica', 'AyudaGratuita', 'Confidencial', 'ChesterCounty',
+        'DVCCC', 'ApoyoEnEspanol', 'ComunidadLatina', 'SomosFamilia',
+        'NoEstásSola', 'HelpIsAvailable', 'BilingualServices', 'ServiciosEnEspanol'
+    ]
+
+    # Volunteer hashtags
+    volunteer_hashtags = [
+        'VolunteerWithUs', 'MakeADifference', 'BeTheChange', 'DVCCCVolunteers',
+        'CommunityService', 'GiveBack', 'VolunteerOpportunity', 'ChesterCounty',
+        'NonprofitVolunteer', 'HelpingSurvivors', 'VolunteerAppreciation'
+    ]
+
     # Campaign-specific additions
     campaign_additions = {
         'awareness': ['DVAwareness', 'EndDV', 'BreakTheSilence'],
@@ -2306,14 +2334,18 @@ def get_audience_hashtags(audience: str, campaign_type: str) -> list:
     }
 
     # Select base hashtags by audience
-    if audience == 'youth':
-        hashtags = youth_hashtags.copy()
-    elif audience == 'donors':
-        hashtags = donor_hashtags.copy()
-    elif audience == 'event':
-        hashtags = event_hashtags.copy()
-    else:
-        hashtags = general_hashtags.copy()
+    audience_map = {
+        'youth': youth_hashtags,
+        'donors': donor_hashtags,
+        'event': event_hashtags,
+        'survivors': survivor_hashtags,
+        'professionals': professional_hashtags,
+        'spanish': spanish_hashtags,
+        'volunteers': volunteer_hashtags,
+        'general': general_hashtags
+    }
+
+    hashtags = audience_map.get(audience, general_hashtags).copy()
 
     # Add campaign-specific hashtags
     hashtags.extend(campaign_additions.get(campaign_type, []))
@@ -2534,14 +2566,55 @@ def get_audience_posting_times(audience: str, platform: str) -> dict:
         'instagram': {'best': ['11:00 AM', '7:00 PM'], 'good': ['9:00 AM', '12:00 PM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Friday']},
         'facebook': {'best': ['9:00 AM', '1:00 PM'], 'good': ['11:00 AM', '4:00 PM', '7:00 PM'], 'days': ['Wednesday', 'Thursday', 'Friday']},
         'linkedin': {'best': ['10:00 AM', '12:00 PM'], 'good': ['8:00 AM', '2:00 PM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
-        'tiktok': {'best': ['7:00 PM', '9:00 PM'], 'good': ['12:00 PM', '3:00 PM', '8:00 PM'], 'days': ['Tuesday', 'Thursday', 'Friday']}
+        'tiktok': {'best': ['7:00 PM', '9:00 PM'], 'good': ['12:00 PM', '3:00 PM', '8:00 PM'], 'days': ['Tuesday', 'Thursday', 'Friday']},
+        'twitter': {'best': ['9:00 AM', '12:00 PM'], 'good': ['8:00 AM', '5:00 PM', '6:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']}
+    }
+
+    # Survivors - late evening/night when they have privacy
+    survivor_times = {
+        'instagram': {'best': ['9:00 PM', '10:00 PM'], 'good': ['7:00 PM', '8:00 PM', '11:00 PM'], 'days': ['Monday', 'Wednesday', 'Sunday']},
+        'facebook': {'best': ['8:00 PM', '10:00 PM'], 'good': ['6:00 PM', '9:00 PM'], 'days': ['Monday', 'Tuesday', 'Sunday']},
+        'tiktok': {'best': ['9:00 PM', '11:00 PM'], 'good': ['7:00 PM', '10:00 PM'], 'days': ['Monday', 'Wednesday', 'Friday']},
+        'linkedin': {'best': ['12:00 PM', '5:00 PM'], 'good': ['10:00 AM', '2:00 PM'], 'days': ['Monday', 'Wednesday']},
+        'twitter': {'best': ['9:00 PM', '10:00 PM'], 'good': ['7:00 PM', '11:00 PM'], 'days': ['Monday', 'Tuesday', 'Wednesday']}
+    }
+
+    # Professionals (social workers, healthcare, educators) - work hours
+    professional_times = {
+        'instagram': {'best': ['12:00 PM', '5:00 PM'], 'good': ['8:00 AM', '1:00 PM', '6:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'facebook': {'best': ['10:00 AM', '2:00 PM'], 'good': ['9:00 AM', '12:00 PM', '4:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'linkedin': {'best': ['8:00 AM', '10:00 AM'], 'good': ['12:00 PM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']},
+        'tiktok': {'best': ['5:00 PM', '7:00 PM'], 'good': ['12:00 PM', '6:00 PM'], 'days': ['Wednesday', 'Thursday']},
+        'twitter': {'best': ['9:00 AM', '11:00 AM'], 'good': ['8:00 AM', '1:00 PM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday', 'Thursday']}
+    }
+
+    # Spanish-speaking community
+    spanish_times = {
+        'instagram': {'best': ['7:00 PM', '9:00 PM'], 'good': ['12:00 PM', '6:00 PM', '8:00 PM'], 'days': ['Tuesday', 'Thursday', 'Saturday']},
+        'facebook': {'best': ['8:00 PM', '9:00 PM'], 'good': ['12:00 PM', '7:00 PM'], 'days': ['Wednesday', 'Friday', 'Saturday']},
+        'tiktok': {'best': ['8:00 PM', '10:00 PM'], 'good': ['6:00 PM', '9:00 PM'], 'days': ['Thursday', 'Friday', 'Saturday']},
+        'linkedin': {'best': ['10:00 AM', '1:00 PM'], 'good': ['9:00 AM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday']},
+        'twitter': {'best': ['7:00 PM', '9:00 PM'], 'good': ['12:00 PM', '8:00 PM'], 'days': ['Tuesday', 'Thursday', 'Saturday']}
+    }
+
+    # Volunteers - evening and weekends
+    volunteer_times = {
+        'instagram': {'best': ['6:00 PM', '8:00 PM'], 'good': ['12:00 PM', '5:00 PM', '7:00 PM'], 'days': ['Monday', 'Wednesday', 'Saturday']},
+        'facebook': {'best': ['7:00 PM', '8:00 PM'], 'good': ['10:00 AM', '5:00 PM', '6:00 PM'], 'days': ['Tuesday', 'Thursday', 'Saturday']},
+        'linkedin': {'best': ['9:00 AM', '12:00 PM'], 'good': ['8:00 AM', '5:00 PM'], 'days': ['Tuesday', 'Wednesday']},
+        'tiktok': {'best': ['7:00 PM', '9:00 PM'], 'good': ['5:00 PM', '8:00 PM'], 'days': ['Thursday', 'Friday', 'Saturday']},
+        'twitter': {'best': ['6:00 PM', '8:00 PM'], 'good': ['12:00 PM', '5:00 PM', '7:00 PM'], 'days': ['Monday', 'Wednesday', 'Saturday']}
     }
 
     audience_map = {
         'youth': youth_times,
         'donors': donor_times,
         'event': event_times,
-        'general': general_times
+        'general': general_times,
+        'survivors': survivor_times,
+        'professionals': professional_times,
+        'spanish': spanish_times,
+        'volunteers': volunteer_times
     }
 
     times = audience_map.get(audience, general_times).get(platform, general_times['instagram'])
@@ -2807,10 +2880,14 @@ def generate_optimized_caption(topic: str, audience: str, platform: str, campaig
     }
 
     audience_context = {
-        'youth': 'Target audience is young people under 24. Use relatable language, mention dating relationships, peer support.',
-        'donors': 'Target audience is potential donors. Emphasize impact, community investment, and measurable outcomes.',
+        'youth': 'Target audience is young people under 24. Use relatable language, mention dating relationships, peer support, and social media friendly phrases.',
+        'donors': 'Target audience is potential donors. Emphasize impact, community investment, measurable outcomes, and how donations save lives.',
         'event': 'Target audience is event attendees. Include event details, registration info, and community gathering.',
-        'general': 'Target audience is general community. Balance awareness, support resources, and hope.'
+        'general': 'Target audience is general community. Balance awareness, support resources, and hope.',
+        'survivors': 'Target audience is survivors of domestic violence. Use empathetic, empowering language. Emphasize safety, confidentiality, and that help is available without judgment. Avoid triggering language.',
+        'professionals': 'Target audience is professionals (social workers, healthcare providers, educators). Use professional terminology, mention referral resources, training opportunities, and partnership possibilities.',
+        'spanish': 'Target audience is Spanish-speaking community. Write in BOTH English and Spanish (bilingual caption). Use culturally appropriate messaging. Include "Servicios GRATUITOS y CONFIDENCIALES".',
+        'volunteers': 'Target audience is potential and current volunteers. Emphasize making a difference, training provided, flexible schedules, and community impact.'
     }
 
     campaign_tone = {
