@@ -2757,82 +2757,99 @@ def api_discovery_trending():
     """
     Get trending topics for DV awareness content.
 
+    Uses real-time data from:
+    - Google Trends (search interest)
+    - NewsAPI (current news)
+    - Awareness Calendar (timely events)
+
     Returns:
         List of trending topics with optimization potential
     """
     try:
-        # Current trending topics in DV awareness space
-        trending_topics = [
-            {
-                'topic': 'Teen Dating Violence Awareness',
-                'hashtag': '#TDVAM',
-                'audience': 'youth',
-                'trending_score': 95,
-                'reason': 'February awareness month approaching'
-            },
-            {
-                'topic': 'Financial Abuse Warning Signs',
-                'hashtag': '#FinancialAbuse',
-                'audience': 'general',
-                'trending_score': 88,
-                'reason': 'Tax season - financial control peaks'
-            },
-            {
-                'topic': 'Healthy Relationship Education',
-                'hashtag': '#HealthyRelationships',
-                'audience': 'youth',
-                'trending_score': 92,
-                'reason': 'Back to school prevention programs'
-            },
-            {
-                'topic': 'Survivor Stories of Strength',
-                'hashtag': '#SurvivorStrong',
-                'audience': 'general',
-                'trending_score': 85,
-                'reason': 'High engagement on personal narratives'
-            },
-            {
-                'topic': 'Workplace Domestic Violence Impact',
-                'hashtag': '#WorkplaceSafety',
-                'audience': 'donors',
-                'trending_score': 78,
-                'reason': 'Corporate awareness initiatives growing'
-            },
-            {
-                'topic': 'Digital Safety & Technology Abuse',
-                'hashtag': '#DigitalSafety',
-                'audience': 'youth',
-                'trending_score': 90,
-                'reason': 'Rising concern about online stalking'
-            },
-            {
-                'topic': 'Purple Thursday Community Support',
-                'hashtag': '#PurpleThursday',
-                'audience': 'general',
-                'trending_score': 82,
-                'reason': 'Weekly awareness momentum'
-            },
-            {
-                'topic': 'Volunteer Impact Stories',
-                'hashtag': '#DVCCCVolunteers',
-                'audience': 'donors',
-                'trending_score': 75,
-                'reason': 'Volunteer appreciation drives engagement'
-            }
-        ]
+        # Try to use real-time trends service
+        try:
+            from src.trends.realtime_trends import get_trends_service
+            trends_service = get_trends_service(os.getenv('NEWS_API_KEY'))
+            trending_topics = trends_service.get_all_trends()
+
+            # Add source indicator
+            for topic in trending_topics:
+                topic['realtime'] = topic.get('source') in ['google_trends', 'news', 'google_daily_trends']
+
+            logger.info(f"Fetched {len(trending_topics)} real-time trends")
+
+        except Exception as e:
+            logger.warning(f"Real-time trends unavailable, using fallback: {e}")
+            # Fallback to static trends
+            trending_topics = _get_fallback_trends()
 
         # Sort by trending score
-        trending_topics.sort(key=lambda x: x['trending_score'], reverse=True)
+        trending_topics.sort(key=lambda x: x.get('trending_score', 0), reverse=True)
 
         return jsonify({
             'success': True,
-            'trending': trending_topics,
-            'updated_at': datetime.now().isoformat()
+            'trending': trending_topics[:10],
+            'updated_at': datetime.now().isoformat(),
+            'sources': list(set(t.get('source', 'static') for t in trending_topics))
         })
 
     except Exception as e:
         logger.error(f"Trending topics failed: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def _get_fallback_trends() -> list:
+    """Return fallback trending topics when real-time data is unavailable."""
+    return [
+        {
+            'topic': 'Teen Dating Violence Awareness',
+            'hashtag': '#TDVAM',
+            'audience': 'youth',
+            'trending_score': 95,
+            'reason': 'February awareness month',
+            'source': 'static'
+        },
+        {
+            'topic': 'Financial Abuse Warning Signs',
+            'hashtag': '#FinancialAbuse',
+            'audience': 'general',
+            'trending_score': 88,
+            'reason': 'Often overlooked form of abuse',
+            'source': 'static'
+        },
+        {
+            'topic': 'Healthy Relationship Education',
+            'hashtag': '#HealthyRelationships',
+            'audience': 'youth',
+            'trending_score': 92,
+            'reason': 'High engagement topic',
+            'source': 'static'
+        },
+        {
+            'topic': 'Survivor Stories of Strength',
+            'hashtag': '#SurvivorStrong',
+            'audience': 'survivors',
+            'trending_score': 85,
+            'reason': 'Personal narratives drive engagement',
+            'source': 'static'
+        },
+        {
+            'topic': 'Digital Safety & Technology Abuse',
+            'hashtag': '#DigitalSafety',
+            'audience': 'youth',
+            'trending_score': 90,
+            'reason': 'Rising concern for young people',
+            'source': 'static'
+        },
+        {
+            'topic': 'Purple Thursday Community Support',
+            'hashtag': '#PurpleThursday',
+            'audience': 'general',
+            'trending_score': 82,
+            'reason': 'Weekly awareness momentum',
+            'source': 'static'
+        }
+    ]
 
 
 @app.route('/api/discovery/multi-optimize', methods=['POST'])
