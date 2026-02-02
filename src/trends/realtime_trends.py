@@ -134,7 +134,8 @@ class RealtimeTrends:
                 seen_topics.add(topic_key)
                 unique_trends.append(trend)
 
-        return unique_trends[:10]
+        # Return all unique trends (no artificial limit)
+        return unique_trends
 
     def _get_calendar_trends(self) -> List[Dict]:
         """Get trends based on awareness calendar."""

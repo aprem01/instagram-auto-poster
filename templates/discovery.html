@@ -151,6 +151,23 @@
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .trending-chips::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .trending-chips::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+
+    .trending-chips::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
     }
 
     .trending-chip {
@@ -1109,12 +1126,33 @@
             const data = await response.json();
 
             if (data.success && data.trending) {
-                const chips = data.trending.slice(0, 5).map(t => `
-                    <button class="trending-chip" onclick="selectTrending('${t.topic}')">
-                        ${t.hashtag} <span class="trending-score">${t.trending_score}</span>
-                    </button>
-                `).join('');
+                // Show ALL trending topics (no limit)
+                const chips = data.trending.map(t => {
+                    // Source icon based on where trend came from
+                    const sourceIcon = {
+                        'google_trends': '🔍',
+                        'google_daily_trends': '📈',
+                        'news': '📰',
+                        'reddit': '🗣️',
+                        'twitter': '🐦',
+                        'awareness_calendar': '📅',
+                        'special_day': '⭐',
+                        'evergreen': '🌿'
+                    }[t.source] || '🔥';
+
+                    return `
+                        <button class="trending-chip" onclick="selectTrending('${t.topic.replace(/'/g, "\\'")}')" title="${t.reason || t.source}">
+                            ${sourceIcon} ${t.hashtag || t.topic.substring(0, 20)} <span class="trending-score">${t.trending_score}</span>
+                        </button>
+                    `;
+                }).join('');
                 document.getElementById('trendingChips').innerHTML = chips;
+
+                // Update trending count
+                const label = document.querySelector('.trending-label');
+                if (label) {
+                    label.innerHTML = `<span>🔥</span> Trending Now <span style="font-size: 0.75rem; color: #9ca3af;">(${data.trending.length} topics)</span>`;
+                }
             }
         } catch (e) {
             console.error('Failed to load trending topics:', e);
